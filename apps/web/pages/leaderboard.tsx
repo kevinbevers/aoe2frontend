@@ -25,7 +25,7 @@ export default function Index() {
     return (
         <div className="flex flex-col">
 
-            <div className="flex flex-row items-center pb-4">
+            <div className="flex flex-row items-center">
                 <div className="">
                     <label htmlFor="table-search" className="sr-only">Search</label>
                     <div className="relative mt-1">
@@ -60,6 +60,10 @@ export default function Index() {
                         ))
                     }
                 </div>
+            </div>
+
+            <div className="my-4 text-sm text-gray-500">
+                Click on a player name to view their profile and match history
             </div>
 
             {

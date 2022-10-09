@@ -38,6 +38,11 @@ function CustomApp({Component, pageProps}: AppProps) {
                                 <a className="cursor-pointer hover:underline">Leaderboard</a>
                             </Link>
                         </div>
+                        <div className="">
+                            <Link href='/api-nightbot' as={`/api-nightbot`}>
+                                <a className="cursor-pointer hover:underline">Api / Nightbot</a>
+                            </Link>
+                        </div>
                     </div>
 
                     <QueryClientProvider client={queryClient}>
