@@ -3,12 +3,10 @@ import {fetchLeaderboard, fetchLeaderboards} from "../helper/api";
 import {useInfiniteQuery, useQuery} from "@tanstack/react-query";
 import {flatten} from "next/dist/shared/lib/flatten";
 import {ILeaderboardDef} from "../helper/api.types";
-import useDebounce from "../hooks/use-debounce";
 
 
 export default function Index() {
     const [leaderboard, setLeaderboard] = useState(null);
-    const [search, setSearch] = useState('');
 
     const {
         data,
@@ -37,9 +35,7 @@ export default function Index() {
                         </div>
                         <input type="text" id="table-search"
                                className="block p-2 pl-10 w-80 text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                               placeholder="Search for player"
-                               onChange={(e) => { setSearch(e.target.value) }}
-                        />
+                               placeholder="Search for player"/>
                     </div>
                 </div>
 
@@ -59,16 +55,14 @@ export default function Index() {
 
             {
                 leaderboard && (
-                    <PlayerList leaderboard={leaderboard} search={search}/>
+                    <PlayerList leaderboard={leaderboard}/>
                 )
             }
         </div>
     );
 }
 
-export function PlayerList({leaderboard, search}: { leaderboard: ILeaderboardDef, search: string }) {
-    const debouncedSearch = useDebounce(search, 600);
-
+export function PlayerList({leaderboard}: { leaderboard: ILeaderboardDef }) {
     const {
         data,
         error,
@@ -78,14 +72,8 @@ export function PlayerList({leaderboard, search}: { leaderboard: ILeaderboardDef
         isFetchingNextPage,
         status,
     } = useInfiniteQuery(
-        ['leaderboard-players', debouncedSearch, leaderboard.leaderboardId],
-        (context) => {
-            return fetchLeaderboard({
-                ...context,
-                search: context.queryKey[1] as string,
-                leaderboardId: context.queryKey[2] as number,
-            });
-        }, {
+        ['leaderboard-players', leaderboard.leaderboardId],
+        (context) => fetchLeaderboard({...context, leaderboardId: context.queryKey[1] as number,}), {
             getNextPageParam: (lastPage, pages) => lastPage.page + 1,
             keepPreviousData: true,
         })
