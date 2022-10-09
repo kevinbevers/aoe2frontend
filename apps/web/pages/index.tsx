@@ -25,11 +25,11 @@ export function Index() {
 
                 <br/>
                 <div className="flex flex-row space-x-4">
-                    <a href={`https://play.google.com/store/apps/details?id=`}>
+                    <a href={`https://play.google.com/store/apps/details?id=com.aoe2companion`}>
                         <img src="/app-button-play-store.png" className="max-h-[50px]" />
                     </a>
                     <div className="app-button-spacer"/>
-                    <a href={`https://apps.apple.com/app/id`}>
+                    <a href={`https://apps.apple.com/app/id1518463195`}>
                         <img src="/app-button-app-store.png" className="max-h-[50px]" />
                     </a>
                 </div>
