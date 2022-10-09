@@ -65,8 +65,7 @@ function CustomApp({Component, pageProps}: AppProps) {
                            rel="noreferrer noopener">Game
                             Content
                             Usage Rules</a>
-                        " using assets from
-                        <a className="text-gray-500"
+                        " using assets from <a className="text-gray-500"
                            href="https://www.ageofempires.com/games/aoeiide/"
                            rel="noreferrer noopener">Age of Empires II</a>
                         , and it is
