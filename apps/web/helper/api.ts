@@ -10,8 +10,7 @@ import {
     IMatchesResult, IProfilesResult
 } from "./api.types";
 
-// const baseUrl = 'https://data.aoe2companion.com';
-const baseUrl = 'http://localhost:3334';
+const baseUrl = process.env.NEXT_PUBLIC_DATA_API_URL;
 
 export async function fetchProfile(params: IFetchProfileParams) {
     console.log('fetchProfile', params);
