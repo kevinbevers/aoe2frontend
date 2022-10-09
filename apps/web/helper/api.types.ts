@@ -23,7 +23,7 @@ export interface ILeaderboardPlayer {
     rank: number;
     rankCountry: number;
     rating: number;
-    lastMatchTime: string;
+    lastMatchTime: Date;
     streak: number;
     wins: number;
     losses: number;
@@ -32,40 +32,6 @@ export interface ILeaderboardPlayer {
     games: number;
     country: string;
 }
-
-// export interface ILeaderboardPlayer {
-//     clan: string;
-//     country: string;
-//     drops: number;
-//     games: number;
-//     highest_rating: number;
-//     highest_streak: number;
-//     icon: any;
-//     last_match: Date;
-//     last_match_time: Date;
-//     losses: number;
-//     lowest_streak: number;
-//     name: string;
-//     previous_rating: number;
-//     profile_id: number;
-//     rank: number;
-//     rating: number;
-//     steam_id: string;
-//     streak: number;
-//     wins: number;
-// }
-//
-// export interface ILeaderboard {
-//     count: number;
-//     length: number;
-//     leaderboard_id?: number;
-//     event_leaderboard_id?: number;
-//     start: number;
-//     total: number;
-//     players: ILeaderboardPlayer[];
-//     updated?: Date;
-// }
-
 
 export interface IFetchLeaderboardParams {
     leaderboardId: number;
@@ -77,6 +43,146 @@ export interface IFetchLeaderboardParams {
 
     pageParam?: string;
 }
+
+
+
+
+
+
+
+
+export interface IFetchProfilesProfile {
+    profileId: number;
+    name: string;
+    games: number;
+    country: string;
+}
+
+
+export interface IProfilesResult {
+    page: number;
+    profiles: IFetchProfilesProfile[];
+}
+
+
+export interface IMatchesResult {
+    perPage: number;
+    page: number;
+    matches: IMatchesMatch[];
+}
+
+export interface IMatchesMatch {
+    matchId: number
+    started: Date
+    finished?: Date
+    leaderboardId?: number
+    leaderboardName?: string
+    name: string
+    server?: string
+    internalLeaderboardId?: number
+    difficulty: number
+    startingAge: number
+    fullTechTree: boolean
+    allowCheats: boolean
+    empireWarsMode: boolean
+    endingAge: number
+    gameMode: number
+    lockSpeed: boolean
+    lockTeams: boolean
+    mapSize: number
+    map: number
+    mapName: string
+    mapImageUrl: string
+    population: number
+    recordGame: boolean
+    regicideMode: boolean
+    resources: number
+    sharedExploration: boolean
+    speed: number
+    suddenDeathMode: boolean
+    teamPositions: boolean
+    teamTogether: boolean
+    treatyLength: number
+    turboMode: boolean
+    victory: number
+    revealMap: number
+    privacy: number
+    teams: IMatchesMatchTeam[]
+}
+
+export type IMatchesMatchTeam = IMatchesMatchPlayer[];
+
+export interface IMatchesMatchPlayer {
+    profileId: number
+    name?: string
+    rating?: number
+    ratingDiff?: number
+    games?: number
+    civ: number
+    civName: string
+    civImageUrl: string
+    color: number
+    colorHex: string
+    slot: number
+    team?: number
+    won?: boolean
+}
+
+
+
+
+
+
+export interface IFetchMatchesParams {
+    leaderboardIds: number[];
+    page?: number;
+    search?: string;
+    steamId?: string;
+    profileIds?: number[];
+    country?: string;
+
+    pageParam?: string;
+}
+
+
+
+export interface IFetchProfileParams {
+    page?: number;
+    search?: string;
+    steamId?: string;
+    profileId?: number;
+    country?: string;
+
+    pageParam?: string;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

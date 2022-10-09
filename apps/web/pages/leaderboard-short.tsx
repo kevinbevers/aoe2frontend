@@ -41,7 +41,7 @@ export default function Index() {
 
                 <div className="flex-1"></div>
 
-                <div className="flex flex-row space-x-6 cursor-pointer">
+                <div className="flex flex-row space-x-6 cursor-pointer hover:underline">
                     {
                         data?.map((leaderboard: ILeaderboardDef) => (
                             <div key={leaderboard.leaderboardId} className="flex flex-col"

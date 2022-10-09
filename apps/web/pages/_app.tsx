@@ -12,26 +12,26 @@ function CustomApp({Component, pageProps}: AppProps) {
     return (
         <>
             <Head>
-                <title>Welcome to web!</title>
+                <title>AoE II Companion</title>
             </Head>
-            <main className="app">
+            <main className="flex flex-col items-center">
 
-                <div className="flex flex-col px-6 py-4 min-h-[100vh]">
+                <div className="flex flex-col px-6 py-4 min-h-[100vh] w-full max-w-[1200px] m-x-auto">
 
-                    <div className="flex flex-row space-x-14 my-4 items-center">
+                    <div className="flex flex-row space-x-14 mt-4 mb-6 items-center">
                         <div className="text-2xl font-bold">
                             <Link href='/' as={`/`}>
-                                <a>AoE II Companion</a>
+                                <a className="cursor-pointer">AoE II Companion</a>
                             </Link>
                         </div>
                         <div className="">
                             <Link href='/' as={`/`}>
-                                <a>App</a>
+                                <a className="cursor-pointer hover:underline">App</a>
                             </Link>
                         </div>
                         <div className="">
                             <Link href='/leaderboard' as={`/leaderboard`}>
-                                <a>Leaderboard</a>
+                                <a className="cursor-pointer hover:underline">Leaderboard</a>
                             </Link>
                         </div>
                     </div>

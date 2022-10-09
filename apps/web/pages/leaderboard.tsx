@@ -4,6 +4,8 @@ import {useInfiniteQuery, useQuery} from "@tanstack/react-query";
 import {flatten} from "next/dist/shared/lib/flatten";
 import {ILeaderboardDef} from "../helper/api.types";
 import useDebounce from "../hooks/use-debounce";
+import Link from "next/link";
+import {formatAgo} from "../helper/util";
 
 
 export default function Index() {
@@ -45,12 +47,15 @@ export default function Index() {
 
                 <div className="flex-1"></div>
 
-                <div className="flex flex-row space-x-6 cursor-pointer">
+                <div className="flex flex-row space-x-6">
                     {
-                        data?.map((leaderboard: ILeaderboardDef) => (
-                            <div key={leaderboard.leaderboardId} className="flex flex-col"
-                                 onClick={() => setLeaderboard(leaderboard)}>
-                                {leaderboard.abbreviation}
+                        data?.map((leaderboardDef: ILeaderboardDef) => (
+                            <div key={leaderboardDef.leaderboardId}
+                                 className={`flex flex-col  cursor-pointer hover:underline
+                                            ${leaderboardDef.leaderboardId === leaderboard?.leaderboardId ? 'font-bold' : ''}
+                                 `}
+                                 onClick={() => setLeaderboard(leaderboardDef)}>
+                                {leaderboardDef.abbreviation}
                             </div>
                         ))
                     }
@@ -99,19 +104,22 @@ export function PlayerList({leaderboard, search}: { leaderboard: ILeaderboardDef
                 <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
                     <th scope="col" className="py-3 px-6">
+                        #
+                    </th>
+                    <th scope="col" className="py-3 px-6">
                         Name
                     </th>
                     <th scope="col" className="py-3 px-6">
-                        Color
+                        Rating
                     </th>
                     <th scope="col" className="py-3 px-6">
-                        Category
+                        Wins
                     </th>
                     <th scope="col" className="py-3 px-6">
-                        Price
+                        Games
                     </th>
                     <th scope="col" className="py-3 px-6">
-                        Action
+                        Last Match
                     </th>
                 </tr>
                 </thead>
@@ -119,22 +127,28 @@ export function PlayerList({leaderboard, search}: { leaderboard: ILeaderboardDef
                 {
                     flatten(data?.pages?.map(p => p.players) || []).map((player, index) =>
                         <tr key={player.profileId} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                            <td className="py-4 px-6">
+                                {player.rank}
+                            </td>
                             <th scope="row"
                                 className="py-4 px-6 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                {player.name}
+                                <Link href={`/profile/[profileId]`} as={`/profile/${player.profileId}`}>
+                                    <div className="cursor-pointer hover:underline">
+                                        {player.name}
+                                    </div>
+                                </Link>
                             </th>
                             <td className="py-4 px-6">
-                                Sliver
+                                {player.rating}
                             </td>
                             <td className="py-4 px-6">
-                                Laptop
+                                {(player.wins / player.games * 100).toFixed(0)} %
                             </td>
                             <td className="py-4 px-6">
-                                $2999
+                                {player.games}
                             </td>
                             <td className="py-4 px-6">
-                                <a href="#"
-                                   className="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
+                                {formatAgo(player.lastMatchTime)}
                             </td>
                         </tr>
                     )
@@ -142,8 +156,9 @@ export function PlayerList({leaderboard, search}: { leaderboard: ILeaderboardDef
                 </tbody>
             </table>
 
-            <div>
+            <div className="flex flex-row justify-center p-4">
                 <button
+                    className="btn btn-primary"
                     onClick={() => fetchNextPage()}
                     disabled={!hasNextPage || isFetchingNextPage}
                 >
@@ -153,9 +168,8 @@ export function PlayerList({leaderboard, search}: { leaderboard: ILeaderboardDef
                             ? 'Load More'
                             : 'Nothing more to load'}
                 </button>
+                <div>{isFetching && !isFetchingNextPage ? 'Fetching...' : null}</div>
             </div>
-            <div>{isFetching && !isFetchingNextPage ? 'Fetching...' : null}</div>
-
 
         </div>
     );

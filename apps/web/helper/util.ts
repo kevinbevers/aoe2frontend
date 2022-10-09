@@ -1,3 +1,4 @@
+import {formatDistanceToNowStrict} from "date-fns";
 
 export function sleep(ms: number) {
     return new Promise((resolve) => {
@@ -18,6 +19,17 @@ export function makeQueryString(params: IParams) {
 
 const apiKey = process.env.NEXT_PUBLIC_API_KEY;
 
+const dateFormat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;
+
+function reviver(key, value) {
+    // console.log(key, value);
+    if (typeof value === "string" && dateFormat.test(value)) {
+        // console.log("DATE", value);
+        return new Date(value);
+    }
+    return value;
+}
+
 export async function fetchJson(title: string, input: RequestInfo, init?: RequestInit) {
   if (init) {
     console.log(input, init);
@@ -33,8 +45,14 @@ export async function fetchJson(title: string, input: RequestInfo, init?: Reques
         },
         // timeout: 60 * 1000,
     });
-    return await response.json();
+    const text = await response.text();
+    return JSON.parse(text, reviver);
   } catch (e) {
     console.log(input, 'failed', response?.status);
   }
+}
+
+export function formatAgo(date: Date) {
+    return formatDistanceToNowStrict(date, {addSuffix: true});
+    // return formatDistanceToNowStrict(date, {locale: getLocale(), addSuffix: true});
 }
