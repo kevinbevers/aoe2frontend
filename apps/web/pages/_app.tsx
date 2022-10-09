@@ -59,7 +59,7 @@ function CustomApp({Component, pageProps}: AppProps) {
 
                     <p className="pt-4 text-xs md:text-sm text-center max-w-4xl mx-auto px-4 md:px-8">
                         Age of Empires II©
-                        Microsoft Corporation. AoE4World.com was created under Microsoft's "
+                        Microsoft Corporation. aoe2companion.com was created under Microsoft's "
                         <a className="text-gray-500"
                            href="https://www.xbox.com/en-US/developers/rules"
                            rel="noreferrer noopener">Game
@@ -67,7 +67,7 @@ function CustomApp({Component, pageProps}: AppProps) {
                             Usage Rules</a>
                         " using assets from
                         <a className="text-gray-500"
-                           href="https://www.ageofempires.com/games/age-of-empires-iv/"
+                           href="https://www.ageofempires.com/games/aoeiide/"
                            rel="noreferrer noopener">Age of Empires II</a>
                         , and it is
                         not endorsed
