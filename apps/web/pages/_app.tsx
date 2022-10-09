@@ -5,6 +5,8 @@ import Link from "next/link";
 import {useState} from "react";
 import {Hydrate, QueryClient, QueryClientProvider} from "@tanstack/react-query";
 import NoSSRWrapper from "../other/no-ssr-wrapper";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faSkull, faUpRightFromSquare} from "@fortawesome/free-solid-svg-icons";
 
 function CustomApp({Component, pageProps}: AppProps) {
     const [queryClient] = useState(() => new QueryClient())
@@ -42,6 +44,12 @@ function CustomApp({Component, pageProps}: AppProps) {
                             <Link href='/api-nightbot' as={`/api-nightbot`}>
                                 <a className="cursor-pointer hover:underline">Api / Nightbot</a>
                             </Link>
+                        </div>
+                        <div className="">
+                            <a href="https://status.aoe2companion.com" target="_blank" className="flex flex-row space-x-2 items-center cursor-pointer hover:underline">
+                                <span>Status</span>
+                                <FontAwesomeIcon icon={faUpRightFromSquare} className="w-4 h-4" color="grey" />
+                            </a>
                         </div>
                     </div>
 
