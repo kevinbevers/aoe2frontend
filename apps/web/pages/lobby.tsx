@@ -34,12 +34,14 @@ async function createClient(url: string) {
     })
 }
 
+const baseUrl = process.env.NEXT_PUBLIC_GRAPH_API_URL;
+
 async function doListen(onChange: (data: any) => void, onReset: () => void) {
     try {
         console.log('LISTENING');
 
-        const url = `ws://localhost:3334/graphql`;
-        // const url = `wss://graph.aoe2companion.com/graphql`;
+        // const url = `ws://localhost:3334/graphql`;
+        const url = baseUrl.replace('http', 'ws');
 
         const client = await createClient(url)
         const result = await new Promise<string>((resolve, reject) => {
