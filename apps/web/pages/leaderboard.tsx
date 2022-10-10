@@ -24,6 +24,11 @@ export default function Index() {
 
     return (
         <div className="flex flex-col">
+            <div className="flex flex-col my-3 space-y-1">
+                <div className="text-lg">
+                    Leaderboard
+                </div>
+            </div>
 
             <div className="flex flex-row items-center">
                 <div className="">

@@ -53,6 +53,11 @@ export interface IFetchLeaderboardParams {
 
 
 export interface ILobbiesMatch {
+    totalSlotCount: number;
+    blockedSlotCount: number;
+    gameModeName: string;
+    averageRating: number;
+
     matchId: number
     started: Date
     finished?: Date
