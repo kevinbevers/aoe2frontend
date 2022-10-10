@@ -169,6 +169,9 @@ export interface IMatchesMatchPlayer {
     rating?: number
     ratingDiff?: number
     games?: number
+    wins?: number
+    losses?: number
+    drops?: number
     civ: number
     civName: string
     civImageUrl: string

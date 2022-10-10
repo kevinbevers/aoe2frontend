@@ -6,21 +6,16 @@ import {differenceInSeconds} from "date-fns";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faChevronDown, faChevronRight, faCrown, faSkull} from "@fortawesome/free-solid-svg-icons";
 import {ILeaderboardDef, ILobbiesMatch, IMatchesMatch, IMatchesMatchPlayer} from "../helper/api.types";
-import useDebounce from "../hooks/use-debounce";
-
-
+import {fetchLeaderboards} from "../helper/api";
+import {formatAgo} from "../helper/util";
 import {gql} from "graphql-request";
 import { GRAPHQL_TRANSPORT_WS_PROTOCOL } from 'graphql-ws';
 import {GraphQLWebSocketClientCustom} from "../other/graphql-ws";
-import {fetchLeaderboards, fetchProfile} from "../helper/api";
-import {data} from "autoprefixer";
-import {formatAgo} from "../helper/util";
-import {applyPatch, generate, observe, Observer} from "fast-json-patch";
+import {applyPatch} from "fast-json-patch";
 import {camelizeKeys} from "humps";
 
 async function createClient(url: string) {
     return new Promise<GraphQLWebSocketClientCustom>((resolve, reject) => {
-        // const socket = new WebSocketImpl(url, GRAPHQL_TRANSPORT_WS_PROTOCOL);
         const socket = new WebSocket(url, GRAPHQL_TRANSPORT_WS_PROTOCOL);
         const client: GraphQLWebSocketClientCustom = new GraphQLWebSocketClientCustom((socket as unknown) as WebSocket, {
             onAcknowledged: async (_p) => {
@@ -39,22 +34,16 @@ const baseUrl = process.env.NEXT_PUBLIC_GRAPH_API_URL;
 async function doListen(onChange: (data: any) => void, onReset: () => void) {
     try {
         console.log('LISTENING');
-
-        // const url = `ws://localhost:3334/graphql`;
         const url = baseUrl.replace('http', 'ws');
-
         const client = await createClient(url)
         const result = await new Promise<string>((resolve, reject) => {
-            const allGreatings = 'test';
             client.subscribe<{ lobbiesUpdatedSub: any }>(
                 gql`subscription lobbiesUpdatedSub {
                     lobbiesUpdatedSub
                 }`,
                 {
-                    next: ({ lobbiesUpdatedSub }) => {
-                        onChange(JSON.parse(lobbiesUpdatedSub));
-                    },
-                    complete: () => { resolve(allGreatings) },
+                    next: ({ lobbiesUpdatedSub }) => onChange(JSON.parse(lobbiesUpdatedSub)),
+                    complete: () => { resolve(null) },
                     error: (e) => { reject(e) }
                 })
         })
@@ -65,7 +54,6 @@ async function doListen(onChange: (data: any) => void, onReset: () => void) {
     } catch (e) {
         console.log(e);
         console.log('Connection Error. Reconnecting in 10s');
-        // sendAlert('notify', e)
         onReset();
         setTimeout(() => doListen(onChange, onReset), 10 * 1000);
     }
@@ -195,13 +183,16 @@ export function PlayerList({
     }, [lobbiesDict]);
 
     useEffect(() => {
+        const parts = search.toLowerCase().split(' ');
         const filtered = data.filter((match) => {
             if (search === '') return true;
-            return match.name.toLowerCase().includes(search.toLowerCase()) ||
-                   match.mapName.toLowerCase().includes(search.toLowerCase()) ||
-                   match.gameModeName.toLowerCase().includes(search.toLowerCase()) ||
-                   match.server.toLowerCase().includes(search.toLowerCase()) ||
-                   match.players.some((player) => player.name?.toLowerCase().includes(search.toLowerCase()));
+            return parts.every(part => {
+                return match.name.toLowerCase().includes(part.toLowerCase()) ||
+                       match.mapName.toLowerCase().includes(part.toLowerCase()) ||
+                       match.gameModeName.toLowerCase().includes(part.toLowerCase()) ||
+                       match.server.toLowerCase().includes(part.toLowerCase()) ||
+                       match.players.some((player) => player.name?.toLowerCase().includes(part.toLowerCase()));
+                });
         });
         setFilteredData(filtered);
     }, [data, search]);
