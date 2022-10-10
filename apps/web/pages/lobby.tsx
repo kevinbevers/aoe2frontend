@@ -176,8 +176,8 @@ export function PlayerList({
         doListen(
             (patch) => {
                 try {
-                    console.log('lobbiesDict', lobbiesDict);
-                    console.log('patch', patch);
+                    // console.log('lobbiesDict', lobbiesDict);
+                    // console.log('patch', patch);
                     const newDoc = applyPatch(lobbiesDict, patch);
                     setLobbiesDict(camelizeKeys(newDoc.newDocument));
                 } catch (e) {
@@ -206,7 +206,7 @@ export function PlayerList({
         setFilteredData(filtered);
     }, [data, search]);
 
-    console.log('data', data);
+    // console.log('data', data);
 
     return (
         <div className="flex flex-col">
