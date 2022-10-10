@@ -160,6 +160,7 @@ export function PlayerList({
                                leaderboard,
                                search,
                            }: { leaderboard: ILeaderboardDef, search: string }) {
+    const [lobbiesDict, setLobbiesDict] = useState<any>({});
     const [data, setData] = useState<ILobbiesMatch[]>([]);
     const [filteredData, setFilteredData] = useState<ILobbiesMatch[]>([]);
     const [expandedDict, setExpandedDict] = useState<{ [key: string]: boolean }>({});
@@ -173,10 +174,10 @@ export function PlayerList({
         doListen(
             (patch) => {
                 try {
-                    console.log('data', data);
+                    console.log('lobbiesDict', lobbiesDict);
                     console.log('patch', patch);
-                    const newDoc = applyPatch(data, patch);
-                    setData(camelizeKeys(newDoc.newDocument) as ILobbiesMatch[]);
+                    const newDoc = applyPatch(lobbiesDict, patch);
+                    setLobbiesDict(camelizeKeys(newDoc.newDocument));
                 } catch (e) {
                     console.log(e);
                 }
@@ -186,6 +187,10 @@ export function PlayerList({
             },
             );
     }, []);
+
+    useEffect(() => {
+        setData(Object.values(lobbiesDict) as ILobbiesMatch[]);
+    }, [lobbiesDict]);
 
     useEffect(() => {
         const filtered = data.filter((match) => {
