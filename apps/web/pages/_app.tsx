@@ -9,7 +9,13 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faSkull, faUpRightFromSquare} from "@fortawesome/free-solid-svg-icons";
 
 function CustomApp({Component, pageProps}: AppProps) {
-    const [queryClient] = useState(() => new QueryClient())
+    const [queryClient] = useState(() => new QueryClient({
+        defaultOptions: {
+            queries: {
+                // refetchOnWindowFocus: false,
+            },
+        },
+    }));
 
     return (
         <>

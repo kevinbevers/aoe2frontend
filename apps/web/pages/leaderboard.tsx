@@ -16,11 +16,12 @@ export default function Index() {
         data,
     } = useQuery(['leaderboards'], () => fetchLeaderboards(), {
         onSuccess: (data) => {
-            setLeaderboard(data[0]);
+            setLeaderboard(x => x || data[0]);
         },
     });
 
     // console.log('data', data);
+    // console.log('leaderboard', leaderboard);
 
     return (
         <div className="flex flex-col">
@@ -104,7 +105,7 @@ export function PlayerList({leaderboard, search}: { leaderboard: ILeaderboardDef
             keepPreviousData: true,
         })
 
-    console.log('data', data);
+    // console.log('data', data);
 
     return (
         <div className="flex flex-col">

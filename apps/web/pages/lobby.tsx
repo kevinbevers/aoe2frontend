@@ -64,9 +64,9 @@ export default function LobbyPage() {
     const [leaderboard, setLeaderboard] = useState(null);
     const [search, setSearch] = useState('');
 
-    const leaderboards = useQuery(['matches'], () => fetchLeaderboards(), {
+    const leaderboards = useQuery(['leaderboards'], () => fetchLeaderboards(), {
         onSuccess: (data) => {
-            setLeaderboard(data[0]);
+            setLeaderboard(x => x || data[0]);
         },
     });
 

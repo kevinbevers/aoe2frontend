@@ -12,7 +12,7 @@ export default function Index() {
         data,
     } = useQuery(['leaderboards'], () => fetchLeaderboards(), {
         onSuccess: (data) => {
-            setLeaderboard(data[0]);
+            setLeaderboard(x => x || data[0]);
         },
     });
 

@@ -1,5 +1,5 @@
 import {fromUnixTime} from "date-fns";
-import {fetchJson, makeQueryString} from "./util";
+import {fetchJson, makeQueryString, removeReactQueryParams} from "./util";
 import {camelizeKeys, decamelizeKeys} from "humps";
 import {
     IFetchLeaderboardParams,
@@ -15,7 +15,7 @@ const baseUrl = process.env.NEXT_PUBLIC_DATA_API_URL;
 export async function fetchProfile(params: IFetchProfileParams) {
     console.log('fetchProfile', params);
     const queryString = makeQueryString(decamelizeKeys({
-        ...params,
+        ...removeReactQueryParams(params),
         page: params.pageParam || 1,
     }));
     const url = `${baseUrl}/api/profile?${queryString}`;
@@ -25,7 +25,7 @@ export async function fetchProfile(params: IFetchProfileParams) {
 export async function fetchMatches(params: IFetchMatchesParams) {
     console.log('fetchMatches', params);
     const queryString = makeQueryString(decamelizeKeys({
-        ...params,
+        ...removeReactQueryParams(params),
         page: params.pageParam || 1,
     }));
     const url = `${baseUrl}/api/matches?${queryString}`;
@@ -34,7 +34,7 @@ export async function fetchMatches(params: IFetchMatchesParams) {
 
 export async function fetchLeaderboard(params: IFetchLeaderboardParams) {
     const queryString = makeQueryString(decamelizeKeys({
-        ...params,
+        ...removeReactQueryParams(params),
         page: params.pageParam || 1,
     }));
     const url = `${baseUrl}/api/leaderboard/${params.leaderboardId}?${queryString}`;
