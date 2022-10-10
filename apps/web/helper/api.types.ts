@@ -51,6 +51,52 @@ export interface IFetchLeaderboardParams {
 
 
 
+
+export interface ILobbiesMatch {
+    matchId: number
+    started: Date
+    finished?: Date
+    leaderboardId?: number
+    leaderboardName?: string
+    name: string
+    server?: string
+    internalLeaderboardId?: number
+    difficulty: number
+    startingAge: number
+    fullTechTree: boolean
+    allowCheats: boolean
+    empireWarsMode: boolean
+    endingAge: number
+    gameMode: number
+    lockSpeed: boolean
+    lockTeams: boolean
+    mapSize: number
+    map: number
+    mapName: string
+    mapImageUrl: string
+    population: number
+    recordGame: boolean
+    regicideMode: boolean
+    resources: number
+    sharedExploration: boolean
+    speed: number
+    suddenDeathMode: boolean
+    teamPositions: boolean
+    teamTogether: boolean
+    treatyLength: number
+    turboMode: boolean
+    victory: number
+    revealMap: number
+    privacy: number
+    players: IMatchesMatchPlayer[];
+}
+
+
+
+
+
+
+
 export interface IFetchProfilesProfile {
     profileId: number;
     name: string;

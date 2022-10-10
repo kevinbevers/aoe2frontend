@@ -36,6 +36,11 @@ function CustomApp({Component, pageProps}: AppProps) {
                             </Link>
                         </div>
                         <div className="">
+                            <Link href='/lobby' as={`/lobby`}>
+                                <a className="cursor-pointer hover:underline">Lobbies</a>
+                            </Link>
+                        </div>
+                        <div className="">
                             <Link href='/leaderboard' as={`/leaderboard`}>
                                 <a className="cursor-pointer hover:underline">Leaderboard</a>
                             </Link>

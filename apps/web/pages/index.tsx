@@ -1,16 +1,12 @@
 import styles from './index.module.scss';
+import {useEffect} from "react";
+
+
 
 export function Index() {
-    /*
-     * Replace the elements below with your own.
-     *
-     * Note: The corresponding styles are in the ./index.scss file.
-     */
+
     return (
         <div className="flex flex-row">
-
-
-
             <div className="flex-1 p-8 pt-32">
                 {/*<h1><span className="main-title">{appName}</span></h1>*/}
                 <h3 style={{ fontFamily: 'Merriweather,sans-serif' }}>
@@ -62,17 +58,9 @@ export function Index() {
                 </a>
             </div>
 
-            {/*<div className="spacer"/>*/}
-
             <div className="p-8">
                 <img src="ios-shot-aoe2companion.png" style={{maxWidth: '400px'}}/>
             </div>
-
-
-
-
-
-
         </div>
     );
 }
