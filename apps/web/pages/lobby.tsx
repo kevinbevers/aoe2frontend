@@ -246,10 +246,10 @@ export function PlayerList({
                                 onClick={() => toggleExpanded(match.matchId)}
                             >
 
-                                <td className="py-4 px-6">
+                                <td className="py-4 pl-6">
                                     <FontAwesomeIcon
                                         icon={expandedDict[match.matchId] ? faChevronDown : faChevronRight}
-                                        className="w-8 h-8"
+                                        className="w-6 h-6"
                                         color="grey"
                                     />
                                 </td>
