@@ -255,18 +255,16 @@ interface Props {
 }
 
 export function Player({ player }: Props) {
-    // const boxStyle = {backgroundColor: getPlayerBackgroundColor(player.color)};
-
     return (
         <div className="flex flex-row space-x-2 items-center">
-            <div className="">
+            <div className="w-[16px]">
                 {
                     player.won === true && player.team != -1 &&
-                    <FontAwesomeIcon icon={faCrown} color="goldenrod" />
+                    <FontAwesomeIcon icon={faCrown} className="w-[16px]" color="goldenrod" />
                 }
                 {
                     player.won === false && player.team != -1 &&
-                    <FontAwesomeIcon icon={faSkull} className="" color="grey" />
+                    <FontAwesomeIcon icon={faSkull} className="w-[16px]" color="grey" />
                 }
             </div>
 
@@ -281,7 +279,7 @@ export function Player({ player }: Props) {
             </Link>
             <Link href='/profile/[profileId]' as={`/profile/${player.profileId}`}>
                 <div className="flex flex-row space-x-1 items-center">
-                    <img src={player.civImageUrl} className="w-4 h-4"/>
+                    <img src={player.civImageUrl} className="w-[18px]"/>
                     <div className="w-[100px] truncate">{player.civName}</div>
                 </div>
             </Link>
