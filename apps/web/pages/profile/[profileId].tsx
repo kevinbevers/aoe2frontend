@@ -188,6 +188,9 @@ export function PlayerList({
                                     <img src={match.mapImageUrl} className="w-16 h-16"/>
 
                                     <div className="flex flex-col">
+                                        <div className="text-sm text-gray-400">
+                                            {match.matchId}
+                                        </div>
                                         <div className="font-bold">
                                             {match.mapName}
                                         </div>
