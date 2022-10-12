@@ -1,4 +1,4 @@
-import {Fragment, useEffect, useState} from "react";
+import React, {Fragment, useEffect, useState} from "react";
 import {useInfiniteQuery, useQuery} from "@tanstack/react-query";
 import {flatten} from "next/dist/shared/lib/flatten";
 import Link from "next/link";
@@ -206,7 +206,7 @@ export function PlayerList({
 
     // console.log('data', data);
 
-    const handleSpectate = (e: Event, matchId: number) => {
+    const handleSpectate = (e: React.MouseEvent<HTMLButtonElement>, matchId: number) => {
         window.location.href = `aoe2de://1/${matchId}`;
         e.preventDefault();
         e.stopPropagation();
@@ -283,7 +283,10 @@ export function PlayerList({
                                     {match.server}
                                 </td>
                                 <td className="py-4 px-6">
-                                    <button disabled={match.blockedSlotCount >= match.totalSlotCount} className="bg-green-500 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold py-2 px-4 rounded" onClick={(e) => handleSpectate(e, match.matchId)}>Join</button>
+                                    <button disabled={match.blockedSlotCount >= match.totalSlotCount}
+                                            className="bg-green-500 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold py-2 px-4 rounded"
+                                            onClick={(e) => handleSpectate(e, match.matchId)}
+                                    >Join</button>
                                 </td>
                             </tr>
                             {
