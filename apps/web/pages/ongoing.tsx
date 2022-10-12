@@ -284,9 +284,9 @@ export function PlayerList({
                                 </td>
                                 <td className="py-4 px-6">
                                     <button disabled={match.blockedSlotCount >= match.totalSlotCount}
-                                            className="bg-green-500 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold py-2 px-4 rounded"
+                                            className="bg-blue-500 hover:bg-blue-700 disabled:bg-gray-300 text-white font-bold py-2 px-4 rounded"
                                             onClick={(e) => handleSpectate(e, match.matchId)}
-                                    >Join</button>
+                                    >Spectate</button>
                                 </td>
                             </tr>
                             {
