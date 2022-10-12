@@ -197,6 +197,12 @@ export function PlayerList({
 
     // console.log('data', data);
 
+    const handleJoin = (e: Event, matchId: number) => {
+        window.location.href = `aoe2de://0/${matchId}`;
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
     return (
         <div className="flex flex-col">
 
@@ -226,11 +232,13 @@ export function PlayerList({
                     <th scope="col" className="py-3 px-6">
                         Status
                     </th>
+                    <th scope="col" className="py-3 px-6">
+
+                    </th>
                 </tr>
                 </thead>
                 <tbody>
                 {
-                    // flatten(data?.pages?.map(p => p.matches) || []).map((match, index) =>
                     filteredData?.map((match, index) =>
                         <Fragment key={match.matchId}>
                             <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
@@ -269,6 +277,9 @@ export function PlayerList({
                                 </td>
                                 <td className="py-4 px-6">
                                     {match.blockedSlotCount} / {match.totalSlotCount}
+                                </td>
+                                <td className="py-4 px-6">
+                                    <button disabled={match.blockedSlotCount >= match.totalSlotCount} className="bg-green-500 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold py-2 px-4 rounded" onClick={(e) => handleJoin(e, match.matchId)}>Join</button>
                                 </td>
                             </tr>
                             {
