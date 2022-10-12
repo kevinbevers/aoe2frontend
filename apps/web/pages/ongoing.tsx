@@ -2,7 +2,7 @@ import {Fragment, useEffect, useState} from "react";
 import {useInfiniteQuery, useQuery} from "@tanstack/react-query";
 import {flatten} from "next/dist/shared/lib/flatten";
 import Link from "next/link";
-import {differenceInSeconds} from "date-fns";
+import {differenceInSeconds, parseISO} from "date-fns";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faChevronDown, faChevronRight, faCrown, faSkull} from "@fortawesome/free-solid-svg-icons";
 import {ILeaderboardDef, ILobbiesMatch, IMatchesMatch, IMatchesMatchPlayer} from "../helper/api.types";
@@ -13,6 +13,7 @@ import { GRAPHQL_TRANSPORT_WS_PROTOCOL } from 'graphql-ws';
 import {GraphQLWebSocketClientCustom} from "../other/graphql-ws";
 import {applyPatch} from "fast-json-patch";
 import {camelizeKeys} from "humps";
+import {orderBy, sortBy} from "lodash";
 
 async function createClient(url: string) {
     return new Promise<GraphQLWebSocketClientCustom>((resolve, reject) => {
@@ -37,12 +38,12 @@ async function doListen(onChange: (data: any) => void, onReset: () => void) {
         const url = baseUrl.replace('http', 'ws');
         const client = await createClient(url)
         const result = await new Promise<string>((resolve, reject) => {
-            client.subscribe<{ lobbiesUpdatedSub: any }>(
-                gql`subscription lobbiesUpdatedSub {
-                    lobbiesUpdatedSub
+            client.subscribe<{ ongoingMatchesUpdatedSub: any }>(
+                gql`subscription ongoingMatchesUpdatedSub {
+                    ongoingMatchesUpdatedSub
                 }`,
                 {
-                    next: ({ lobbiesUpdatedSub }) => onChange(JSON.parse(lobbiesUpdatedSub)),
+                    next: ({ ongoingMatchesUpdatedSub }) => onChange(JSON.parse(ongoingMatchesUpdatedSub)),
                     complete: () => { resolve(null) },
                     error: (e) => { reject(e) }
                 })
@@ -75,7 +76,7 @@ export default function LobbyPage() {
 
             <div className="flex flex-col my-3 space-y-1">
                 <div className="text-lg">
-                    Lobbies
+                    Ongoing Matches
                 </div>
             </div>
 
@@ -140,6 +141,7 @@ function formatMatchDuration(match: IMatchesMatch) {
     }
     if (match.started) {
         const finished = match.finished || new Date();
+        // console.log(finished, match.started)
         duration = formatDuration(differenceInSeconds(finished, match.started) * getSpeedFactor(match.speed as AoeSpeed));
     }
     return duration;
@@ -165,7 +167,12 @@ export function PlayerList({
             (patch) => {
                 try {
                     const newDoc = applyPatch(lobbiesDict, patch);
-                    setLobbiesDict(camelizeKeys(newDoc.newDocument));
+                    const newLobbies = camelizeKeys(newDoc.newDocument);
+                    Object.values(newLobbies).forEach((match: ILobbiesMatch) => {
+                        match.started = match.started ? parseISO(match.started as any) : null;
+                        match.finished = match.finished ? parseISO(match.finished as any) : null;
+                    });
+                    setLobbiesDict(newLobbies);
                 } catch (e) {
                     console.log(e);
                 }
@@ -177,7 +184,9 @@ export function PlayerList({
     }, []);
 
     useEffect(() => {
-        setData(Object.values(lobbiesDict) as ILobbiesMatch[]);
+        let newData = Object.values(lobbiesDict) as ILobbiesMatch[];
+        newData = orderBy(newData, m => m.started, 'desc');
+        setData(newData);
     }, [lobbiesDict]);
 
     useEffect(() => {
@@ -201,7 +210,7 @@ export function PlayerList({
         <div className="flex flex-col">
 
             <div className="my-4 text-sm text-gray-500">
-                <span>There are {data?.length} open lobbies.</span>
+                <span>There are {data?.length} ongoing matches.</span>
                 Click on a row to show player list
             </div>
 
@@ -222,9 +231,6 @@ export function PlayerList({
                     </th>
                     <th scope="col" className="py-3 px-6">
                         Server
-                    </th>
-                    <th scope="col" className="py-3 px-6">
-                        Status
                     </th>
                 </tr>
                 </thead>
@@ -254,6 +260,7 @@ export function PlayerList({
                                                 {match.mapName}
                                             </div>
                                             <div>{match.name}</div>
+                                            <div>{formatMatchDuration(match as any)}</div>
                                         </div>
                                     </div>
 
@@ -266,9 +273,6 @@ export function PlayerList({
                                 </td>
                                 <td className="py-4 px-6">
                                     {match.server}
-                                </td>
-                                <td className="py-4 px-6">
-                                    {match.blockedSlotCount} / {match.totalSlotCount}
                                 </td>
                             </tr>
                             {

@@ -47,6 +47,11 @@ function CustomApp({Component, pageProps}: AppProps) {
                             </Link>
                         </div>
                         <div className="">
+                            <Link href='/ongoing' as={`/ongoing`}>
+                                <a className="cursor-pointer hover:underline">Ongoing Matches</a>
+                            </Link>
+                        </div>
+                        <div className="">
                             <Link href='/leaderboard' as={`/leaderboard`}>
                                 <a className="cursor-pointer hover:underline">Leaderboard</a>
                             </Link>
