@@ -1,6 +1,5 @@
 import React, {Fragment, useEffect, useState} from "react";
-import {useInfiniteQuery, useQuery} from "@tanstack/react-query";
-import {flatten} from "next/dist/shared/lib/flatten";
+import {useQuery} from "@tanstack/react-query";
 import Link from "next/link";
 import {differenceInSeconds} from "date-fns";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
@@ -8,61 +7,73 @@ import {faChevronDown, faChevronRight, faCrown, faSkull} from "@fortawesome/free
 import {ILeaderboardDef, ILobbiesMatch, IMatchesMatch, IMatchesMatchPlayer} from "../helper/api.types";
 import {fetchLeaderboards} from "../helper/api";
 import {formatAgo} from "../helper/util";
-import {gql} from "graphql-request";
-import { GRAPHQL_TRANSPORT_WS_PROTOCOL } from 'graphql-ws';
-import {GraphQLWebSocketClientCustom} from "../other/graphql-ws";
-import {applyPatch} from "fast-json-patch";
+import {ICloseEvent, w3cwebsocket} from "websocket";
 import {camelizeKeys} from "humps";
+import {cloneDeep} from "lodash";
 
-async function createClient(url: string) {
-    return new Promise<GraphQLWebSocketClientCustom>((resolve, reject) => {
-        const socket = new WebSocket(url, GRAPHQL_TRANSPORT_WS_PROTOCOL);
-        const client: GraphQLWebSocketClientCustom = new GraphQLWebSocketClientCustom((socket as unknown) as WebSocket, {
-            onAcknowledged: async (_p) => {
-                console.log('ACKNOWLEDGED');
-                resolve(client);
-            },
-            onClose: () => {
-                reject();
-            },
-        })
-    })
+
+export function initConnection(onConnected: () => void, onLobbies: (_lobbies: any[]) => void): Promise<void> {
+    return new Promise(resolve => {
+        console.log('ENVIRONMENT', process.env.NEXT_PUBLIC_ENVIRONMENT);
+
+        let client: w3cwebsocket;
+        if (process.env.NEXT_PUBLIC_ENVIRONMENT == 'development') {
+            client = new w3cwebsocket(`ws://aoe2backend-socket.deno.dev/`);
+            // client = new w3cwebsocket(`ws://127.0.0.1:8787/api/room/1234/websocket`);
+        } else {
+            client = new w3cwebsocket(`wss://gartic.denniske.workers.dev/api/room/1234/websocket`);
+        }
+
+        client.onopen = () => {
+            console.log('WebSocket Client Connected');
+            onConnected();
+            // mutate(connected());
+
+            client.send(JSON.stringify({
+                type: 'ping',
+            }));
+
+            resolve();
+        };
+
+        client.onmessage = (messageEvent) => {
+            const message = JSON.parse(messageEvent.data as string);
+            // console.log('message', message);
+
+            if (message.type != 'pong') {
+                onLobbies(message);
+            }
+
+
+            // lobbyClient.message(message);
+            // gameClient.message(message);
+        };
+
+        client.onerror = (error) => {
+            console.log('error', error);
+        };
+
+        client.onclose = (event: ICloseEvent) => {
+            // mutate(disconnected());
+
+            console.log('closed', event);
+            // lobbyClient.close(event.reason);
+
+            // if (event.reason === closeReasonKicked) {
+            //     console.log('You were kicked.');
+            //     mutate(updateUser({id: undefined, name: undefined}));
+            // } else {
+            //     console.log('Connection lost.', event);
+            // }
+        };
+    });
 }
 
-const baseUrl = process.env.NEXT_PUBLIC_GRAPH_API_URL;
-
-async function doListen(onChange: (data: any) => void, onReset: () => void) {
-    try {
-        console.log('LISTENING');
-        const url = baseUrl.replace('http', 'ws');
-        const client = await createClient(url)
-        const result = await new Promise<string>((resolve, reject) => {
-            client.subscribe<{ lobbiesUpdatedSub: any }>(
-                gql`subscription lobbiesUpdatedSub {
-                    lobbiesUpdatedSub
-                }`,
-                {
-                    next: ({ lobbiesUpdatedSub }) => onChange(JSON.parse(lobbiesUpdatedSub)),
-                    complete: () => { resolve(null) },
-                    error: (e) => { reject(e) }
-                })
-        })
-        client.close();
-        console.log('Connection complete. Reconnecting in 10s', result);
-        onReset();
-        setTimeout(() => doListen(onChange, onReset), 10 * 1000);
-    } catch (e) {
-        console.log(e);
-        console.log('Connection Error. Reconnecting in 10s');
-        onReset();
-        setTimeout(() => doListen(onChange, onReset), 10 * 1000);
-    }
-}
-
+// const baseUrl = process.env.NEXT_PUBLIC_GRAPH_API_URL;
 
 export default function LobbyPage() {
     const [leaderboard, setLeaderboard] = useState(null);
-    const [search, setSearch] = useState('');
+    const [search, setSearch] = useState('test');
 
     const leaderboards = useQuery(['leaderboards'], () => fetchLeaderboards(), {
         onSuccess: (data) => {
@@ -145,14 +156,19 @@ function formatMatchDuration(match: IMatchesMatch) {
     return duration;
 }
 
+interface IChangedEntity {
+    type: 'lobby' | 'player';
+    id: number;
+    data: any;
+}
 
 export function PlayerList({
                                leaderboard,
                                search,
                            }: { leaderboard: ILeaderboardDef, search: string }) {
-    const [lobbiesDict, setLobbiesDict] = useState<any>({});
-    const [data, setData] = useState<ILobbiesMatch[]>([]);
-    const [filteredData, setFilteredData] = useState<ILobbiesMatch[]>([]);
+    // const [lobbiesDict, setLobbiesDict] = useState<any>({});
+    const [lobbies, setLobbies] = useState<ILobbiesMatch[]>([]);
+    const [filteredLobbies, setFilteredLobbies] = useState<ILobbiesMatch[]>([]);
     const [expandedDict, setExpandedDict] = useState<{ [key: string]: boolean }>({});
 
     const toggleExpanded = (matchId: number) => {
@@ -161,28 +177,62 @@ export function PlayerList({
     };
 
     useEffect(() => {
-        doListen(
-            (patch) => {
-                try {
-                    const newDoc = applyPatch(lobbiesDict, patch);
-                    setLobbiesDict(camelizeKeys(newDoc.newDocument));
-                } catch (e) {
-                    console.log(e);
-                }
-            },
+
+        initConnection(
             () => {
-                setData([]);
+                fetch(`https://aoe2backend-socket.deno.dev/api/lobbies`).then(async (response) => {
+                    const lobbies = camelizeKeys(await response.json());
+                    setLobbies(lobbies);
+                });
             },
-            );
+            (changedEntities: IChangedEntity[]) => {
+                console.log('changedEntities', changedEntities);
+
+                setLobbies(oldLobbies => {
+                    const _lobbies = cloneDeep(oldLobbies);
+
+                    for (const lobby of changedEntities.filter(e => e.type === 'lobby')) {
+                        if (lobby.data == null) {
+                            _lobbies.splice(_lobbies.findIndex(x => x.matchId === lobby.id), 1);
+                        } else {
+                            const existingLobby = _lobbies.find(x => x.matchId === lobby.id);
+                            if (existingLobby) {
+                                Object.assign(existingLobby, lobby.data);
+                            } else {
+                                _lobbies.push(lobby.data);
+                            }
+                        }
+                    }
+
+                    return _lobbies;
+                });
+            });
+
+        // doListen(
+        //     (patch) => {
+        //         try {
+        //             const newDoc = applyPatch(lobbiesDict, patch);
+        //             setLobbiesDict(camelizeKeys(newDoc.newDocument));
+        //         } catch (e) {
+        //             console.log(e);
+        //         }
+        //     },
+        //     () => {
+        //         setData([]);
+        //     },
+        //     );
     }, []);
 
-    useEffect(() => {
-        setData(Object.values(lobbiesDict) as ILobbiesMatch[]);
-    }, [lobbiesDict]);
+    // useEffect(() => {
+    //     setLobbies(Object.values(lobbiesDict) as ILobbiesMatch[]);
+    // }, [lobbiesDict]);
 
     useEffect(() => {
         const parts = search.toLowerCase().split(' ');
-        const filtered = data.filter((match) => {
+        const filtered = lobbies.filter((match) => {
+
+            console.log(match);
+
             if (search === '') return true;
             return parts.every(part => {
                 return match.name.toLowerCase().includes(part.toLowerCase()) ||
@@ -192,8 +242,8 @@ export function PlayerList({
                        match.players.some((player) => player.name?.toLowerCase().includes(part.toLowerCase()));
                 });
         });
-        setFilteredData(filtered);
-    }, [data, search]);
+        setFilteredLobbies(filtered);
+    }, [lobbies, search]);
 
     // console.log('data', data);
 
@@ -207,7 +257,7 @@ export function PlayerList({
         <div className="flex flex-col">
 
             <div className="my-4 text-sm text-gray-500">
-                <span>There are {data?.length} open lobbies.</span>
+                <span>There are {lobbies?.length} open lobbies.</span>
                 Click on a row to show player list
             </div>
 
@@ -239,7 +289,7 @@ export function PlayerList({
                 </thead>
                 <tbody>
                 {
-                    filteredData?.map((match, index) =>
+                    filteredLobbies?.map((match, index) =>
                         <Fragment key={match.matchId}>
                             <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
                                 onClick={() => toggleExpanded(match.matchId)}
@@ -291,7 +341,7 @@ export function PlayerList({
 
                                         <td className="py-4 px-6">
                                         </td>
-                                        <td className="py-4 px-6" colSpan={5}>
+                                        <td className="py-4 px-6" colSpan={6}>
 
                                             <div className="flex flex-row space-x-4">
                                                 <div className="flex flex-row items-center space-x-3">
