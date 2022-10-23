@@ -13,7 +13,7 @@ export function initConnection(onConnected: () => void, onLobbies: (_lobbies: an
     return new Promise(resolve => {
         console.log('ENVIRONMENT', process.env.NEXT_PUBLIC_ENVIRONMENT);
 
-        const client = new w3cwebsocket(`wss://aoe2backend-socket.deno.dev/`);
+        const client = new w3cwebsocket(`wss://aoe2backend-socket.deno.dev/listen/lobbies`);
 
         client.onopen = () => {
             console.log('WebSocket Client Connected');
