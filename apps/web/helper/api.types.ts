@@ -98,6 +98,71 @@ export interface ILobbiesMatch {
 
 
 
+export interface ILobbiesMatch2 {
+    totalSlotCount: number;
+    blockedSlotCount: number;
+    gameModeName: string;
+    averageRating: number;
+
+    matchId: number
+    started: Date
+    finished?: Date
+    leaderboardId?: number
+    leaderboardName?: string
+    name: string
+    server?: string
+    internalLeaderboardId?: number
+    difficulty: number
+    startingAge: number
+    fullTechTree: boolean
+    allowCheats: boolean
+    empireWarsMode: boolean
+    endingAge: number
+    gameMode: number
+    lockSpeed: boolean
+    lockTeams: boolean
+    mapSize: number
+    map: number
+    mapName: string
+    mapImageUrl: string
+    population: number
+    recordGame: boolean
+    regicideMode: boolean
+    resources: number
+    sharedExploration: boolean
+    speed: number
+    suddenDeathMode: boolean
+    teamPositions: boolean
+    teamTogether: boolean
+    treatyLength: number
+    turboMode: boolean
+    victory: number
+    revealMap: number
+    privacy: number
+    players: number[];
+}
+
+export interface IMatchesMatchPlayer2 {
+    matchId: number
+    profileId: number
+    name?: string
+    rating?: number
+    ratingDiff?: number
+    games?: number
+    wins?: number
+    losses?: number
+    drops?: number
+    civ: number
+    civName: string
+    civImageUrl: string
+    color: number
+    colorHex: string
+    slot: number
+    team?: number
+    won?: boolean
+}
+
+
 
 
 

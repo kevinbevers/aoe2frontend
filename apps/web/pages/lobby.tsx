@@ -4,12 +4,19 @@ import Link from "next/link";
 import {differenceInSeconds} from "date-fns";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faChevronDown, faChevronRight, faCrown, faSkull} from "@fortawesome/free-solid-svg-icons";
-import {ILeaderboardDef, ILobbiesMatch, IMatchesMatch, IMatchesMatchPlayer} from "../helper/api.types";
+import {
+    ILeaderboardDef,
+    ILobbiesMatch,
+    ILobbiesMatch2,
+    IMatchesMatch,
+    IMatchesMatchPlayer,
+    IMatchesMatchPlayer2
+} from "../helper/api.types";
 import {fetchLeaderboards} from "../helper/api";
 import {formatAgo} from "../helper/util";
 import {ICloseEvent, w3cwebsocket} from "websocket";
 import {camelizeKeys} from "humps";
-import {cloneDeep} from "lodash";
+import {cloneDeep, flatten} from "lodash";
 
 
 export function initConnection(onConnected: () => void, onLobbies: (_lobbies: any[]) => void): Promise<void> {
@@ -29,9 +36,9 @@ export function initConnection(onConnected: () => void, onLobbies: (_lobbies: an
             onConnected();
             // mutate(connected());
 
-            client.send(JSON.stringify({
-                type: 'ping',
-            }));
+            // client.send(JSON.stringify({
+            //     type: 'ping',
+            // }));
 
             resolve();
         };
@@ -67,6 +74,199 @@ export function initConnection(onConnected: () => void, onLobbies: (_lobbies: an
             // }
         };
     });
+}
+
+
+
+
+
+// const changedLobbies: ILobbiesMatch[] = [];
+
+// const sample = [
+//     {
+//         type: 'lobby',
+//         id: 100,
+//         data: {
+//             blockedSlotCount: 2,
+//             players: [
+//                 {
+//                     type: 'player',
+//                     id: 1,
+//                     data: {
+//                         profileId: 1,
+//                         name: 'Dennis',
+//                     },
+//                 },
+//             ],
+//         },
+//     },
+// ];
+
+
+// const changeset: ILobbiesMatch[] = [
+//     {
+//         matchId: 100,
+//         blockedSlotCount: 2,
+//         players: [
+//             {
+//                 slot: 1,
+//                 profileId: 1,
+//                 name: 'Dennis',
+//             },
+//         ],
+//     },
+// ] as any;
+
+
+// const changeset: ILobbiesMatch[] = [
+//     {
+//         matchId: 100,
+//         blockedSlotCount: 2,
+//         players: [
+//             {
+//                 slot: 1,
+//                 profileId: 1,
+//                 name: 'Dennis',
+//             },
+//         ],
+//     },
+// ] as any;
+
+
+interface ILobbyAddedEvent {
+    type: 'lobbyAdded';
+    data: ILobbiesMatch;
+}
+
+interface ILobbyUpdatedEvent {
+    type: 'lobbyUpdated';
+    data: ILobbiesMatch;
+}
+
+interface ILobbyRemovedEvent {
+    type: 'lobbyRemoved';
+    data: { matchId: number; };
+}
+
+interface ISlotAddedEvent {
+    type: 'slotAdded';
+    data: IMatchesMatchPlayer2;
+}
+
+interface ISlotUpdatedEvent {
+    type: 'slotUpdated';
+    data: IMatchesMatchPlayer2;
+}
+
+interface ISlotRemovedEvent {
+    type: 'slotRemoved';
+    data: { matchId: number; slot: number; };
+}
+
+type ILobbyEvent = ILobbyAddedEvent | ILobbyUpdatedEvent | ILobbyRemovedEvent | ISlotAddedEvent | ISlotUpdatedEvent | ISlotRemovedEvent;
+
+const lobbies: ILobbiesMatch[] = [];
+
+function processEvent(event: ILobbyEvent) {
+    const lobby = lobbies.find(lobby => lobby.matchId == event.data.matchId);
+
+    switch (event.type) {
+        case 'lobbyAdded':
+            lobbies.push(event.data);
+            break;
+        case 'lobbyUpdated':
+            Object.assign(lobby, event.data);
+            break;
+        case 'lobbyRemoved':
+            lobbies.splice(lobbies.indexOf(lobby), 1);
+            break;
+        case 'slotAdded':
+            lobby.players[event.data.slot] = event.data;
+            break;
+        case 'slotUpdated':
+            Object.assign(lobby.players[event.data.slot], event.data);
+            break;
+        case 'slotRemoved':
+            delete lobby.players[event.data.slot];
+            break;
+    }
+}
+
+
+
+
+export function initLobbySubscription(onConnected: () => void, onLobbies: (_lobbies: any[]) => void): Promise<void> {
+    let lobbyDict: { [key: string]: ILobbiesMatch2 } = {};
+    let playerDict: { [key: string]: IMatchesMatchPlayer2 } = {};
+
+    const createArray = () => {
+        const lobbies = Object.values(lobbyDict);
+        const players = Object.values(playerDict);
+
+        const lobbiesWithPlayers = lobbies.map(lobby => {
+            const lobbyPlayers = players.filter(player => player.matchId == lobby.matchId);
+            return {
+                ...lobby,
+                players: lobbyPlayers,
+            };
+        });
+
+        onLobbies(lobbiesWithPlayers);
+    };
+
+    return initConnection(
+        () => {
+            fetch(`https://aoe2backend-socket.deno.dev/api/lobbies`).then(async (response) => {
+                let matches = await response.json() as ILobbiesMatch[];
+
+                let players = flatten(matches.map(l => l.players));
+
+                // lobbies.forEach(l => l.players = l.players.map(p => p.profileId));
+
+                const lobbies: ILobbiesMatch2[] = matches.map(l => ({
+                    ...l,
+                    players: l.players.map(p => p.profileId),
+                }));
+
+                lobbyDict = Object.assign({}, ...lobbies.map((x) => ({[x.matchId]: x})));
+                playerDict = Object.assign({}, ...players.map((x) => ({[x.profileId]: x})));
+
+                createArray();
+            });
+        },
+        (changedEntities: IChangedEntity[]) => {
+            console.log('changedEntities', changedEntities);
+
+            const changedLobbies = changedEntities.filter(e => e.type === 'lobby');
+            for (const lobby of changedLobbies) {
+                if (lobby.data == null) {
+                    delete lobbyDict[lobby.id];
+                } else {
+                    const existingLobby = lobbyDict[lobby.id];
+                    if (existingLobby) {
+                        Object.assign(existingLobby, lobby.data);
+                    } else {
+                        lobbyDict[lobby.id] = lobby.data;
+                    }
+                }
+            }
+
+            const changedPlayers = changedEntities.filter(e => e.type === 'player');
+            for (const player of changedPlayers) {
+                if (player.data == null) {
+                    delete playerDict[player.id];
+                } else {
+                    const existingLobby = playerDict[player.id];
+                    if (existingLobby) {
+                        Object.assign(existingLobby, player.data);
+                    } else {
+                        playerDict[player.id] = player.data;
+                    }
+                }
+            }
+
+            // createArray();
+        });
 }
 
 // const baseUrl = process.env.NEXT_PUBLIC_GRAPH_API_URL;
@@ -106,6 +306,7 @@ export default function LobbyPage() {
                         <input type="text" id="table-search"
                                className="block p-2 pl-10 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                placeholder="Search for name, map, game mode, server, player name"
+                               value={search}
                                onChange={(e) => {
                                    setSearch(e.target.value)
                                }}
@@ -116,7 +317,7 @@ export default function LobbyPage() {
 
             {
                 leaderboard && (
-                    <PlayerList leaderboard={leaderboard} search={search} />
+                    <PlayerList leaderboard={leaderboard} search={search}/>
                 )
             }
         </div>
@@ -172,55 +373,18 @@ export function PlayerList({
     const [expandedDict, setExpandedDict] = useState<{ [key: string]: boolean }>({});
 
     const toggleExpanded = (matchId: number) => {
-      expandedDict[matchId] = !expandedDict[matchId];
-      setExpandedDict({...expandedDict});
+        expandedDict[matchId] = !expandedDict[matchId];
+        setExpandedDict({...expandedDict});
     };
 
     useEffect(() => {
-
-        initConnection(
+        initLobbySubscription(
             () => {
-                fetch(`https://aoe2backend-socket.deno.dev/api/lobbies`).then(async (response) => {
-                    const lobbies = camelizeKeys(await response.json());
-                    setLobbies(lobbies);
-                });
+
             },
-            (changedEntities: IChangedEntity[]) => {
-                console.log('changedEntities', changedEntities);
-
-                setLobbies(oldLobbies => {
-                    const _lobbies = cloneDeep(oldLobbies);
-
-                    for (const lobby of changedEntities.filter(e => e.type === 'lobby')) {
-                        if (lobby.data == null) {
-                            _lobbies.splice(_lobbies.findIndex(x => x.matchId === lobby.id), 1);
-                        } else {
-                            const existingLobby = _lobbies.find(x => x.matchId === lobby.id);
-                            if (existingLobby) {
-                                Object.assign(existingLobby, lobby.data);
-                            } else {
-                                _lobbies.push(lobby.data);
-                            }
-                        }
-                    }
-
-                    return _lobbies;
-                });
+            (_lobbies: any[]) => {
+                setLobbies(_lobbies);
             });
-
-        // doListen(
-        //     (patch) => {
-        //         try {
-        //             const newDoc = applyPatch(lobbiesDict, patch);
-        //             setLobbiesDict(camelizeKeys(newDoc.newDocument));
-        //         } catch (e) {
-        //             console.log(e);
-        //         }
-        //     },
-        //     () => {
-        //         setData([]);
-        //     },
-        //     );
     }, []);
 
     // useEffect(() => {
@@ -230,17 +394,15 @@ export function PlayerList({
     useEffect(() => {
         const parts = search.toLowerCase().split(' ');
         const filtered = lobbies.filter((match) => {
-
-            console.log(match);
-
+            // console.log(match);
             if (search === '') return true;
             return parts.every(part => {
                 return match.name.toLowerCase().includes(part.toLowerCase()) ||
-                       match.mapName.toLowerCase().includes(part.toLowerCase()) ||
-                       match.gameModeName.toLowerCase().includes(part.toLowerCase()) ||
-                       match.server.toLowerCase().includes(part.toLowerCase()) ||
-                       match.players.some((player) => player.name?.toLowerCase().includes(part.toLowerCase()));
-                });
+                    match.mapName.toLowerCase().includes(part.toLowerCase()) ||
+                    match.gameModeName.toLowerCase().includes(part.toLowerCase()) ||
+                    match.server.toLowerCase().includes(part.toLowerCase()) ||
+                    match.players.some((player) => player.name?.toLowerCase().includes(part.toLowerCase()));
+            });
         });
         setFilteredLobbies(filtered);
     }, [lobbies, search]);
@@ -323,7 +485,7 @@ export function PlayerList({
                                     ~{match.averageRating?.toFixed(0)}
                                 </td>
                                 <td className="py-4 px-6">
-                                    {match.server}
+                                    {match.server} {match.players.length}
                                 </td>
                                 <td className="py-4 px-6">
                                     {match.blockedSlotCount} / {match.totalSlotCount}
@@ -332,7 +494,8 @@ export function PlayerList({
                                     <button disabled={match.blockedSlotCount >= match.totalSlotCount}
                                             className="bg-green-500 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold py-2 px-4 rounded"
                                             onClick={(e) => handleJoin(e, match.matchId)}
-                                    >Join</button>
+                                    >Join
+                                    </button>
                                 </td>
                             </tr>
                             {
@@ -389,21 +552,22 @@ interface Props {
     player: IMatchesMatchPlayer;
 }
 
-export function Player({ player }: Props) {
+export function Player({player}: Props) {
     return (
         <div className="flex flex-row space-x-2 items-center">
             <div className="w-[16px]">
                 {
                     player.won === true && player.team != -1 &&
-                    <FontAwesomeIcon icon={faCrown} className="w-[16px]" color="goldenrod" />
+                    <FontAwesomeIcon icon={faCrown} className="w-[16px]" color="goldenrod"/>
                 }
                 {
                     player.won === false && player.team != -1 &&
-                    <FontAwesomeIcon icon={faSkull} className="w-[16px]" color="grey" />
+                    <FontAwesomeIcon icon={faSkull} className="w-[16px]" color="grey"/>
                 }
             </div>
 
-            <div className="flex flex-row items-center justify-center w-5 h-5 border border-black text-black" style={{ backgroundColor: player.colorHex }}>
+            <div className="flex flex-row items-center justify-center w-5 h-5 border border-black text-black"
+                 style={{backgroundColor: player.colorHex}}>
                 {player.color}
             </div>
             <div className="w-9">{player.rating}</div>
