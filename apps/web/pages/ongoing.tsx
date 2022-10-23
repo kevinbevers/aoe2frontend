@@ -15,61 +15,91 @@ import {applyPatch} from "fast-json-patch";
 import {camelizeKeys} from "humps";
 import {orderBy, sortBy} from "lodash";
 
-async function createClient(url: string) {
-    return new Promise<GraphQLWebSocketClientCustom>((resolve, reject) => {
-        const socket = new WebSocket(url, GRAPHQL_TRANSPORT_WS_PROTOCOL);
-        const client: GraphQLWebSocketClientCustom = new GraphQLWebSocketClientCustom((socket as unknown) as WebSocket, {
-            onAcknowledged: async (_p) => {
-                console.log('ACKNOWLEDGED');
-                resolve(client);
-            },
-            onClose: () => {
-                reject();
-            },
-        })
-    })
+import {ICloseEvent, w3cwebsocket} from "websocket";
+import produce from "immer"
+
+interface IConnectionHandler {
+    onOpen?: () => void;
+    onMatches?: (_matches: any[]) => void;
+    onClose?: (event: ICloseEvent) => void;
 }
 
-const baseUrl = process.env.NEXT_PUBLIC_GRAPH_API_URL;
+function initConnection(handler: IConnectionHandler): Promise<void> {
+    return new Promise(resolve => {
+        const client = new w3cwebsocket(`wss://aoe2backend-socket.deno.dev/listen/ongoing-matches`);
 
-async function doListen(onChange: (data: any) => void, onReset: () => void) {
-    try {
-        console.log('LISTENING');
-        const url = baseUrl.replace('http', 'ws');
-        const client = await createClient(url)
-        const result = await new Promise<string>((resolve, reject) => {
-            client.subscribe<{ ongoingMatchesUpdatedSub: any }>(
-                gql`subscription ongoingMatchesUpdatedSub {
-                    ongoingMatchesUpdatedSub
-                }`,
-                {
-                    next: ({ ongoingMatchesUpdatedSub }) => onChange(JSON.parse(ongoingMatchesUpdatedSub)),
-                    complete: () => { resolve(null) },
-                    error: (e) => { reject(e) }
-                })
-        })
-        client.close();
-        console.log('Connection complete. Reconnecting in 10s', result);
-        onReset();
-        setTimeout(() => doListen(onChange, onReset), 10 * 1000);
-    } catch (e) {
-        console.log(e);
-        console.log('Connection Error. Reconnecting in 10s');
-        onReset();
-        setTimeout(() => doListen(onChange, onReset), 10 * 1000);
-    }
+        client.onopen = () => {
+            console.log('WebSocket client connected');
+            handler.onOpen?.();
+            resolve();
+        };
+
+        client.onmessage = (messageEvent) => {
+            const message = JSON.parse(messageEvent.data as string);
+            if (message.type != 'pong') {
+                handler.onMatches?.(message);
+            }
+        };
+
+        client.onerror = (error) => {
+            console.log('WebSocket client error', error);
+        };
+
+        client.onclose = (event: ICloseEvent) => {
+            console.log('WebSocket client closed', event);
+            handler.onClose?.(event);
+        };
+    });
+}
+
+interface IMatchAddedEvent {
+    type: 'matchAdded';
+    data: IMatchesMatch;
+}
+
+interface IMatchUpdatedEvent {
+    type: 'matchUpdated';
+    data: IMatchesMatch;
+}
+
+interface IMatchRemovedEvent {
+    type: 'matchRemoved';
+    data: { matchId: number; };
+}
+
+type IMatchEvent = IMatchAddedEvent | IMatchUpdatedEvent | IMatchRemovedEvent;
+
+export function initMatchSubscription(handler: IConnectionHandler): Promise<void> {
+    let _matches: any[] = [];
+
+    return initConnection({
+        onOpen: handler.onOpen,
+        onClose: handler.onClose,
+        onMatches: (events: IMatchEvent[]) => {
+            _matches = produce(_matches, matches => {
+                for (const event of events) {
+                    const match = matches.find(match => match.matchId == event.data.matchId);
+
+                    switch (event.type) {
+                        case 'matchAdded':
+                            matches.push(event.data);
+                            break;
+                        case 'matchUpdated':
+                            Object.assign(match, event.data);
+                            break;
+                        case 'matchRemoved':
+                            matches.splice(matches.indexOf(match), 1);
+                            break;
+                    }
+                }
+            })
+            handler.onMatches?.(_matches);
+        }});
 }
 
 
 export default function LobbyPage() {
-    const [leaderboard, setLeaderboard] = useState(null);
     const [search, setSearch] = useState('');
-
-    const leaderboards = useQuery(['leaderboards'], () => fetchLeaderboards(), {
-        onSuccess: (data) => {
-            setLeaderboard(x => x || data[0]);
-        },
-    });
 
     return (
         <div className="flex flex-col">
@@ -104,11 +134,7 @@ export default function LobbyPage() {
                 </div>
             </div>
 
-            {
-                leaderboard && (
-                    <PlayerList leaderboard={leaderboard} search={search} />
-                )
-            }
+            <PlayerList search={search} />
         </div>
     );
 }
@@ -148,50 +174,39 @@ function formatMatchDuration(match: IMatchesMatch) {
 }
 
 
-export function PlayerList({
-                               leaderboard,
-                               search,
-                           }: { leaderboard: ILeaderboardDef, search: string }) {
-    const [lobbiesDict, setLobbiesDict] = useState<any>({});
-    const [data, setData] = useState<ILobbiesMatch[]>([]);
-    const [filteredData, setFilteredData] = useState<ILobbiesMatch[]>([]);
+export function PlayerList({search}: { search: string }) {
+    const [matches, setMatches] = useState<ILobbiesMatch[]>([]);
+    const [filteredMatches, setFilteredMatches] = useState<ILobbiesMatch[]>([]);
     const [expandedDict, setExpandedDict] = useState<{ [key: string]: boolean }>({});
+    const [connected, setConnected] = useState(false);
+    const [listSize, setListSize] = useState(20);
 
     const toggleExpanded = (matchId: number) => {
       expandedDict[matchId] = !expandedDict[matchId];
       setExpandedDict({...expandedDict});
     };
 
+    const connect = async () => {
+        await initMatchSubscription({
+            onOpen: () => {
+                setConnected(true);
+            },
+            onClose: () => {
+                setConnected(false);
+            },
+            onMatches: (_lobbies: any[]) => {
+                setMatches(_lobbies);
+            }
+        });
+    };
+
     useEffect(() => {
-        doListen(
-            (patch) => {
-                try {
-                    const newDoc = applyPatch(lobbiesDict, patch);
-                    const newLobbies = camelizeKeys(newDoc.newDocument);
-                    Object.values(newLobbies).forEach((match: ILobbiesMatch) => {
-                        match.started = match.started ? parseISO(match.started as any) : null;
-                        match.finished = match.finished ? parseISO(match.finished as any) : null;
-                    });
-                    setLobbiesDict(newLobbies);
-                } catch (e) {
-                    console.log(e);
-                }
-            },
-            () => {
-                setData([]);
-            },
-            );
+        connect();
     }, []);
 
     useEffect(() => {
-        let newData = Object.values(lobbiesDict) as ILobbiesMatch[];
-        newData = orderBy(newData, m => m.started, 'desc');
-        setData(newData);
-    }, [lobbiesDict]);
-
-    useEffect(() => {
         const parts = search.toLowerCase().split(' ');
-        const filtered = data.filter((match) => {
+        let filtered = matches.filter((match) => {
             if (search === '') return true;
             return parts.every(part => {
                 return match.name.toLowerCase().includes(part.toLowerCase()) ||
@@ -201,8 +216,9 @@ export function PlayerList({
                        match.players.some((player) => player.name?.toLowerCase().includes(part.toLowerCase()));
                 });
         });
-        setFilteredData(filtered);
-    }, [data, search]);
+        filtered = orderBy(filtered, m => m.started, 'desc');
+        setFilteredMatches(filtered);
+    }, [matches, search]);
 
     // console.log('data', data);
 
@@ -215,9 +231,17 @@ export function PlayerList({
     return (
         <div className="flex flex-col">
 
-            <div className="my-4 text-sm text-gray-500">
-                <span>There are {data?.length} ongoing matches.</span>
-                Click on a row to show player list
+            <div className="flex flex-row my-4 text-sm text-gray-500">
+                <div>There are {matches?.length} ongoing matches. Click on a row to show player list</div>
+                <div className="flex-1"></div>
+                {/*{*/}
+                {/*    connected &&*/}
+                {/*    <div className="text-blue">Connected. Refreshes every 10s.</div>*/}
+                {/*}*/}
+                {
+                    !connected &&
+                    <div className="text-blue hover:underline" onClick={connect}>Connection lost. Reconnect.</div>
+                }
             </div>
 
             <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -245,7 +269,7 @@ export function PlayerList({
                 </thead>
                 <tbody>
                 {
-                    filteredData?.map((match, index) =>
+                    filteredMatches?.filter((m, i) => i < listSize).map((match, index) =>
                         <Fragment key={match.matchId}>
                             <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
                                 onClick={() => toggleExpanded(match.matchId)}
@@ -319,21 +343,17 @@ export function PlayerList({
                 </tbody>
             </table>
 
-            {/*<div className="flex flex-row justify-center p-4">*/}
-            {/*    <button*/}
-            {/*        className="btn btn-primary"*/}
-            {/*        onClick={() => fetchNextPage()}*/}
-            {/*        disabled={!hasNextPage || isFetchingNextPage}*/}
-            {/*    >*/}
-            {/*        {isFetchingNextPage*/}
-            {/*            ? 'Loading more...'*/}
-            {/*            : hasNextPage*/}
-            {/*                ? 'Load More'*/}
-            {/*                : 'Nothing more to load'}*/}
-            {/*    </button>*/}
-            {/*    <div>{isFetching && !isFetchingNextPage ? 'Fetching...' : null}</div>*/}
-            {/*</div>*/}
-
+            <div className="flex flex-row justify-center p-4">
+                <button
+                    className="btn btn-primary"
+                    onClick={() => setListSize(listSize + 10)}
+                    disabled={filteredMatches?.length <= listSize}
+                >
+                    {filteredMatches?.length === 0 ? 'Fetching...' : filteredMatches?.length > listSize
+                        ? 'Show More'
+                        : 'Nothing more to show'}
+                </button>
+            </div>
         </div>
     );
 }

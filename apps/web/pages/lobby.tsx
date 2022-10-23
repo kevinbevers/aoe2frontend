@@ -1,49 +1,41 @@
 import React, {Fragment, useEffect, useState} from "react";
 import Link from "next/link";
-import {differenceInSeconds} from "date-fns";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faChevronDown, faChevronRight, faCrown, faSkull} from "@fortawesome/free-solid-svg-icons";
-import {ILobbiesMatch, IMatchesMatch, IMatchesMatchPlayer, IMatchesMatchPlayer2} from "../helper/api.types";
-import {formatAgo} from "../helper/util";
+import {ILobbiesMatch, IMatchesMatchPlayer, IMatchesMatchPlayer2} from "../helper/api.types";
 import {ICloseEvent, w3cwebsocket} from "websocket";
 import produce from "immer"
 
+interface IConnectionHandler {
+    onOpen?: () => void;
+    onLobbies?: (_lobbies: any[]) => void;
+    onClose?: (event: ICloseEvent) => void;
+}
 
-export function initConnection(onConnected: () => void, onLobbies: (_lobbies: any[]) => void): Promise<void> {
+function initConnection(handler: IConnectionHandler): Promise<void> {
     return new Promise(resolve => {
-        console.log('ENVIRONMENT', process.env.NEXT_PUBLIC_ENVIRONMENT);
-
         const client = new w3cwebsocket(`wss://aoe2backend-socket.deno.dev/listen/lobbies`);
 
         client.onopen = () => {
-            console.log('WebSocket Client Connected');
-            onConnected();
+            console.log('WebSocket client connected');
+            handler.onOpen?.();
             resolve();
         };
 
         client.onmessage = (messageEvent) => {
             const message = JSON.parse(messageEvent.data as string);
             if (message.type != 'pong') {
-                onLobbies(message);
+                handler.onLobbies?.(message);
             }
-
-            // lobbyClient.message(message);
-            // gameClient.message(message);
         };
 
         client.onerror = (error) => {
-            console.log('error', error);
+            console.log('WebSocket client error', error);
         };
 
         client.onclose = (event: ICloseEvent) => {
-            console.log('closed', event);
-
-            // if (event.reason === closeReasonKicked) {
-            //     console.log('You were kicked.');
-            //     mutate(updateUser({id: undefined, name: undefined}));
-            // } else {
-            //     console.log('Connection lost.', event);
-            // }
+            console.log('WebSocket client closed', event);
+            handler.onClose?.(event);
         };
     });
 }
@@ -80,48 +72,13 @@ interface ISlotRemovedEvent {
 
 type ILobbyEvent = ILobbyAddedEvent | ILobbyUpdatedEvent | ILobbyRemovedEvent | ISlotAddedEvent | ISlotUpdatedEvent | ISlotRemovedEvent;
 
-const lobbies: ILobbiesMatch[] = [];
-
-function processEvent(event: ILobbyEvent) {
-    const lobby = lobbies.find(lobby => lobby.matchId == event.data.matchId);
-
-    switch (event.type) {
-        case 'lobbyAdded':
-            lobbies.push(event.data);
-            break;
-        case 'lobbyUpdated':
-            Object.assign(lobby, event.data);
-            break;
-        case 'lobbyRemoved':
-            lobbies.splice(lobbies.indexOf(lobby), 1);
-            break;
-        case 'slotAdded':
-            lobby.players[event.data.slot] = event.data;
-            break;
-        case 'slotUpdated':
-            Object.assign(lobby.players[event.data.slot], event.data);
-            break;
-        case 'slotRemoved':
-            delete lobby.players[event.data.slot];
-            break;
-    }
-}
-
-export function initLobbySubscription(onConnected: () => void, onLobbies: (_lobbies: any[]) => void): Promise<void> {
+export function initLobbySubscription(handler: IConnectionHandler): Promise<void> {
     let _lobbies: any[] = [];
 
-    return initConnection(
-        () => {
-            // fetch(`https://aoe2backend-socket.deno.dev/api/lobbies`).then(async (response) => {
-            //     await sleep(12 * 1000);
-            //     _lobbies = await response.json() as ILobbiesMatch[];
-            //     console.log('FIRST LOBBIES', _lobbies);
-            //     onLobbies(_lobbies);
-            // });
-        },
-        (events: ILobbyEvent[]) => {
-            // console.log('events', events);
-
+    return initConnection({
+        onOpen: handler.onOpen,
+        onClose: handler.onClose,
+        onLobbies: (events: ILobbyEvent[]) => {
             _lobbies = produce(_lobbies, lobbies => {
                 for (const event of events) {
                     const lobby = lobbies.find(lobby => lobby.matchId == event.data.matchId);
@@ -149,8 +106,8 @@ export function initLobbySubscription(onConnected: () => void, onLobbies: (_lobb
                     }
                 }
             })
-            onLobbies(_lobbies);
-        });
+            handler.onLobbies?.(_lobbies);
+        }});
 }
 
 export default function LobbyPage() {
@@ -195,63 +152,34 @@ export default function LobbyPage() {
     );
 }
 
-export type AoeSpeed = 0 | 1 | 2 | 3;
-
-const speedFactorDict = {
-    0: 1.0,
-    1: 1.5,
-    2: 1.7,
-    3: 2.0,
-}
-
-export function getSpeedFactor(speed: AoeSpeed) {
-    if (speed == null) return 1;
-    return speedFactorDict[speed];
-}
-
-const formatDuration = (durationInSeconds: number) => {
-    if (!durationInSeconds) return '00:00'; // divide by 0 protection
-    const minutes = Math.abs(Math.floor(durationInSeconds / 60) % 60).toString();
-    const hours = Math.abs(Math.floor(durationInSeconds / 60 / 60)).toString();
-    return `${hours.length < 2 ? hours : hours}:${minutes.length < 2 ? 0 + minutes : minutes} h`;
-};
-
-function formatMatchDuration(match: IMatchesMatch) {
-    let duration: string = '';
-    if (match.finished) {
-        return formatAgo(match.started);
-    }
-    if (match.started) {
-        const finished = match.finished || new Date();
-        duration = formatDuration(differenceInSeconds(finished, match.started) * getSpeedFactor(match.speed as AoeSpeed));
-    }
-    return duration;
-}
-
-interface IChangedEntity {
-    type: 'lobby' | 'player';
-    id: number;
-    data: any;
-}
-
 export function PlayerList({search}: { search: string }) {
     const [lobbies, setLobbies] = useState<ILobbiesMatch[]>([]);
     const [filteredLobbies, setFilteredLobbies] = useState<ILobbiesMatch[]>([]);
     const [expandedDict, setExpandedDict] = useState<{ [key: string]: boolean }>({});
+    const [connected, setConnected] = useState(false);
+    const [listSize, setListSize] = useState(20);
 
     const toggleExpanded = (matchId: number) => {
         expandedDict[matchId] = !expandedDict[matchId];
         setExpandedDict({...expandedDict});
     };
 
-    useEffect(() => {
-        initLobbySubscription(
-            () => {
-
+    const connect = async () => {
+        await initLobbySubscription({
+            onOpen: () => {
+                setConnected(true);
             },
-            (_lobbies: any[]) => {
+            onClose: () => {
+                setConnected(false);
+            },
+            onLobbies: (_lobbies: any[]) => {
                 setLobbies(_lobbies);
-            });
+            }
+        });
+    };
+
+    useEffect(() => {
+        connect();
     }, []);
 
     useEffect(() => {
@@ -279,9 +207,17 @@ export function PlayerList({search}: { search: string }) {
     return (
         <div className="flex flex-col">
 
-            <div className="my-4 text-sm text-gray-500">
-                <span>There are {lobbies?.length} open lobbies. </span>
-                Click on a row to show player list
+            <div className="flex flex-row my-4 text-sm text-gray-500">
+                <div>There are {lobbies?.length} open lobbies. Click on a row to show player list</div>
+                <div className="flex-1"></div>
+                {/*{*/}
+                {/*    connected &&*/}
+                {/*    <div className="text-blue">Connected. Refreshes every 10s.</div>*/}
+                {/*}*/}
+                {
+                    !connected &&
+                    <div className="text-blue hover:underline" onClick={connect}>Connection lost. Reconnect.</div>
+                }
             </div>
 
             <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -312,7 +248,7 @@ export function PlayerList({search}: { search: string }) {
                 </thead>
                 <tbody>
                 {
-                    filteredLobbies?.map((match, index) =>
+                    filteredLobbies?.filter((m, i) => i < listSize).map((match, index) =>
                         <Fragment key={match.matchId}>
                             <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
                                 onClick={() => toggleExpanded(match.matchId)}
@@ -388,6 +324,18 @@ export function PlayerList({search}: { search: string }) {
                 }
                 </tbody>
             </table>
+
+            <div className="flex flex-row justify-center p-4">
+                <button
+                    className="btn btn-primary"
+                    onClick={() => setListSize(listSize + 10)}
+                    disabled={filteredLobbies?.length <= listSize}
+                >
+                    {filteredLobbies?.length === 0 ? 'Fetching...' : filteredLobbies?.length > listSize
+                        ? 'Show More'
+                        : 'Nothing more to show'}
+                </button>
+            </div>
         </div>
     );
 }
