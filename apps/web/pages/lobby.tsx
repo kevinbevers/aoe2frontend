@@ -35,23 +35,14 @@ export function initConnection(onConnected: () => void, onLobbies: (_lobbies: an
         client.onopen = () => {
             console.log('WebSocket Client Connected');
             onConnected();
-            // mutate(connected());
-
-            // client.send(JSON.stringify({
-            //     type: 'ping',
-            // }));
-
             resolve();
         };
 
         client.onmessage = (messageEvent) => {
             const message = JSON.parse(messageEvent.data as string);
-            // console.log('message', message);
-
             if (message.type != 'pong') {
                 onLobbies(message);
             }
-
 
             // lobbyClient.message(message);
             // gameClient.message(message);
@@ -62,10 +53,7 @@ export function initConnection(onConnected: () => void, onLobbies: (_lobbies: an
         };
 
         client.onclose = (event: ICloseEvent) => {
-            // mutate(disconnected());
-
             console.log('closed', event);
-            // lobbyClient.close(event.reason);
 
             // if (event.reason === closeReasonKicked) {
             //     console.log('You were kicked.');
@@ -76,63 +64,6 @@ export function initConnection(onConnected: () => void, onLobbies: (_lobbies: an
         };
     });
 }
-
-
-
-
-
-// const changedLobbies: ILobbiesMatch[] = [];
-
-// const sample = [
-//     {
-//         type: 'lobby',
-//         id: 100,
-//         data: {
-//             blockedSlotCount: 2,
-//             players: [
-//                 {
-//                     type: 'player',
-//                     id: 1,
-//                     data: {
-//                         profileId: 1,
-//                         name: 'Dennis',
-//                     },
-//                 },
-//             ],
-//         },
-//     },
-// ];
-
-
-// const changeset: ILobbiesMatch[] = [
-//     {
-//         matchId: 100,
-//         blockedSlotCount: 2,
-//         players: [
-//             {
-//                 slot: 1,
-//                 profileId: 1,
-//                 name: 'Dennis',
-//             },
-//         ],
-//     },
-// ] as any;
-
-
-// const changeset: ILobbiesMatch[] = [
-//     {
-//         matchId: 100,
-//         blockedSlotCount: 2,
-//         players: [
-//             {
-//                 slot: 1,
-//                 profileId: 1,
-//                 name: 'Dennis',
-//             },
-//         ],
-//     },
-// ] as any;
-
 
 interface ILobbyAddedEvent {
     type: 'lobbyAdded';
@@ -193,9 +124,6 @@ function processEvent(event: ILobbyEvent) {
     }
 }
 
-
-
-
 export function initLobbySubscription(onConnected: () => void, onLobbies: (_lobbies: any[]) => void): Promise<void> {
     let _lobbies: any[] = [];
 
@@ -203,9 +131,9 @@ export function initLobbySubscription(onConnected: () => void, onLobbies: (_lobb
         () => {
             fetch(`https://aoe2backend-socket.deno.dev/api/lobbies`).then(async (response) => {
                 // await sleep(12 * 1000);
-                // _lobbies = await response.json() as ILobbiesMatch[];
-                // console.log('FIRST LOBBIES', _lobbies);
-                // onLobbies(_lobbies);
+                _lobbies = await response.json() as ILobbiesMatch[];
+                console.log('FIRST LOBBIES', _lobbies);
+                onLobbies(_lobbies);
             });
         },
         (events: ILobbyEvent[]) => {
@@ -214,9 +142,6 @@ export function initLobbySubscription(onConnected: () => void, onLobbies: (_lobb
             _lobbies = produce(_lobbies, lobbies => {
                 for (const event of events) {
                     const lobby = lobbies.find(lobby => lobby.matchId == event.data.matchId);
-                    const lobbyIndex = lobbies.findIndex(lobby => lobby.matchId == event.data.matchId);
-
-                    console.log('lobby', lobby, lobbyIndex);
 
                     switch (event.type) {
                         case 'lobbyAdded':
@@ -244,8 +169,6 @@ export function initLobbySubscription(onConnected: () => void, onLobbies: (_lobb
             onLobbies(_lobbies);
         });
 }
-
-// const baseUrl = process.env.NEXT_PUBLIC_GRAPH_API_URL;
 
 export default function LobbyPage() {
     const [leaderboard, setLeaderboard] = useState(null);
@@ -343,7 +266,6 @@ export function PlayerList({
                                leaderboard,
                                search,
                            }: { leaderboard: ILeaderboardDef, search: string }) {
-    // const [lobbiesDict, setLobbiesDict] = useState<any>({});
     const [lobbies, setLobbies] = useState<ILobbiesMatch[]>([]);
     const [filteredLobbies, setFilteredLobbies] = useState<ILobbiesMatch[]>([]);
     const [expandedDict, setExpandedDict] = useState<{ [key: string]: boolean }>({});
@@ -363,10 +285,6 @@ export function PlayerList({
             });
     }, []);
 
-    // useEffect(() => {
-    //     setLobbies(Object.values(lobbiesDict) as ILobbiesMatch[]);
-    // }, [lobbiesDict]);
-
     useEffect(() => {
         const parts = search.toLowerCase().split(' ');
         const filtered = lobbies.filter((match) => {
@@ -382,8 +300,6 @@ export function PlayerList({
         });
         setFilteredLobbies(filtered);
     }, [lobbies, search]);
-
-    // console.log('data', data);
 
     const handleJoin = (e: React.MouseEvent<HTMLButtonElement>, matchId: number) => {
         window.location.href = `aoe2de://0/${matchId}`;
@@ -503,22 +419,6 @@ export function PlayerList({
                 }
                 </tbody>
             </table>
-
-            {/*<div className="flex flex-row justify-center p-4">*/}
-            {/*    <button*/}
-            {/*        className="btn btn-primary"*/}
-            {/*        onClick={() => fetchNextPage()}*/}
-            {/*        disabled={!hasNextPage || isFetchingNextPage}*/}
-            {/*    >*/}
-            {/*        {isFetchingNextPage*/}
-            {/*            ? 'Loading more...'*/}
-            {/*            : hasNextPage*/}
-            {/*                ? 'Load More'*/}
-            {/*                : 'Nothing more to load'}*/}
-            {/*    </button>*/}
-            {/*    <div>{isFetching && !isFetchingNextPage ? 'Fetching...' : null}</div>*/}
-            {/*</div>*/}
-
         </div>
     );
 }
