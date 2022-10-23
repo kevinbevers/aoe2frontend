@@ -1,22 +1,11 @@
 import React, {Fragment, useEffect, useState} from "react";
-import {useQuery} from "@tanstack/react-query";
 import Link from "next/link";
 import {differenceInSeconds} from "date-fns";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faChevronDown, faChevronRight, faCrown, faSkull} from "@fortawesome/free-solid-svg-icons";
-import {
-    ILeaderboardDef,
-    ILobbiesMatch,
-    ILobbiesMatch2,
-    IMatchesMatch,
-    IMatchesMatchPlayer,
-    IMatchesMatchPlayer2
-} from "../helper/api.types";
-import {fetchLeaderboards} from "../helper/api";
-import {formatAgo, sleep} from "../helper/util";
+import {ILobbiesMatch, IMatchesMatch, IMatchesMatchPlayer, IMatchesMatchPlayer2} from "../helper/api.types";
+import {formatAgo} from "../helper/util";
 import {ICloseEvent, w3cwebsocket} from "websocket";
-import {camelizeKeys} from "humps";
-import {cloneDeep, flatten} from "lodash";
 import produce from "immer"
 
 
@@ -129,12 +118,12 @@ export function initLobbySubscription(onConnected: () => void, onLobbies: (_lobb
 
     return initConnection(
         () => {
-            fetch(`https://aoe2backend-socket.deno.dev/api/lobbies`).then(async (response) => {
-                // await sleep(12 * 1000);
-                _lobbies = await response.json() as ILobbiesMatch[];
-                console.log('FIRST LOBBIES', _lobbies);
-                onLobbies(_lobbies);
-            });
+            // fetch(`https://aoe2backend-socket.deno.dev/api/lobbies`).then(async (response) => {
+            //     await sleep(12 * 1000);
+            //     _lobbies = await response.json() as ILobbiesMatch[];
+            //     console.log('FIRST LOBBIES', _lobbies);
+            //     onLobbies(_lobbies);
+            // });
         },
         (events: ILobbyEvent[]) => {
             console.log('events', events);
@@ -171,14 +160,7 @@ export function initLobbySubscription(onConnected: () => void, onLobbies: (_lobb
 }
 
 export default function LobbyPage() {
-    const [leaderboard, setLeaderboard] = useState(null);
     const [search, setSearch] = useState('');
-
-    const leaderboards = useQuery(['leaderboards'], () => fetchLeaderboards(), {
-        onSuccess: (data) => {
-            setLeaderboard(x => x || data[0]);
-        },
-    });
 
     return (
         <div className="flex flex-col">
@@ -214,11 +196,7 @@ export default function LobbyPage() {
                 </div>
             </div>
 
-            {
-                leaderboard && (
-                    <PlayerList leaderboard={leaderboard} search={search}/>
-                )
-            }
+            <PlayerList search={search}/>
         </div>
     );
 }
@@ -262,10 +240,7 @@ interface IChangedEntity {
     data: any;
 }
 
-export function PlayerList({
-                               leaderboard,
-                               search,
-                           }: { leaderboard: ILeaderboardDef, search: string }) {
+export function PlayerList({search}: { search: string }) {
     const [lobbies, setLobbies] = useState<ILobbiesMatch[]>([]);
     const [filteredLobbies, setFilteredLobbies] = useState<ILobbiesMatch[]>([]);
     const [expandedDict, setExpandedDict] = useState<{ [key: string]: boolean }>({});
