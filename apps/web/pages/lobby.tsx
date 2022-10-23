@@ -126,7 +126,7 @@ export function initLobbySubscription(onConnected: () => void, onLobbies: (_lobb
             // });
         },
         (events: ILobbyEvent[]) => {
-            console.log('events', events);
+            // console.log('events', events);
 
             _lobbies = produce(_lobbies, lobbies => {
                 for (const event of events) {
