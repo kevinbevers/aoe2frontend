@@ -38,6 +38,7 @@ importers:
       graphql-request: ^5.0.0
       graphql-ws: ^5.11.2
       humps: ^2.0.1
+      immer: ^9.0.16
       lodash: ^4.17.21
       next: 12.3.1
       nx: 14.8.3
@@ -63,6 +64,7 @@ importers:
       graphql-request: 5.0.0_graphql@16.6.0
       graphql-ws: 5.11.2_graphql@16.6.0
       humps: 2.0.1
+      immer: 9.0.16
       lodash: 4.17.21
       next: 12.3.1_ru2bdujs5wv7zrmz55pdteej2m
       react: 18.2.0
@@ -6403,6 +6405,10 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /immer/9.0.16:
+    resolution: {integrity: sha512-qenGE7CstVm1NrHQbMh8YaSzTZTFNP3zPqr3YU0S0UY441j4bJTg4A2Hh5KAhwgaiU6ZZ1Ar6y/2f4TblnMReQ==}
+    dev: false
 
   /immutable/4.1.0:
     resolution: {integrity: sha512-oNkuqVTA8jqG1Q6c+UglTOD1xhC1BtjKI7XkCXRkZHrN5m18/XsnUp8Q89GkQO/z+0WjonSvl0FLhDYftp46nQ==}

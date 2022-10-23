@@ -13,10 +13,11 @@ import {
     IMatchesMatchPlayer2
 } from "../helper/api.types";
 import {fetchLeaderboards} from "../helper/api";
-import {formatAgo} from "../helper/util";
+import {formatAgo, sleep} from "../helper/util";
 import {ICloseEvent, w3cwebsocket} from "websocket";
 import {camelizeKeys} from "humps";
 import {cloneDeep, flatten} from "lodash";
+import produce from "immer"
 
 
 export function initConnection(onConnected: () => void, onLobbies: (_lobbies: any[]) => void): Promise<void> {
@@ -196,76 +197,51 @@ function processEvent(event: ILobbyEvent) {
 
 
 export function initLobbySubscription(onConnected: () => void, onLobbies: (_lobbies: any[]) => void): Promise<void> {
-    let lobbyDict: { [key: string]: ILobbiesMatch2 } = {};
-    let playerDict: { [key: string]: IMatchesMatchPlayer2 } = {};
-
-    const createArray = () => {
-        const lobbies = Object.values(lobbyDict);
-        const players = Object.values(playerDict);
-
-        const lobbiesWithPlayers = lobbies.map(lobby => {
-            const lobbyPlayers = players.filter(player => player.matchId == lobby.matchId);
-            return {
-                ...lobby,
-                players: lobbyPlayers,
-            };
-        });
-
-        onLobbies(lobbiesWithPlayers);
-    };
+    let _lobbies: any[] = [];
 
     return initConnection(
         () => {
             fetch(`https://aoe2backend-socket.deno.dev/api/lobbies`).then(async (response) => {
-                let matches = await response.json() as ILobbiesMatch[];
-
-                let players = flatten(matches.map(l => l.players));
-
-                // lobbies.forEach(l => l.players = l.players.map(p => p.profileId));
-
-                const lobbies: ILobbiesMatch2[] = matches.map(l => ({
-                    ...l,
-                    players: l.players.map(p => p.profileId),
-                }));
-
-                lobbyDict = Object.assign({}, ...lobbies.map((x) => ({[x.matchId]: x})));
-                playerDict = Object.assign({}, ...players.map((x) => ({[x.profileId]: x})));
-
-                createArray();
+                // await sleep(12 * 1000);
+                // _lobbies = await response.json() as ILobbiesMatch[];
+                // console.log('FIRST LOBBIES', _lobbies);
+                // onLobbies(_lobbies);
             });
         },
-        (changedEntities: IChangedEntity[]) => {
-            console.log('changedEntities', changedEntities);
+        (events: ILobbyEvent[]) => {
+            console.log('events', events);
 
-            const changedLobbies = changedEntities.filter(e => e.type === 'lobby');
-            for (const lobby of changedLobbies) {
-                if (lobby.data == null) {
-                    delete lobbyDict[lobby.id];
-                } else {
-                    const existingLobby = lobbyDict[lobby.id];
-                    if (existingLobby) {
-                        Object.assign(existingLobby, lobby.data);
-                    } else {
-                        lobbyDict[lobby.id] = lobby.data;
+            _lobbies = produce(_lobbies, lobbies => {
+                for (const event of events) {
+                    const lobby = lobbies.find(lobby => lobby.matchId == event.data.matchId);
+                    const lobbyIndex = lobbies.findIndex(lobby => lobby.matchId == event.data.matchId);
+
+                    console.log('lobby', lobby, lobbyIndex);
+
+                    switch (event.type) {
+                        case 'lobbyAdded':
+                            lobbies.push(event.data);
+                            break;
+                        case 'lobbyUpdated':
+                            Object.assign(lobby, event.data);
+                            break;
+                        case 'lobbyRemoved':
+                            lobbies.splice(lobbies.indexOf(lobby), 1);
+                            break;
+                        case 'slotAdded':
+                            lobby.players = lobby.players || [];
+                            lobby.players[event.data.slot] = event.data;
+                            break;
+                        case 'slotUpdated':
+                            Object.assign(lobby.players[event.data.slot], event.data);
+                            break;
+                        case 'slotRemoved':
+                            delete lobby.players[event.data.slot];
+                            break;
                     }
                 }
-            }
-
-            const changedPlayers = changedEntities.filter(e => e.type === 'player');
-            for (const player of changedPlayers) {
-                if (player.data == null) {
-                    delete playerDict[player.id];
-                } else {
-                    const existingLobby = playerDict[player.id];
-                    if (existingLobby) {
-                        Object.assign(existingLobby, player.data);
-                    } else {
-                        playerDict[player.id] = player.data;
-                    }
-                }
-            }
-
-            // createArray();
+            })
+            onLobbies(_lobbies);
         });
 }
 
@@ -273,7 +249,7 @@ export function initLobbySubscription(onConnected: () => void, onLobbies: (_lobb
 
 export default function LobbyPage() {
     const [leaderboard, setLeaderboard] = useState(null);
-    const [search, setSearch] = useState('test');
+    const [search, setSearch] = useState('');
 
     const leaderboards = useQuery(['leaderboards'], () => fetchLeaderboards(), {
         onSuccess: (data) => {
@@ -419,7 +395,7 @@ export function PlayerList({
         <div className="flex flex-col">
 
             <div className="my-4 text-sm text-gray-500">
-                <span>There are {lobbies?.length} open lobbies.</span>
+                <span>There are {lobbies?.length} open lobbies. </span>
                 Click on a row to show player list
             </div>
 
@@ -485,7 +461,7 @@ export function PlayerList({
                                     ~{match.averageRating?.toFixed(0)}
                                 </td>
                                 <td className="py-4 px-6">
-                                    {match.server} {match.players.length}
+                                    {match.server}
                                 </td>
                                 <td className="py-4 px-6">
                                     {match.blockedSlotCount} / {match.totalSlotCount}
