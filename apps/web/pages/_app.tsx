@@ -43,7 +43,7 @@ function CustomApp({Component, pageProps}: AppProps) {
                         </div>
                         <div className="">
                             <Link href='/lobby' as={`/lobby`}>
-                                <a className="cursor-pointer hover:underline">Lobbies</a>
+                                <a className="cursor-pointer hover:underline">Lobbies2</a>
                             </Link>
                         </div>
                         <div className="">
