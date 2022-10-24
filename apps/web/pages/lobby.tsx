@@ -359,9 +359,14 @@ export function Player({player}: Props) {
                 }
             </div>
 
-            <div className="flex flex-row items-center justify-center w-5 h-5 border border-black text-black"
-                 style={{backgroundColor: player.colorHex}}>
-                {player.color}
+            <div className="flex flex-row w-5 h-5">
+                {
+                    player.name != 'Open' && player.name != 'Closed' &&
+                    <div className="flex flex-row items-center justify-center w-5 h-5 border border-black text-black"
+                         style={{backgroundColor: player.colorHex}}>
+                        {player.color || '?'}
+                    </div>
+                }
             </div>
             <div className="w-9">{player.rating}</div>
             <Link href='/profile/[profileId]' as={`/profile/${player.profileId}`}>
@@ -380,7 +385,16 @@ export function Player({player}: Props) {
                     }
                 </div>
             </Link>
+            {
+                player.team &&
+                <div className="flex flex-row items-center justify-center w-5 h-5 border border-black text-black">
+                    {getTeamStr(player.team)}
+                </div>
+            }
         </div>
     )
 }
 
+function getTeamStr(team: number) {
+    return ['', '-', '1', '2', '3', '4', '?'][team];
+}
