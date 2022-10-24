@@ -27,7 +27,7 @@ const apiKey = process.env.NEXT_PUBLIC_API_KEY;
 
 const dateFormat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;
 
-function reviver(key, value) {
+export function dateReviver(key, value) {
     // console.log(key, value);
     if (typeof value === "string" && dateFormat.test(value)) {
         // console.log("DATE", value);
@@ -53,7 +53,7 @@ export async function fetchJson(title: string, input: RequestInfo, init?: Reques
         // timeout: 60 * 1000,
     });
     const text = await response.text();
-    return JSON.parse(text, reviver);
+    return JSON.parse(text, dateReviver);
   } catch (e) {
     console.log(input, 'failed', response?.status);
   }

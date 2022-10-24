@@ -7,7 +7,7 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faChevronDown, faChevronRight, faCrown, faSkull} from "@fortawesome/free-solid-svg-icons";
 import {ILeaderboardDef, ILobbiesMatch, IMatchesMatch, IMatchesMatchPlayer} from "../helper/api.types";
 import {fetchLeaderboards} from "../helper/api";
-import {formatAgo} from "../helper/util";
+import {dateReviver, formatAgo} from "../helper/util";
 import {gql} from "graphql-request";
 import { GRAPHQL_TRANSPORT_WS_PROTOCOL } from 'graphql-ws';
 import {GraphQLWebSocketClientCustom} from "../other/graphql-ws";
@@ -35,7 +35,7 @@ function initConnection(handler: IConnectionHandler): Promise<void> {
         };
 
         client.onmessage = (messageEvent) => {
-            const message = JSON.parse(messageEvent.data as string);
+            const message = JSON.parse(messageEvent.data as string, dateReviver);
             if (message.type != 'pong') {
                 handler.onMatches?.(message);
             }
@@ -155,9 +155,9 @@ export function getSpeedFactor(speed: AoeSpeed) {
 
 const formatDuration = (durationInSeconds: number) => {
     if (!durationInSeconds) return '00:00'; // divide by 0 protection
-    const minutes = Math.abs(Math.floor(durationInSeconds / 60) % 60).toString();
-    const hours = Math.abs(Math.floor(durationInSeconds / 60 / 60)).toString();
-    return `${hours.length < 2 ? hours : hours}:${minutes.length < 2 ? 0 + minutes : minutes} h`;
+    const minutes = Math.abs(Math.floor(durationInSeconds / 60) % 60);
+    const hours = Math.abs(Math.floor(durationInSeconds / 60 / 60));
+    return `${hours == 0 ? '' : hours + ' h '}${minutes} min`;
 };
 
 function formatMatchDuration(match: IMatchesMatch) {
@@ -167,7 +167,8 @@ function formatMatchDuration(match: IMatchesMatch) {
     }
     if (match.started) {
         const finished = match.finished || new Date();
-        // console.log(finished, match.started)
+        console.log(finished, match.started)
+        console.log(differenceInSeconds(finished, match.started), getSpeedFactor(match.speed as AoeSpeed))
         duration = formatDuration(differenceInSeconds(finished, match.started) * getSpeedFactor(match.speed as AoeSpeed));
     }
     return duration;
