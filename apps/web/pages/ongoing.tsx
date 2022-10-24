@@ -307,8 +307,7 @@ export function PlayerList({search}: { search: string }) {
                                     {match.server}
                                 </td>
                                 <td className="py-4 px-6">
-                                    <button disabled={match.blockedSlotCount >= match.totalSlotCount}
-                                            className="bg-blue-500 hover:bg-blue-700 disabled:bg-gray-300 text-white font-bold py-2 px-4 rounded"
+                                    <button className="bg-blue-500 hover:bg-blue-700 disabled:bg-gray-300 text-white font-bold py-2 px-4 rounded"
                                             onClick={(e) => handleSpectate(e, match.matchId)}
                                     >Spectate</button>
                                 </td>
