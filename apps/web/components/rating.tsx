@@ -119,45 +119,48 @@ export default function Rating({ratingHistories}: IRatingProps) {
 
             {
                 ratingHistories &&
-                <div ref={measureRef}>
-                    <VictoryChart
-                        width={width} height={300}
-                        theme={VictoryTheme.material}
-                        padding={{left: 50, bottom: 30, top: 20, right: 20}}
-                        scale={{x: "time"}}
-                    >
-                        <VictoryAxis crossAxis tickFormat={formatTick}
-                                     tickCount={width ? Math.round(width / 60) : 100}/>
-                        <VictoryAxis dependentAxis crossAxis/>
-                        {
-                            ratingHistories?.map(ratingHistory => (
-                                <VictoryLine
-                                    name={'line-' + ratingHistory.leaderboardId}
-                                    key={'line-' + ratingHistory.leaderboardId}
-                                    data={ratingHistory.ratings}
-                                    x="date"
-                                    y="rating" style={{
-                                    data: {stroke: getLeaderboardColor(ratingHistory.leaderboardId)}
-                                }}
-                                />
-                            ))
-                        }
-                        {
-                            ratingHistories?.map(ratingHistory => (
-                                <VictoryScatter
-                                    name={'scatter-' + ratingHistory.leaderboardId}
-                                    key={'scatter-' + ratingHistory.leaderboardId}
-                                    data={ratingHistory.ratings}
-                                    x="date"
-                                    y="rating"
-                                    size={1.5}
-                                    style={{
-                                        data: {fill: getLeaderboardColor(ratingHistory.leaderboardId)}
+                <div ref={measureRef} style={{height:300}}>
+                    {
+                        width &&
+                        <VictoryChart
+                            width={width} height={300}
+                            theme={VictoryTheme.material}
+                            padding={{left: 50, bottom: 30, top: 20, right: 20}}
+                            scale={{x: "time"}}
+                        >
+                            <VictoryAxis crossAxis tickFormat={formatTick}
+                                         tickCount={width ? Math.round(width / 60) : 100}/>
+                            <VictoryAxis dependentAxis crossAxis/>
+                            {
+                                ratingHistories?.map(ratingHistory => (
+                                    <VictoryLine
+                                        name={'line-' + ratingHistory.leaderboardId}
+                                        key={'line-' + ratingHistory.leaderboardId}
+                                        data={ratingHistory.ratings}
+                                        x="date"
+                                        y="rating" style={{
+                                        data: {stroke: getLeaderboardColor(ratingHistory.leaderboardId)}
                                     }}
-                                />
-                            ))
-                        }
-                    </VictoryChart>
+                                    />
+                                ))
+                            }
+                            {
+                                ratingHistories?.map(ratingHistory => (
+                                    <VictoryScatter
+                                        name={'scatter-' + ratingHistory.leaderboardId}
+                                        key={'scatter-' + ratingHistory.leaderboardId}
+                                        data={ratingHistory.ratings}
+                                        x="date"
+                                        y="rating"
+                                        size={1.5}
+                                        style={{
+                                            data: {fill: getLeaderboardColor(ratingHistory.leaderboardId)}
+                                        }}
+                                    />
+                                ))
+                            }
+                        </VictoryChart>
+                    }
                 </div>
             }
 
