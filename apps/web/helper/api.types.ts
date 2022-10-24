@@ -2,7 +2,7 @@
 
 export interface ILeaderboardDef {
     leaderboardId: number;
-    name: string;
+    leaderboardName: string;
     abbreviation: string;
 }
 
@@ -164,6 +164,35 @@ export interface IMatchesMatchPlayer2 {
 
 
 
+export interface IProfileLeaderboardResult {
+    leaderboardId: any
+    leaderboardName: string
+    abbreviation: string
+    profileId?: number
+    name?: string
+    rank?: number
+    rating?: number
+    lastMatchTime?: string
+    drops?: number
+    losses?: number
+    streak?: number
+    wins?: number
+    updatedAt?: string
+    rankCountry?: number
+}
+
+export interface IProfileResult {
+    profileId: number;
+    name: string;
+    games: number;
+    country: string;
+    leaderboards: IProfileLeaderboardResult[];
+    ratings: IProfileRatingsLeaderboard[];
+}
+
+
+
+
 
 
 
@@ -266,6 +295,16 @@ export interface IFetchMatchesParams {
 
 
 export interface IFetchProfileParams {
+    page?: number;
+    search?: string;
+    steamId?: string;
+    profileId?: number;
+    country?: string;
+
+    pageParam?: string;
+}
+
+export interface IFetchProfileRatingParams {
     page?: number;
     search?: string;
     steamId?: string;
@@ -389,3 +428,31 @@ export interface IMatch extends IMatchRaw {
   finished?: Date;
   checked?: Date;
 }
+
+
+
+
+
+
+
+
+export type IProfileRatingsResult = IProfileRatingsLeaderboard[]
+
+export interface IProfileRatingsLeaderboard {
+    leaderboardId: string
+    leaderboardName: string
+    abbreviation: string
+    ratings: IProfileRatingsRating[]
+}
+
+export interface IProfileRatingsRating {
+    leaderboardId: number
+    profileId: number
+    games: number
+    rating: number
+    ratingDiff?: number
+    date: string
+}
+
+
+

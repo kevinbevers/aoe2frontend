@@ -1,4 +1,5 @@
-import {formatDistanceToNowStrict} from "date-fns";
+import {format, formatDistanceToNowStrict, fromUnixTime, parseISO} from "date-fns";
+import enUS from 'date-fns/locale/en-US';
 
 export function sleep(ms: number) {
     return new Promise((resolve) => {
@@ -30,7 +31,8 @@ function reviver(key, value) {
     // console.log(key, value);
     if (typeof value === "string" && dateFormat.test(value)) {
         // console.log("DATE", value);
-        return new Date(value);
+        // return new Date(value);
+        return parseISO(value);
     }
     return value;
 }
@@ -45,9 +47,9 @@ export async function fetchJson(title: string, input: RequestInfo, init?: Reques
   try {
     response = await fetch(input, {
         ...init,
-        headers: {
-            apikey: apiKey,
-        },
+        // headers: {
+        //     apikey: apiKey,
+        // },
         // timeout: 60 * 1000,
     });
     const text = await response.text();
@@ -58,6 +60,35 @@ export async function fetchJson(title: string, input: RequestInfo, init?: Reques
 }
 
 export function formatAgo(date: Date) {
-    return formatDistanceToNowStrict(date, {addSuffix: true});
-    // return formatDistanceToNowStrict(date, {locale: getLocale(), addSuffix: true});
+    // return formatDistanceToNowStrict(date, {addSuffix: true});
+    return formatDistanceToNowStrict(date, {locale: enUS, addSuffix: true});
 }
+
+export function parseUnixTimestamp(timestamp: number) {
+    return fromUnixTime(timestamp);
+}
+
+export function formatYear(date: Date) {
+    return format(date, 'yyyy', {locale: enUS});
+}
+
+export function formatMonth(date: Date) {
+    return format(date, 'MMM', {locale: enUS});
+}
+
+export function formatDateShort(date: Date) {
+    return format(date, 'MMM d', {locale: enUS});
+}
+
+export function formatDayAndTime(date: Date) {
+    return format(date, 'MMM d HH:mm', {locale: enUS});
+}
+
+export function formatTime(date: Date) {
+    return format(date, 'HH:mm', {locale: enUS});
+}
+
+export function formatDate(date: Date) {
+    return format(date, 'dd MM yyyy', {locale: enUS});
+}
+

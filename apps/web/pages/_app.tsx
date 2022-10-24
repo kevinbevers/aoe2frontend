@@ -81,7 +81,7 @@ function CustomApp({Component, pageProps}: AppProps) {
 
                     <div className="flex-1"></div>
 
-                    <p className="pt-4 text-xs md:text-sm text-center max-w-4xl mx-auto px-4 md:px-8">
+                    <p className="pt-8 pb-4 text-xs md:text-sm text-center max-w-4xl mx-auto px-4 md:px-8">
                         Age of Empires II©
                         Microsoft Corporation. aoe2companion.com was created under Microsoft's "
                         <a className="text-gray-500"

@@ -59,7 +59,8 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "regenerator-runtime": "0.13.7",
+    "websocket": "^1.0.34",
     "tslib": "^2.3.0",
-    "websocket": "^1.0.34"
+    "victory": "^35.0.8"
   }
 }

@@ -3,13 +3,15 @@ import {useInfiniteQuery, useQuery} from "@tanstack/react-query";
 import {flatten} from "next/dist/shared/lib/flatten";
 import Link from "next/link";
 import {useRouter} from "next/router";
-import {fetchLeaderboards, fetchMatches, fetchProfile} from "../../helper/api";
-import {ILeaderboardDef, IMatchesMatch, IMatchesMatchPlayer} from "../../helper/api.types";
+import {fetchLeaderboards, fetchMatches, fetchProfile, fetchProfileRatings} from "../../helper/api";
+import {ILeaderboardDef, IMatchesMatch, IMatchesMatchPlayer, IProfileLeaderboardResult} from "../../helper/api.types";
 import useDebounce from "../../hooks/use-debounce";
 import {formatAgo} from "../../helper/util";
 import {differenceInSeconds} from "date-fns";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faCrown, faSkull} from "@fortawesome/free-solid-svg-icons";
+import {faChartLine, faCrown, faSkull, faStairs} from "@fortawesome/free-solid-svg-icons";
+import Rating from "../../components/rating";
+import Tabs from "../../components/tabs";
 
 
 export default function ProfilePage() {
@@ -24,31 +26,127 @@ export default function ProfilePage() {
         },
     });
 
+    // const ratings = useQuery(['ratings', profileId], (context) => {
+    //     return fetchProfileRatings({
+    //         ...context,
+    //         profileId: context.queryKey[1] as number,
+    //     });
+    // }, {enabled: !!profileId});
+
+    // const leaderboardRows = useQuery(['leaderboardRows', profileId], (context) => {
+    //     return fetchProfileRatings({
+    //         ...context,
+    //         profileId: context.queryKey[1] as number,
+    //     });
+    // }, {
+    //     enabled: !!profileId,
+    // });
+
     // const profile = useQuery(['profile', profileId], () => fetchProfile());
 
     const profile = useQuery(
         ['profile', profileId],
         (context) => {
-        return fetchProfile({
-            ...context,
-            profileId: profileId,
-        });
-    });
+            return fetchProfile({
+                ...context,
+                profileId: profileId,
+            });
+        }, {enabled: !!profileId});
 
 
-    // console.log('data', data);
+    // console.log('profile?.data', profile?.data);
+
+    if (!(leaderboard && profileId && profile?.data)) {
+        return <div></div>;
+    }
 
     return (
         <div className="flex flex-col">
 
             <div className="flex flex-col ml-6 space-y-1">
                 <div className="text-lg">
-                    {profile?.data?.profiles[0].name}
+                    {profile?.data?.name}
                 </div>
                 <div className="text-md">
-                    {profile?.data?.profiles[0].games} games
+                    {profile?.data?.games} games
                 </div>
             </div>
+
+            <br/>
+
+            <div className="flex flex-col w-full lg:flex-row gap-4 lg:gap-8 text-black mb-4 md:mb-6">
+
+                {
+                    profile?.data?.leaderboards.filter(l => l.rank).map((leaderboardDef: IProfileLeaderboardResult) => (
+
+                        <div key={leaderboardDef.leaderboardId}
+                             className="flex-auto bg-white overflow-visible border border-black/10 rounded-2xl px-4 py-4 flex flex-wrap gap-6 justify-center group only:items-center only:justify-start only:px-8">
+                            <div
+                                className="text-black/50 uppercase font-bold flex-none w-full sm:w-auto lg:w-full text-center group-only:w-auto">
+                                {leaderboardDef.leaderboardName}
+                            </div>
+                            {
+                                leaderboardDef.rank &&
+                                <>
+                                    <div
+                                        className="flex-auto basis-auto flex gap-4 justify-center lg:basis-full text-center group-only:basis-1/12">
+                                        <div className="flex-none">
+                                            <div
+                                                className="text-black/50 uppercase text-xs font-bold tracking-widest mb-1">Rank
+                                            </div>
+                                            <div className="inline-flex inline-flex items-center">
+                                                <div className="text-xl lg:text-4xl"><span
+                                                    className="mr-1">#</span><span>{leaderboardDef.rank}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex-auto justify-evenly flex flex-wrap gap-y-6 gap-x-4">
+                                        <div className="flex-none text-center"><h5
+                                            className="text-black/50 uppercase text-xs font-bold tracking-widest mb-1">Rating</h5>
+                                            <div className="text-xl lg:text-2xl">{leaderboardDef.rating}</div>
+                                        </div>
+                                        <div className="flex-none text-center"><h5
+                                            className="text-black/50 uppercase text-xs font-bold tracking-widest mb-1">Win
+                                            Rate</h5>
+                                            <div className="text-xl lg:text-2xl">{(leaderboardDef.wins/(leaderboardDef.wins+leaderboardDef.losses)*100).toFixed(0)} %</div>
+                                        </div>
+                                        <div className="flex-none text-center"><h5
+                                            className="text-black/50 uppercase text-xs font-bold tracking-widest mb-1">Games</h5>
+                                            <div className="text-xl lg:text-2xl">{leaderboardDef.wins + leaderboardDef.losses}</div>
+                                        </div>
+                                    </div>
+                                </>
+                            }
+                        </div>
+                    ))
+                }
+
+            </div>
+
+
+            <div className="overflow-hidden bg-white sm:rounded-lg sm:shadow">
+
+                <div className="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
+                    <h3 className="flex flex-row space-x-4 text-lg font-medium leading-6 text-gray-900">
+                        <FontAwesomeIcon icon={faChartLine} className="w-4"/>
+                        <span>Rating History</span>
+                    </h3>
+                </div>
+
+                <div role="list" className="px-6 py-7">
+
+                    {
+                        profile?.data?.ratings &&
+                        <Rating ratingHistories={profile?.data?.ratings}/>
+                    }
+
+                </div>
+            </div>
+
+
+            <br/>
+
 
             <div className="flex flex-row items-center pb-4">
                 {/*<div className="">*/}
@@ -75,23 +173,33 @@ export default function ProfilePage() {
 
                 <div className="flex-1"></div>
 
-                <div className="flex flex-row space-x-6">
-                    {
-                        leaderboards?.data?.map((leaderboardDef: ILeaderboardDef) => (
-                            <div key={leaderboardDef.leaderboardId}
-                                 className={`flex flex-col  cursor-pointer hover:underline
-                                            ${leaderboardDef.leaderboardId === leaderboard?.leaderboardId ? 'font-bold' : ''}
-                                 `}
-                                 onClick={() => setLeaderboard(leaderboardDef)}>
-                                {leaderboardDef.abbreviation}
-                            </div>
-                        ))
-                    }
-                </div>
+                {
+                    leaderboards?.data && leaderboard &&
+                    <Tabs tabs={leaderboards?.data?.map((leaderboardDef: ILeaderboardDef) => ({
+                        name: leaderboardDef.abbreviation,
+                        current: leaderboardDef.leaderboardId === leaderboard?.leaderboardId,
+                        onClick: () => setLeaderboard(leaderboardDef),
+                    }))}/>
+                }
+
+
+                {/*<div className="flex flex-row space-x-6">*/}
+                {/*    {*/}
+                {/*        leaderboards?.data?.map((leaderboardDef: ILeaderboardDef) => (*/}
+                {/*            <div key={leaderboardDef.leaderboardId}*/}
+                {/*                 className={`flex flex-col  cursor-pointer hover:underline*/}
+                {/*                            ${leaderboardDef.leaderboardId === leaderboard?.leaderboardId ? 'font-bold' : ''}*/}
+                {/*                 `}*/}
+                {/*                 onClick={() => setLeaderboard(leaderboardDef)}>*/}
+                {/*                {leaderboardDef.abbreviation}*/}
+                {/*            </div>*/}
+                {/*        ))*/}
+                {/*    }*/}
+                {/*</div>*/}
             </div>
 
             {
-                leaderboard && profileId && (
+                leaderboard && profileId && profile?.data && (
                     <PlayerList leaderboard={leaderboard} search={search} profileId={profileId}/>
                 )
             }
@@ -165,89 +273,91 @@ export function PlayerList({
     console.log('data', data);
 
     return (
-        <div className="flex flex-col">
+        <div className="overflow-hidden bg-white sm:rounded-lg sm:shadow">
+            <div className="flex flex-col">
 
-            <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr>
-                    <th scope="col" className="py-3 px-6">
-                        Map / Mode / Duration
-                    </th>
-                    <th scope="col" className="py-3 px-6">
-                        Players
-                    </th>
-                </tr>
-                </thead>
-                <tbody>
-                {
-                    flatten(data?.pages?.map(p => p.matches) || []).map((match, index) =>
-                        <tr key={match.matchId} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                            <td className="py-4 px-6">
+                <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                        <th scope="col" className="py-3 px-6">
+                            Map / Mode / Duration
+                        </th>
+                        <th scope="col" className="py-3 px-6">
+                            Players
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {
+                        flatten(data?.pages?.map(p => p.matches) || []).map((match, index) =>
+                            <tr key={match.matchId} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                <td className="py-4 px-6">
 
-                                <div className="flex flex-row space-x-4 items-center w-[200px]">
-                                    <img src={match.mapImageUrl} className="w-16 h-16"/>
+                                    <div className="flex flex-row space-x-4 items-center w-[200px]">
+                                        <img src={match.mapImageUrl} className="w-16 h-16"/>
 
-                                    <div className="flex flex-col">
-                                        <div className="text-sm text-gray-400">
-                                            {match.matchId}
-                                        </div>
-                                        <div className="font-bold">
-                                            {match.mapName}
-                                        </div>
-                                        <div>{match.leaderboardName}</div>
-                                        <div>{formatMatchDuration(match)}</div>
-                                    </div>
-                                </div>
-
-                            </td>
-                            <td className="py-4 px-6">
-
-                                {/*<div>{match.teams.length} TEAMS</div>*/}
-
-                                <div className="flex flex-row space-x-4">
-                                {
-                                    match.teams.map((teamPlayers, index) => (
-                                        <div key={index} className="flex flex-row items-center space-x-3">
-                                            <div key={index} className="flex flex-col space-y-3">
-                                                {
-                                                    teamPlayers.map((player) => (
-                                                        <Player key={player.profileId} player={player}/>
-                                                    ))
-                                                }
+                                        <div className="flex flex-col">
+                                            <div className="text-sm text-gray-400">
+                                                {match.matchId}
                                             </div>
-                                            {
-                                                index < match.teams.length - 1 &&
-                                                <div className="">
-                                                    <div className="">VS</div>
-                                                </div>
-                                            }
+                                            <div className="font-bold">
+                                                {match.mapName}
+                                            </div>
+                                            <div>{match.leaderboardName}</div>
+                                            <div>{formatMatchDuration(match)}</div>
                                         </div>
-                                    ))
-                                }
-                                </div>
+                                    </div>
 
-                            </td>
-                        </tr>
-                    )
-                }
-                </tbody>
-            </table>
+                                </td>
+                                <td className="py-4 px-6">
 
-            <div className="flex flex-row justify-center p-4">
-                <button
-                    className="btn btn-primary"
-                    onClick={() => fetchNextPage()}
-                    disabled={!hasNextPage || isFetchingNextPage}
-                >
-                    {isFetchingNextPage
-                        ? 'Loading more...'
-                        : hasNextPage
-                            ? 'Load More'
-                            : 'Nothing more to load'}
-                </button>
-                <div>{isFetching && !isFetchingNextPage ? 'Fetching...' : null}</div>
+                                    {/*<div>{match.teams.length} TEAMS</div>*/}
+
+                                    <div className="flex flex-row space-x-4">
+                                        {
+                                            match.teams.map((teamPlayers, index) => (
+                                                <div key={index} className="flex flex-row items-center space-x-3">
+                                                    <div key={index} className="flex flex-col space-y-3">
+                                                        {
+                                                            teamPlayers.map((player) => (
+                                                                <Player key={player.profileId} player={player}/>
+                                                            ))
+                                                        }
+                                                    </div>
+                                                    {
+                                                        index < match.teams.length - 1 &&
+                                                        <div className="">
+                                                            <div className="">VS</div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            ))
+                                        }
+                                    </div>
+
+                                </td>
+                            </tr>
+                        )
+                    }
+                    </tbody>
+                </table>
+
+                <div className="flex flex-row justify-center p-4">
+                    <button
+                        className="btn btn-primary"
+                        onClick={() => fetchNextPage()}
+                        disabled={!hasNextPage || isFetchingNextPage}
+                    >
+                        {isFetchingNextPage
+                            ? 'Loading more...'
+                            : hasNextPage
+                                ? 'Load More'
+                                : 'Nothing more to load'}
+                    </button>
+                    <div>{isFetching && !isFetchingNextPage ? 'Fetching...' : null}</div>
+                </div>
+
             </div>
-
         </div>
     );
 }
@@ -257,21 +367,22 @@ interface Props {
     player: IMatchesMatchPlayer;
 }
 
-export function Player({ player }: Props) {
+export function Player({player}: Props) {
     return (
         <div className="flex flex-row space-x-2 items-center">
             <div className="w-[16px]">
                 {
                     player.won === true && player.team != -1 &&
-                    <FontAwesomeIcon icon={faCrown} className="w-[16px]" color="goldenrod" />
+                    <FontAwesomeIcon icon={faCrown} className="w-[16px]" color="goldenrod"/>
                 }
                 {
                     player.won === false && player.team != -1 &&
-                    <FontAwesomeIcon icon={faSkull} className="w-[16px]" color="grey" />
+                    <FontAwesomeIcon icon={faSkull} className="w-[16px]" color="grey"/>
                 }
             </div>
 
-            <div className="flex flex-row items-center justify-center w-5 h-5 border border-black text-black" style={{ backgroundColor: player.colorHex }}>
+            <div className="flex flex-row items-center justify-center w-5 h-5 border border-black text-black"
+                 style={{backgroundColor: player.colorHex}}>
                 {player.color}
             </div>
             <div className="w-9">{player.rating}</div>
