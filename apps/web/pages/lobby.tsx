@@ -386,7 +386,7 @@ export function Player({player}: Props) {
                 </div>
             </Link>
             {
-                player.team &&
+                player.name != 'Open' && player.name != 'Closed' && player.team &&
                 <div className="flex flex-row items-center justify-center w-5 h-5 border border-black text-black">
                     {getTeamStr(player.team)}
                 </div>
