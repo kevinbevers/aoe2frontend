@@ -451,7 +451,7 @@ export interface IProfileRatingsRating {
     games: number
     rating: number
     ratingDiff?: number
-    date: string
+    date: Date
 }
 
 
