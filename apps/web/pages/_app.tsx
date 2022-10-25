@@ -69,33 +69,33 @@ function CustomApp({Component, pageProps}: AppProps) {
 
                                     <GlobalSearch></GlobalSearch>
 
-                                    {/*<div className="">*/}
-                                    {/*    <Link href='/leaderboard' as={`/leaderboard`}>*/}
-                                    {/*        <a className="cursor-pointer hover:underline">Leaderboard</a>*/}
-                                    {/*    </Link>*/}
-                                    {/*</div>*/}
-                                    {/*<div className="">*/}
-                                    {/*    <Link href='/lobby' as={`/lobby`}>*/}
-                                    {/*        <a className="cursor-pointer hover:underline">Lobbies</a>*/}
-                                    {/*    </Link>*/}
-                                    {/*</div>*/}
-                                    {/*<div className="">*/}
-                                    {/*    <Link href='/ongoing' as={`/ongoing`}>*/}
-                                    {/*        <a className="cursor-pointer hover:underline">Ongoing Matches</a>*/}
-                                    {/*    </Link>*/}
-                                    {/*</div>*/}
+                                    <div className="">
+                                        <Link href='/leaderboard' as={`/leaderboard`}>
+                                            <a className="cursor-pointer hover:underline">Leaderboard</a>
+                                        </Link>
+                                    </div>
+                                    <div className="">
+                                        <Link href='/lobby' as={`/lobby`}>
+                                            <a className="cursor-pointer hover:underline">Lobbies</a>
+                                        </Link>
+                                    </div>
+                                    <div className="">
+                                        <Link href='/ongoing' as={`/ongoing`}>
+                                            <a className="cursor-pointer hover:underline">Ongoing Matches</a>
+                                        </Link>
+                                    </div>
 
-                                    {/*<div className="">*/}
-                                    {/*    <Link href='/' as={`/`}>*/}
-                                    {/*        <a className="cursor-pointer hover:underline">App</a>*/}
-                                    {/*    </Link>*/}
-                                    {/*</div>*/}
+                                    <div className="">
+                                        <Link href='/' as={`/`}>
+                                            <a className="cursor-pointer hover:underline">App</a>
+                                        </Link>
+                                    </div>
 
-                                    {/*<div className="">*/}
-                                    {/*    <Link href='/api-nightbot' as={`/api-nightbot`}>*/}
-                                    {/*        <a className="cursor-pointer hover:underline">Api / Nightbot</a>*/}
-                                    {/*    </Link>*/}
-                                    {/*</div>*/}
+                                    <div className="">
+                                        <Link href='/api-nightbot' as={`/api-nightbot`}>
+                                            <a className="cursor-pointer hover:underline">Api / Nightbot</a>
+                                        </Link>
+                                    </div>
 
 
                                 </div>

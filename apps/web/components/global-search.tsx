@@ -53,6 +53,7 @@ export default function GlobalSearch() {
     const navigateToProfile = (profile) => {
         console.log('navigateToProfile', profile);
         router.push(`/profile/${profile.profileId}`);
+        document.activeElement.blur();
     };
 
     console.log(profiles?.data?.profiles);
@@ -68,7 +69,7 @@ export default function GlobalSearch() {
 
     return (
         <Combobox as="div" value={selectedPerson} onChange={navigateToProfile}>
-            <div className="relative mt-1 w-80">
+            <div className="relative mt-1 w-60">
                 <Combobox.Button
                     className="absolute pointer-events-none inset-y-0 left-1 flex items-center rounded-r-md px-2 focus:outline-none">
                     <FontAwesomeIcon className="w-3.5 text-gray-400" icon={faSearch}/>
@@ -89,8 +90,8 @@ export default function GlobalSearch() {
                                 value={person}
                                 className={({active}) =>
                                     classNames(
-                                        'relative cursor-pointer select-none py-2 pl-3 pr-9',
-                                        active ? 'bg-indigo-600 text-white' : 'text-gray-900'
+                                        'relative cursor-pointer select-none py-2 pl-3 pr-9 text-gray-900',
+                                        active ? 'bg-gray-100' : ''
                                     )
                                 }
                             >
@@ -103,8 +104,7 @@ export default function GlobalSearch() {
                                                 {person.verified &&
                                                     <FontAwesomeIcon
                                                         className={classNames(
-                                                            'w-3.5 ml-1 ',
-                                                            active ? 'text-white' : 'text-[#397AF9] '
+                                                            'w-3.5 ml-1 text-[#397AF9]',
                                                         )}
                                                         icon={faCheckCircle}/>
                                                 }
@@ -112,7 +112,6 @@ export default function GlobalSearch() {
                                             <span
                                                 className={classNames(
                                                     'truncate text-gray-500',
-                                                    active ? 'text-indigo-200' : 'text-gray-500'
                                                 )}
                                             >
                                             {person.games} games
