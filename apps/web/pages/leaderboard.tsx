@@ -93,7 +93,7 @@ export function PlayerList({leaderboard, search}: { leaderboard: ILeaderboardDef
         isFetchingNextPage,
         status,
     } = useInfiniteQuery(
-        ['leaderboard-players', debouncedSearch, leaderboard.leaderboardId],
+        ['leaderboard-players', search, leaderboard.leaderboardId],
         (context) => {
             return fetchLeaderboard({
                 ...context,
