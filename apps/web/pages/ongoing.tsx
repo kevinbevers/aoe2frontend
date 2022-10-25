@@ -27,6 +27,7 @@ interface IConnectionHandler {
 function initConnection(handler: IConnectionHandler): Promise<void> {
     return new Promise(resolve => {
         const client = new w3cwebsocket(`wss://aoe2backend-socket.deno.dev/listen/ongoing-matches`);
+        // const client = new w3cwebsocket(`ws://localhost:8000/listen/ongoing-matches`);
 
         client.onopen = () => {
             console.log('WebSocket client connected');
@@ -167,8 +168,6 @@ function formatMatchDuration(match: IMatchesMatch) {
     }
     if (match.started) {
         const finished = match.finished || new Date();
-        console.log(finished, match.started)
-        console.log(differenceInSeconds(finished, match.started), getSpeedFactor(match.speed as AoeSpeed))
         duration = formatDuration(differenceInSeconds(finished, match.started) * getSpeedFactor(match.speed as AoeSpeed));
     }
     return duration;
@@ -196,13 +195,34 @@ export function PlayerList({search}: { search: string }) {
                 setConnected(false);
             },
             onMatches: (_lobbies: any[]) => {
+                console.log('pause');
                 setMatches(_lobbies);
             }
         });
     };
 
     useEffect(() => {
+        console.log('WebClient connecting...')
         connect();
+
+        // fetch(`http://localhost:8000/api/ongoing-matches`).then(async (response) => {
+        // // fetch(`http://aoe2backend-socket.deno.dev/api/ongoing-matches`).then(async (response) => {
+        //     // const lobbies = camelizeKeys(await response.json());
+        //     // setLobbies(lobbies);
+        //     console.log('done');
+        // });
+        // fetch(`https://legacy.aoe2companion.com/kv/get?key=lobbies`).then(async (response) => {
+        // // fetch(`http://aoe2backend-socket.deno.dev/api/ongoing-matches`).then(async (response) => {
+        //     // const lobbies = camelizeKeys(await response.json());
+        //     // setLobbies(lobbies);
+        //     console.log('done2');
+        // });
+        // fetch(`https://legacy.aoe2companion.com/kv/get?key=lobbies-small`).then(async (response) => {
+        // // fetch(`http://aoe2backend-socket.deno.dev/api/ongoing-matches`).then(async (response) => {
+        //     // const lobbies = camelizeKeys(await response.json());
+        //     // setLobbies(lobbies);
+        //     console.log('done2');
+        // });
     }, []);
 
     useEffect(() => {

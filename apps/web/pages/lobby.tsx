@@ -15,6 +15,7 @@ interface IConnectionHandler {
 function initConnection(handler: IConnectionHandler): Promise<void> {
     return new Promise(resolve => {
         const client = new w3cwebsocket(`wss://aoe2backend-socket.deno.dev/listen/lobbies`);
+        // const client = new w3cwebsocket(`ws://localhost:8000/listen/lobbies`);
 
         client.onopen = () => {
             console.log('WebSocket client connected');
