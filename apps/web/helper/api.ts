@@ -49,7 +49,7 @@ export async function fetchProfiles(params: IFetchProfileParams) {
         page: params.pageParam || 1,
     }));
     const url = `${baseUrl}/api/profiles?${queryString}`;
-    return camelizeKeys(await fetchJson('fetchProfile', url)) as IProfileResult;
+    return camelizeKeys(await fetchJson('fetchProfile', url)) as IProfilesResult;
 }
 
 // export async function fetchProfile(params: IFetchProfileParams) {

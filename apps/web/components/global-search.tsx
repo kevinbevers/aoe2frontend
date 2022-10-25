@@ -37,14 +37,14 @@ export default function GlobalSearch() {
 
     const profiles = useQuery(
         ['profiles', query],
-        (context: any) => {
+        async (context: any) => {
             if (query?.length > 2) {
-                return fetchProfiles({
+                return await fetchProfiles({
                     ...context,
                     search: query,
                 });
             }
-            return [];
+            return { profiles: [] };
         }, {
             // enabled: query?.length > 2,
             keepPreviousData: true,
@@ -53,17 +53,10 @@ export default function GlobalSearch() {
     const navigateToProfile = (profile) => {
         console.log('navigateToProfile', profile);
         router.push(`/profile/${profile.profileId}`);
-        document.activeElement.blur();
+        (document.activeElement as any)?.blur();
     };
 
     console.log(profiles?.data?.profiles);
-
-    // const filteredPeople =
-    //     query === ''
-    //         ? people
-    //         : people.filter((person) => {
-    //             return person.name.toLowerCase().includes(query.toLowerCase())
-    //         })
 
     const filteredPeople = profiles?.data?.profiles || [];
 

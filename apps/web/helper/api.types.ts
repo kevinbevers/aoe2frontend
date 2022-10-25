@@ -192,6 +192,19 @@ export interface IProfileResult {
 
 
 
+export interface IProfilesResultProfile {
+    profileId: number;
+    name: string;
+    games: number;
+    country: string;
+}
+
+export interface IProfilesResult {
+    profiles: IProfilesResultProfile[];
+}
+
+
+
 
 
 
