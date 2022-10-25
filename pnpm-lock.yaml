@@ -7,6 +7,8 @@ importers:
       '@fortawesome/fontawesome-svg-core': ^6.2.0
       '@fortawesome/free-solid-svg-icons': ^6.2.0
       '@fortawesome/react-fontawesome': ^0.2.0
+      '@headlessui/react': ^1.7.3
+      '@heroicons/react': ^2.0.12
       '@nrwl/cli': 14.8.3
       '@nrwl/eslint-plugin-nx': 14.8.3
       '@nrwl/linter': 14.8.3
@@ -52,12 +54,14 @@ importers:
       tailwindcss: ^3.1.8
       tslib: ^2.3.0
       typescript: ~4.8.2
-      websocket: ^1.0.34
       victory: ^35.0.8
+      websocket: ^1.0.34
     dependencies:
       '@fortawesome/fontawesome-svg-core': 6.2.0
       '@fortawesome/free-solid-svg-icons': 6.2.0
       '@fortawesome/react-fontawesome': 0.2.0_6j2wdqxompc6mcokhxkpep2gqu
+      '@headlessui/react': 1.7.3_biqbaboplfbrettd7655fr4n2y
+      '@heroicons/react': 2.0.12_react@18.2.0
       '@tanstack/react-query': 4.10.3_biqbaboplfbrettd7655fr4n2y
       core-js: 3.25.5
       date-fns: 2.29.3
@@ -72,8 +76,8 @@ importers:
       react-dom: 18.2.0_react@18.2.0
       regenerator-runtime: 0.13.7
       tslib: 2.4.0
-      websocket: 1.0.34
       victory: 35.11.4_react@18.2.0
+      websocket: 1.0.34
     devDependencies:
       '@nrwl/cli': 14.8.3
       '@nrwl/eslint-plugin-nx': 14.8.3_4gyd3fgxivyopby2ydwcvap4ca
@@ -1512,6 +1516,25 @@ packages:
       graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
     dependencies:
       graphql: 16.6.0
+    dev: false
+
+  /@headlessui/react/1.7.3_biqbaboplfbrettd7655fr4n2y:
+    resolution: {integrity: sha512-LGp06SrGv7BMaIQlTs8s2G06moqkI0cb0b8stgq7KZ3xcHdH3qMP+cRyV7qe5x4XEW/IGY48BW4fLesD6NQLng==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      react: ^16 || ^17 || ^18
+      react-dom: ^16 || ^17 || ^18
+    dependencies:
+      react: 18.2.0
+      react-dom: 18.2.0_react@18.2.0
+    dev: false
+
+  /@heroicons/react/2.0.12_react@18.2.0:
+    resolution: {integrity: sha512-FZxKh3i9aKIDxyALTgIpSF2t6V6/eZfF5mRu41QlwkX3Oxzecdm1u6dpft6PQGxIBwO7TKYWaMAYYL8mp/EaOg==}
+    peerDependencies:
+      react: '>= 16'
+    dependencies:
+      react: 18.2.0
     dev: false
 
   /@humanwhocodes/config-array/0.9.5:

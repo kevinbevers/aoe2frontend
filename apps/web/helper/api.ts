@@ -42,6 +42,16 @@ export async function fetchProfile(params: IFetchProfileParams) {
     return camelizeKeys(await fetchJson('fetchProfile', url)) as IProfileResult;
 }
 
+export async function fetchProfiles(params: IFetchProfileParams) {
+    console.log('fetchProfiles', params);
+    const queryString = makeQueryString(decamelizeKeys({
+        ...removeReactQueryParams(params),
+        page: params.pageParam || 1,
+    }));
+    const url = `${baseUrl}/api/profiles?${queryString}`;
+    return camelizeKeys(await fetchJson('fetchProfile', url)) as IProfileResult;
+}
+
 // export async function fetchProfile(params: IFetchProfileParams) {
 //     console.log('fetchProfile', params);
 //     const queryString = makeQueryString(decamelizeKeys({
