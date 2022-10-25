@@ -39,8 +39,8 @@ function CustomApp({Component, pageProps}: AppProps) {
 
                                 <div className="flex flex-row space-x-14 mt-4 mb-6 items-center">
                                     <div className="text-2xl font-bold">
-                                        <Link href='/' as={`/`}>
-                                            <a className="cursor-pointer">AoE II Companion</a>
+                                        <Link className="cursor-pointer" href='/'  as={`/`}>
+                                            AoE II Companion
                                         </Link>
                                     </div>
 
@@ -70,30 +70,30 @@ function CustomApp({Component, pageProps}: AppProps) {
                                     <GlobalSearch></GlobalSearch>
 
                                     <div className="">
-                                        <Link href='/leaderboard' as={`/leaderboard`}>
-                                            <a className="cursor-pointer hover:underline">Leaderboard</a>
+                                        <Link className="cursor-pointer hover:underline" href='/leaderboard' as={`/leaderboard`}>
+                                            Leaderboard
                                         </Link>
                                     </div>
                                     <div className="">
-                                        <Link href='/lobby' as={`/lobby`}>
-                                            <a className="cursor-pointer hover:underline">Lobbies</a>
+                                        <Link className="cursor-pointer hover:underline" href='/lobby' as={`/lobby`}>
+                                            Lobbies
                                         </Link>
                                     </div>
                                     <div className="">
-                                        <Link href='/ongoing' as={`/ongoing`}>
-                                            <a className="cursor-pointer hover:underline">Ongoing Matches</a>
-                                        </Link>
-                                    </div>
-
-                                    <div className="">
-                                        <Link href='/' as={`/`}>
-                                            <a className="cursor-pointer hover:underline">App</a>
+                                        <Link className="cursor-pointer hover:underline" href='/ongoing' as={`/ongoing`}>
+                                            Ongoing Matches
                                         </Link>
                                     </div>
 
                                     <div className="">
-                                        <Link href='/api-nightbot' as={`/api-nightbot`}>
-                                            <a className="cursor-pointer hover:underline">Api / Nightbot</a>
+                                        <Link className="cursor-pointer hover:underline" href='/' as={`/`}>
+                                            App
+                                        </Link>
+                                    </div>
+
+                                    <div className="">
+                                        <Link className="cursor-pointer hover:underline" href='/api-nightbot' as={`/api-nightbot`}>
+                                            Api / Nightbot
                                         </Link>
                                     </div>
 

@@ -142,10 +142,8 @@ export function PlayerList({leaderboard, search}: { leaderboard: ILeaderboardDef
                             </td>
                             <th scope="row"
                                 className="py-4 px-6 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                <Link href={`/profile/[profileId]`} as={`/profile/${player.profileId}`}>
-                                    <div className="cursor-pointer hover:underline">
-                                        {player.name}
-                                    </div>
+                                <Link className="cursor-pointer hover:underline" href={`/profile/[profileId]`} as={`/profile/${player.profileId}`}>
+                                    {player.name}
                                 </Link>
                             </th>
                             <td className="py-4 px-6">

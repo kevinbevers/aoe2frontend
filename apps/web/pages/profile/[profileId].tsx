@@ -386,16 +386,12 @@ export function Player({player}: Props) {
                 {player.color}
             </div>
             <div className="w-9">{player.rating}</div>
-            <Link href='/profile/[profileId]' as={`/profile/${player.profileId}`}>
-                <div className="w-[150px] truncate cursor-pointer hover:underline">
-                    {player.name}
-                </div>
+            <Link className="w-[150px] truncate cursor-pointer hover:underline" href='/profile/[profileId]' as={`/profile/${player.profileId}`}>
+                {player.name}
             </Link>
-            <Link href='/profile/[profileId]' as={`/profile/${player.profileId}`}>
-                <div className="flex flex-row space-x-1 items-center">
-                    <img src={player.civImageUrl} className="w-[18px]"/>
-                    <div className="w-[100px] truncate">{player.civName}</div>
-                </div>
+            <Link className="flex flex-row space-x-1 items-center" href='/profile/[profileId]' as={`/profile/${player.profileId}`}>
+                <img src={player.civImageUrl} className="w-[18px]"/>
+                <div className="w-[100px] truncate">{player.civName}</div>
             </Link>
         </div>
     )
