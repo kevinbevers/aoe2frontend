@@ -21,9 +21,9 @@ export default function ProfilePage() {
     const [search, setSearch] = useState('');
 
     const leaderboards = useQuery(['leaderboards'], () => fetchLeaderboards(), {
-        onSuccess: (data) => {
-            setLeaderboard(x => x || data[0]);
-        },
+        // onSuccess: (data) => {
+        //     setLeaderboard(x => x || data[0]);
+        // },
     });
 
     // const ratings = useQuery(['ratings', profileId], (context) => {
@@ -56,9 +56,11 @@ export default function ProfilePage() {
 
     // console.log('profile?.data', profile?.data);
 
-    if (!(leaderboard && profileId && profile?.data)) {
+    if (!(leaderboards?.data && profileId && profile?.data)) {
         return <div></div>;
     }
+
+    console.log('leaderboard', leaderboard);
 
     return (
         <div className="flex flex-col">
@@ -109,11 +111,14 @@ export default function ProfilePage() {
                                         <div className="flex-none text-center"><h5
                                             className="text-black/50 uppercase text-xs font-bold tracking-widest mb-1">Win
                                             Rate</h5>
-                                            <div className="text-xl lg:text-2xl">{(leaderboardDef.wins/(leaderboardDef.wins+leaderboardDef.losses)*100).toFixed(0)} %</div>
+                                            <div
+                                                className="text-xl lg:text-2xl">{(leaderboardDef.wins / (leaderboardDef.wins + leaderboardDef.losses) * 100).toFixed(0)} %
+                                            </div>
                                         </div>
                                         <div className="flex-none text-center"><h5
                                             className="text-black/50 uppercase text-xs font-bold tracking-widest mb-1">Games</h5>
-                                            <div className="text-xl lg:text-2xl">{leaderboardDef.wins + leaderboardDef.losses}</div>
+                                            <div
+                                                className="text-xl lg:text-2xl">{leaderboardDef.wins + leaderboardDef.losses}</div>
                                         </div>
                                     </div>
                                 </>
@@ -173,14 +178,20 @@ export default function ProfilePage() {
 
                 <div className="flex-1"></div>
 
-                {
-                    leaderboards?.data && leaderboard &&
-                    <Tabs tabs={leaderboards?.data?.map((leaderboardDef: ILeaderboardDef) => ({
-                        name: leaderboardDef.abbreviation,
-                        current: leaderboardDef.leaderboardId === leaderboard?.leaderboardId,
-                        onClick: () => setLeaderboard(leaderboardDef),
-                    }))}/>
-                }
+                <Tabs tabs={
+                    [
+                        {
+                            name: 'All',
+                            current: leaderboard == null,
+                            onClick: () => setLeaderboard(null),
+                        },
+                        ...leaderboards?.data?.map((leaderboardDef: ILeaderboardDef) => ({
+                            name: leaderboardDef.abbreviation,
+                            current: leaderboardDef.leaderboardId === leaderboard?.leaderboardId,
+                            onClick: () => setLeaderboard(leaderboardDef),
+                        })),
+                    ]
+                }/>
 
 
                 {/*<div className="flex flex-row space-x-6">*/}
@@ -199,7 +210,7 @@ export default function ProfilePage() {
             </div>
 
             {
-                leaderboard && profileId && profile?.data && (
+                profileId && profile?.data && (
                     <PlayerList leaderboard={leaderboard} search={search} profileId={profileId}/>
                 )
             }
@@ -257,7 +268,7 @@ export function PlayerList({
         isFetchingNextPage,
         status,
     } = useInfiniteQuery(
-        ['matches', profileId, debouncedSearch, leaderboard.leaderboardId],
+        ['matches', profileId, debouncedSearch, leaderboard?.leaderboardId],
         (context) => {
             return fetchMatches({
                 ...context,
@@ -273,7 +284,8 @@ export function PlayerList({
     console.log('data', data);
 
     return (
-        <div className="overflow-hidden bg-white sm:rounded-lg sm:shadow">
+        <div
+            className="overflow-hidden bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 sm:rounded-lg sm:shadow">
             <div className="flex flex-col">
 
                 <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -386,10 +398,12 @@ export function Player({player}: Props) {
                 {player.color}
             </div>
             <div className="w-9">{player.rating}</div>
-            <Link className="w-[150px] truncate cursor-pointer hover:underline" href='/profile/[profileId]' as={`/profile/${player.profileId}`}>
+            <Link className="w-[150px] truncate cursor-pointer hover:underline" href='/profile/[profileId]'
+                  as={`/profile/${player.profileId}`}>
                 {player.name}
             </Link>
-            <Link className="flex flex-row space-x-1 items-center" href='/profile/[profileId]' as={`/profile/${player.profileId}`}>
+            <Link className="flex flex-row space-x-1 items-center" href='/profile/[profileId]'
+                  as={`/profile/${player.profileId}`}>
                 <img src={player.civImageUrl} className="w-[18px]"/>
                 <div className="w-[100px] truncate">{player.civName}</div>
             </Link>

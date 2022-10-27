@@ -53,7 +53,8 @@ export default function Index() {
                 {/*    </div>*/}
                 {/*</div>*/}
 
-                <LocalSearch className="w-80" placeholder="Search for player" query={search} setQuery={setSearch}></LocalSearch>
+                <LocalSearch className="w-80" placeholder="Search for player" query={search}
+                             setQuery={setSearch}></LocalSearch>
 
                 <div className="flex-1"></div>
 
@@ -112,77 +113,81 @@ export function PlayerList({leaderboard, search}: { leaderboard: ILeaderboardDef
     // console.log('data', data);
 
     return (
-        <div className="flex flex-col">
+        <div className="overflow-hidden bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 sm:rounded-lg sm:shadow">
+            <div className="flex flex-col">
 
-            <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr>
-                    <th scope="col" className="py-3 px-6">
-                        #
-                    </th>
-                    <th scope="col" className="py-3 px-6">
-                        Name
-                    </th>
-                    <th scope="col" className="py-3 px-6">
-                        Rating
-                    </th>
-                    <th scope="col" className="py-3 px-6">
-                        Wins
-                    </th>
-                    <th scope="col" className="py-3 px-6">
-                        Games
-                    </th>
-                    <th scope="col" className="py-3 px-6">
-                        Last Match
-                    </th>
-                </tr>
-                </thead>
-                <tbody>
-                {
-                    flatten(data?.pages?.map(p => p.players) || []).map((player, index) =>
-                        <tr key={player.profileId} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                            <td className="py-4 px-6">
-                                {player.rank}
-                            </td>
-                            <th scope="row"
-                                className="py-4 px-6 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                <Link className="cursor-pointer hover:underline" href={`/profile/[profileId]`} as={`/profile/${player.profileId}`}>
-                                    {player.name}
-                                </Link>
-                            </th>
-                            <td className="py-4 px-6">
-                                {player.rating}
-                            </td>
-                            <td className="py-4 px-6">
-                                {(player.wins / player.games * 100).toFixed(0)} %
-                            </td>
-                            <td className="py-4 px-6">
-                                {player.games}
-                            </td>
-                            <td className="py-4 px-6">
-                                {formatAgo(player.lastMatchTime)}
-                            </td>
-                        </tr>
-                    )
-                }
-                </tbody>
-            </table>
+                <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                        <th scope="col" className="py-3 px-6">
+                            #
+                        </th>
+                        <th scope="col" className="py-3 px-6">
+                            Name
+                        </th>
+                        <th scope="col" className="py-3 px-6">
+                            Rating
+                        </th>
+                        <th scope="col" className="py-3 px-6">
+                            Wins
+                        </th>
+                        <th scope="col" className="py-3 px-6">
+                            Games
+                        </th>
+                        <th scope="col" className="py-3 px-6">
+                            Last Match
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {
+                        flatten(data?.pages?.map(p => p.players) || []).map((player, index) =>
+                            <tr key={player.profileId}
+                                className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                <td className="py-4 px-6">
+                                    {player.rank}
+                                </td>
+                                <th scope="row"
+                                    className="py-4 px-6 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                                    <Link className="cursor-pointer hover:underline" href={`/profile/[profileId]`}
+                                          as={`/profile/${player.profileId}`}>
+                                        {player.name}
+                                    </Link>
+                                </th>
+                                <td className="py-4 px-6">
+                                    {player.rating}
+                                </td>
+                                <td className="py-4 px-6">
+                                    {(player.wins / player.games * 100).toFixed(0)} %
+                                </td>
+                                <td className="py-4 px-6">
+                                    {player.games}
+                                </td>
+                                <td className="py-4 px-6">
+                                    {formatAgo(player.lastMatchTime)}
+                                </td>
+                            </tr>
+                        )
+                    }
+                    </tbody>
+                </table>
 
-            <div className="flex flex-row justify-center p-4">
-                <button
-                    className="btn btn-primary"
-                    onClick={() => fetchNextPage()}
-                    disabled={!hasNextPage || isFetchingNextPage}
-                >
-                    {isFetchingNextPage
-                        ? 'Loading more...'
-                        : hasNextPage
-                            ? 'Load More'
-                            : 'Nothing more to load'}
-                </button>
-                <div>{isFetching && !isFetchingNextPage ? 'Fetching...' : null}</div>
+                <div className="flex flex-row justify-center p-4">
+                    <button
+                        className="btn btn-primary"
+                        onClick={() => fetchNextPage()}
+                        disabled={!hasNextPage || isFetchingNextPage}
+                    >
+                        {isFetchingNextPage
+                            ? 'Loading more...'
+                            : hasNextPage
+                                ? 'Load More'
+                                : 'Nothing more to load'}
+                    </button>
+                    <div>{isFetching && !isFetchingNextPage ? 'Fetching...' : null}</div>
+                </div>
+
             </div>
-
         </div>
     );
 }
