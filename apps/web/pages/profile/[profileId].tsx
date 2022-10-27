@@ -15,9 +15,10 @@ import useDebounce from "../../hooks/use-debounce";
 import {formatAgo} from "../../helper/util";
 import {differenceInSeconds} from "date-fns";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faChartLine, faCrown, faSkull, faStairs} from "@fortawesome/free-solid-svg-icons";
+import {faChartLine, faCheckCircle, faCrown, faSkull, faStairs} from "@fortawesome/free-solid-svg-icons";
 import Rating from "../../components/rating";
 import Tabs from "../../components/tabs";
+import {classNames} from "../../components/global-search";
 
 
 export default function ProfilePage() {
@@ -72,8 +73,15 @@ export default function ProfilePage() {
         <div className="flex flex-col">
 
             <div className="flex flex-col ml-6 space-y-1">
-                <div className="text-lg">
+                <div className="flex flex-row text-lg">
                     {profile?.data?.name}
+                    {profile?.data?.verified &&
+                        <FontAwesomeIcon
+                            className={classNames(
+                                'w-3.5 ml-1 text-[#397AF9]',
+                            )}
+                            icon={faCheckCircle}/>
+                    }
                 </div>
                 <div className="text-md">
                     {profile?.data?.games} games
@@ -420,10 +428,17 @@ export function Player({player, reversed, bold}: Props) {
                     <img src={player.civImageUrl} className="w-[18px]"/>
                     <div className="w-[100px] truncate text-left">{player.civName}</div>
                 </Link>
-                <Link className={`w-[150px] truncate cursor-pointer ${bold && ' '} text-left hover:underline`}
+                <Link className={`flex flex-row w-[150px] truncate cursor-pointer ${bold && ' '} text-left hover:underline`}
                       href='/profile/[profileId]'
                       as={`/profile/${player.profileId}`}>
                     {player.name}
+                    {player.verified &&
+                        <FontAwesomeIcon
+                            className={classNames(
+                                'w-3.5 mx-1 text-[#AAA]',
+                            )}
+                            icon={faCheckCircle}/>
+                    }
                 </Link>
                 <div className="w-9">{player.rating}</div>
                 <div className="w-9 text-right" style={{color: player.ratingDiff > 0 ? '#22c55e' : '#ef4444', fontVariant: 'tabular-nums', font:'14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'}}>{signed(player.ratingDiff, reversed)}</div>
@@ -457,10 +472,17 @@ export function Player({player, reversed, bold}: Props) {
 
             <div className="w-9" style={{color: player.ratingDiff > 0 ? '#22c55e' : '#ef4444', fontVariant: 'tabular-nums', font:'14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'}}>{signed(player.ratingDiff, !reversed)}</div>
             <div className="w-9">{player.rating}</div>
-            <Link className={`w-[150px] truncate cursor-pointer ${bold && ' '} text-right hover:underline`}
+            <Link className={`flex flex-row w-[150px] truncate cursor-pointer ${bold && ' '} text-right hover:underline`}
                   href='/profile/[profileId]'
                   as={`/profile/${player.profileId}`}>
                 {player.name}
+                {player.verified &&
+                    <FontAwesomeIcon
+                        className={classNames(
+                            'w-3.5 mx-1 text-[#AAA]',
+                        )}
+                        icon={faCheckCircle}/>
+                }
             </Link>
             <Link className="flex flex-row space-x-1 items-center" href='/profile/[profileId]'
                   as={`/profile/${player.profileId}`}>

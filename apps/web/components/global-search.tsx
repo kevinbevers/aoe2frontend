@@ -6,7 +6,7 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCheckCircle, faSearch} from "@fortawesome/free-solid-svg-icons";
 import {useRouter} from "next/router";
 
-function classNames(...classes) {
+export function classNames(...classes) {
     return classes.filter(Boolean).join(' ')
 }
 
