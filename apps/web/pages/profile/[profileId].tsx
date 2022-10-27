@@ -4,7 +4,13 @@ import {flatten} from "next/dist/shared/lib/flatten";
 import Link from "next/link";
 import {useRouter} from "next/router";
 import {fetchLeaderboards, fetchMatches, fetchProfile, fetchProfileRatings} from "../../helper/api";
-import {ILeaderboardDef, IMatchesMatch, IMatchesMatchPlayer, IProfileLeaderboardResult} from "../../helper/api.types";
+import {
+    ILeaderboardDef,
+    IMatchesMatch,
+    IMatchesMatchPlayer,
+    IMatchesMatchTeam,
+    IProfileLeaderboardResult
+} from "../../helper/api.types";
 import useDebounce from "../../hooks/use-debounce";
 import {formatAgo} from "../../helper/util";
 import {differenceInSeconds} from "date-fns";
@@ -283,12 +289,21 @@ export function PlayerList({
 
     console.log('data', data);
 
+    const sortTeamByCurrentPlayer = (teams: IMatchesMatchTeam[]) => {
+        const focusIndex = teams.findIndex(teamPlayers => teamPlayers.some(player => player.profileId === profileId));
+        return [
+            teams[focusIndex],
+            ...teams.slice(0, focusIndex),
+            ...teams.slice(focusIndex+1, teams.length),
+        ]
+    };
+
     return (
         <div
             className="overflow-hidden bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 sm:rounded-lg sm:shadow">
             <div className="flex flex-col">
 
-                <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                <table className="w-full text-sm text-left text-gray-700 dark:text-gray-400">
                     <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
                         <th scope="col" className="py-3 px-6">
@@ -327,12 +342,14 @@ export function PlayerList({
 
                                     <div className="flex flex-row space-x-4">
                                         {
-                                            match.teams.map((teamPlayers, index) => (
+                                            sortTeamByCurrentPlayer(match.teams).map((teamPlayers, index) => (
                                                 <div key={index} className="flex flex-row items-center space-x-3">
                                                     <div key={index} className="flex flex-col space-y-3">
                                                         {
                                                             teamPlayers.map((player) => (
-                                                                <Player key={player.profileId} player={player}/>
+                                                                <Player key={player.profileId}
+                                                                        bold={player.profileId == profileId}
+                                                                        player={player} reversed={index % 2 == 0}/>
                                                             ))
                                                         }
                                                     </div>
@@ -374,14 +391,59 @@ export function PlayerList({
     );
 }
 
+function signed(number: number, reversed: boolean = false) {
+    if (number == null) return '';
+    if (reversed) {
+        return number > 0 ? number + ' ↑' : Math.abs(number) + ' ↓';
+
+    } else {
+        return number > 0 ? '↑ ' + number : '↓ ' + Math.abs(number);
+
+    }
+}
 
 interface Props {
     player: IMatchesMatchPlayer;
+    reversed: boolean;
+    bold: boolean;
 }
 
-export function Player({player}: Props) {
+export function Player({player, reversed, bold}: Props) {
+    const alpha = bold ? '33' : '33';
+    const bb = bold ? '#777' : '#EEE';
+    if (reversed) {
+        return (
+            <div className={`flex flex-row space-x-2 items-center border border-1 p-2 rounded`}
+                 style={{borderColor: bb, background: `linear-gradient(to right, ${player.colorHex + alpha}, #00000000)`}}>
+                <Link className="flex flex-row space-x-1 items-center" href='/profile/[profileId]'
+                      as={`/profile/${player.profileId}`}>
+                    <img src={player.civImageUrl} className="w-[18px]"/>
+                    <div className="w-[100px] truncate text-left">{player.civName}</div>
+                </Link>
+                <Link className={`w-[150px] truncate cursor-pointer ${bold && ' '} text-left hover:underline`}
+                      href='/profile/[profileId]'
+                      as={`/profile/${player.profileId}`}>
+                    {player.name}
+                </Link>
+                <div className="w-9">{player.rating}</div>
+                <div className="w-9 text-right" style={{color: player.ratingDiff > 0 ? '#22c55e' : '#ef4444', fontVariant: 'tabular-nums', font:'14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'}}>{signed(player.ratingDiff, reversed)}</div>
+
+                <div className="w-[16px]">
+                    {
+                        player.won === true && player.team != -1 &&
+                        <FontAwesomeIcon icon={faCrown} className="w-[16px]" color="goldenrod"/>
+                    }
+                    {
+                        player.won === false && player.team != -1 &&
+                        <FontAwesomeIcon icon={faSkull} className="w-[16px]" color="grey"/>
+                    }
+                </div>
+            </div>
+        )
+    }
     return (
-        <div className="flex flex-row space-x-2 items-center">
+        <div className={`flex flex-row space-x-2 items-center border border-1 p-2 rounded`}
+             style={{borderColor: bb, background: `linear-gradient(to left, ${player.colorHex + alpha}, #00000000)`}}>
             <div className="w-[16px]">
                 {
                     player.won === true && player.team != -1 &&
@@ -393,19 +455,17 @@ export function Player({player}: Props) {
                 }
             </div>
 
-            <div className="flex flex-row items-center justify-center w-5 h-5 border border-black text-black"
-                 style={{backgroundColor: player.colorHex}}>
-                {player.color}
-            </div>
+            <div className="w-9" style={{color: player.ratingDiff > 0 ? '#22c55e' : '#ef4444', fontVariant: 'tabular-nums', font:'14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'}}>{signed(player.ratingDiff, !reversed)}</div>
             <div className="w-9">{player.rating}</div>
-            <Link className="w-[150px] truncate cursor-pointer hover:underline" href='/profile/[profileId]'
+            <Link className={`w-[150px] truncate cursor-pointer ${bold && ' '} text-right hover:underline`}
+                  href='/profile/[profileId]'
                   as={`/profile/${player.profileId}`}>
                 {player.name}
             </Link>
             <Link className="flex flex-row space-x-1 items-center" href='/profile/[profileId]'
                   as={`/profile/${player.profileId}`}>
+                <div className="w-[100px] truncate text-right">{player.civName}</div>
                 <img src={player.civImageUrl} className="w-[18px]"/>
-                <div className="w-[100px] truncate">{player.civName}</div>
             </Link>
         </div>
     )
