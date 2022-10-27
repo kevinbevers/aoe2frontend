@@ -5,6 +5,7 @@ import {faChevronDown, faChevronRight, faCrown, faSkull} from "@fortawesome/free
 import {ILobbiesMatch, IMatchesMatchPlayer, IMatchesMatchPlayer2} from "../helper/api.types";
 import {ICloseEvent, w3cwebsocket} from "websocket";
 import produce from "immer"
+import LocalSearch from "../components/local-search";
 
 interface IConnectionHandler {
     onOpen?: () => void;
@@ -14,8 +15,10 @@ interface IConnectionHandler {
 
 function initConnection(handler: IConnectionHandler): Promise<void> {
     return new Promise(resolve => {
-        const client = new w3cwebsocket(`wss://aoe2backend-socket.deno.dev/listen/lobbies`);
-        // const client = new w3cwebsocket(`ws://localhost:8000/listen/lobbies`);
+        // const client = new w3cwebsocket(`wss://aoe2backend-socket.deno.dev/listen/lobbies`);
+        // const client = new w3cwebsocket(`ws://localhost:8080`);
+        // const client = new w3cwebsocket(`ws://localhost:3336/listen/lobbies`);
+        const client = new w3cwebsocket(`${process.env.NEXT_PUBLIC_SOCKET_URL}/listen?handler=lobbies`);
 
         client.onopen = () => {
             console.log('WebSocket client connected');
@@ -123,30 +126,32 @@ export default function LobbyPage() {
                 </div>
             </div>
 
-            <div className="flex flex-row items-center">
-                <div className="w-full">
-                    <label htmlFor="table-search" className="sr-only">Search</label>
-                    <div className="relative mt-1">
-                        <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                            <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                <path fillRule="evenodd"
-                                      d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                      clipRule="evenodd"></path>
-                            </svg>
-                        </div>
-                        <input type="text" id="table-search"
-                               className="block p-2 pl-10 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                               placeholder="Search for name, map, game mode, server, player name"
-                               value={search}
-                               onChange={(e) => {
-                                   setSearch(e.target.value)
-                               }}
-                        />
-                    </div>
-                </div>
-            </div>
+            {/*<div className="flex flex-row items-center">*/}
+            {/*    <div className="w-full">*/}
+            {/*        <label htmlFor="table-search" className="sr-only">Search</label>*/}
+            {/*        <div className="relative mt-1">*/}
+            {/*            <div className="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">*/}
+            {/*                <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" aria-hidden="true"*/}
+            {/*                     fill="currentColor"*/}
+            {/*                     viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">*/}
+            {/*                    <path fillRule="evenodd"*/}
+            {/*                          d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"*/}
+            {/*                          clipRule="evenodd"></path>*/}
+            {/*                </svg>*/}
+            {/*            </div>*/}
+            {/*            <input type="text" id="table-search"*/}
+            {/*                   className="block p-2 pl-10 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"*/}
+            {/*                   placeholder="Search for name, map, game mode, server, player name"*/}
+            {/*                   value={search}*/}
+            {/*                   onChange={(e) => {*/}
+            {/*                       setSearch(e.target.value)*/}
+            {/*                   }}*/}
+            {/*            />*/}
+            {/*        </div>*/}
+            {/*    </div>*/}
+            {/*</div>*/}
+
+            <LocalSearch className="w-full" placeholder="Search for name, map, game mode, server, player name" query={search} setQuery={setSearch}></LocalSearch>
 
             <PlayerList search={search}/>
         </div>

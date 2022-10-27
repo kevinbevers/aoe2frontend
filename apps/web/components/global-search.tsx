@@ -1,30 +1,10 @@
-/*
-  This example requires some changes to your config:
-
-  ```
-  // tailwind.config.js
-  module.exports = {
-    // ...
-    plugins: [
-      // ...
-      require('@tailwindcss/forms'),
-    ],
-  }
-  ```
-*/
 import {useState} from 'react'
-import {CheckIcon, ChevronUpDownIcon} from '@heroicons/react/20/solid'
 import {Combobox} from '@headlessui/react'
 import {useQuery} from "@tanstack/react-query";
 import {fetchProfile, fetchProfiles} from "../helper/api";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCheckCircle, faSearch} from "@fortawesome/free-solid-svg-icons";
 import {useRouter} from "next/router";
-
-const people = [
-    {id: 1, name: 'Leslie Alexander'},
-    // More users...
-]
 
 function classNames(...classes) {
     return classes.filter(Boolean).join(' ')
@@ -46,7 +26,6 @@ export default function GlobalSearch() {
             }
             return { profiles: [] };
         }, {
-            // enabled: query?.length > 2,
             keepPreviousData: true,
         });
 

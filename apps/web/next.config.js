@@ -13,14 +13,7 @@ const nextConfig = {
         svgr: false,
     },
     images: {
-        remotePatterns: [
-            {
-                protocol: 'https',
-                hostname: 'aoe2companion.com',
-                port: '',
-                pathname: '/**',
-            },
-        ],
+        domains: ['aoe2companion.com'],
     },
 };
 
