@@ -30,12 +30,9 @@ export default function GlobalSearch() {
         });
 
     const navigateToProfile = (profile) => {
-        console.log('navigateToProfile', profile);
         router.push(`/profile/${profile.profileId}`);
         (document.activeElement as any)?.blur();
     };
-
-    console.log(profiles?.data?.profiles);
 
     const filteredPeople = profiles?.data?.profiles || [];
 
