@@ -13,7 +13,7 @@ interface IConnectionHandler {
     onClose?: (event: ICloseEvent) => void;
 }
 
-function initConnection(handler: IConnectionHandler): Promise<void> {
+function initConnection(handler: IConnectionHandler): Promise<w3cwebsocket> {
     return new Promise(resolve => {
         // const client = new w3cwebsocket(`wss://aoe2backend-socket.deno.dev/listen/lobbies`);
         // const client = new w3cwebsocket(`ws://localhost:8080`);
@@ -23,7 +23,7 @@ function initConnection(handler: IConnectionHandler): Promise<void> {
         client.onopen = () => {
             console.log('WebSocket client connected');
             handler.onOpen?.();
-            resolve();
+            resolve(client);
         };
 
         client.onmessage = (messageEvent) => {
@@ -76,7 +76,7 @@ interface ISlotRemovedEvent {
 
 type ILobbyEvent = ILobbyAddedEvent | ILobbyUpdatedEvent | ILobbyRemovedEvent | ISlotAddedEvent | ISlotUpdatedEvent | ISlotRemovedEvent;
 
-export function initLobbySubscription(handler: IConnectionHandler): Promise<void> {
+export function initLobbySubscription(handler: IConnectionHandler): Promise<w3cwebsocket> {
     let _lobbies: any[] = [];
 
     return initConnection({
@@ -171,7 +171,7 @@ export function PlayerList({search}: { search: string }) {
     };
 
     const connect = async () => {
-        await initLobbySubscription({
+        return await initLobbySubscription({
             onOpen: () => {
                 setConnected(true);
             },
@@ -185,7 +185,11 @@ export function PlayerList({search}: { search: string }) {
     };
 
     useEffect(() => {
-        connect();
+        let socket = null;
+        connect().then((s) => socket = s);
+        return () => {
+            socket.close();
+        };
     }, []);
 
     useEffect(() => {
