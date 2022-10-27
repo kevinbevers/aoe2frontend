@@ -18,7 +18,6 @@ function initConnection(handler: IConnectionHandler): Promise<void> {
         // const client = new w3cwebsocket(`wss://aoe2backend-socket.deno.dev/listen/lobbies`);
         // const client = new w3cwebsocket(`ws://localhost:8080`);
         // const client = new w3cwebsocket(`ws://localhost:3336/listen/lobbies`);
-        console.log('initConnection', `${process.env.NEXT_PUBLIC_SOCKET_URL}/listen?handler=lobbies`);
         const client = new w3cwebsocket(`${process.env.NEXT_PUBLIC_SOCKET_URL}/listen?handler=lobbies`);
 
         client.onopen = () => {
@@ -79,8 +78,6 @@ type ILobbyEvent = ILobbyAddedEvent | ILobbyUpdatedEvent | ILobbyRemovedEvent | 
 
 export function initLobbySubscription(handler: IConnectionHandler): Promise<void> {
     let _lobbies: any[] = [];
-
-    console.log('initLobbySubscription');
 
     return initConnection({
         onOpen: handler.onOpen,
@@ -173,10 +170,7 @@ export function PlayerList({search}: { search: string }) {
         setExpandedDict({...expandedDict});
     };
 
-    console.log('lobby');
-
     const connect = async () => {
-        console.log('connect');
         await initLobbySubscription({
             onOpen: () => {
                 setConnected(true);
