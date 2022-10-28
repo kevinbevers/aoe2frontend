@@ -188,7 +188,7 @@ export function PlayerList({search}: { search: string }) {
         let socket = null;
         connect().then((s) => socket = s);
         return () => {
-            socket.close();
+            socket?.close();
         };
     }, []);
 

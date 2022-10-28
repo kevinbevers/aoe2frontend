@@ -7,6 +7,7 @@ import useDebounce from "../hooks/use-debounce";
 import Link from "next/link";
 import {formatAgo} from "../helper/util";
 import LocalSearch from "../components/local-search";
+import Tabs from "../components/tabs";
 
 
 export default function Index() {
@@ -58,19 +59,33 @@ export default function Index() {
 
                 <div className="flex-1"></div>
 
-                <div className="flex flex-row space-x-6">
-                    {
-                        data?.map((leaderboardDef: ILeaderboardDef) => (
-                            <div key={leaderboardDef.leaderboardId}
-                                 className={`flex flex-col  cursor-pointer hover:underline
-                                            ${leaderboardDef.leaderboardId === leaderboard?.leaderboardId ? 'font-bold' : ''}
-                                 `}
-                                 onClick={() => setLeaderboard(leaderboardDef)}>
-                                {leaderboardDef.abbreviation}
-                            </div>
-                        ))
-                    }
-                </div>
+                {/*<div className="flex flex-row space-x-6">*/}
+                {/*    {*/}
+                {/*        data?.map((leaderboardDef: ILeaderboardDef) => (*/}
+                {/*            <div key={leaderboardDef.leaderboardId}*/}
+                {/*                 className={`flex flex-col  cursor-pointer hover:underline*/}
+                {/*                            ${leaderboardDef.leaderboardId === leaderboard?.leaderboardId ? 'font-bold' : ''}*/}
+                {/*                 `}*/}
+                {/*                 onClick={() => setLeaderboard(leaderboardDef)}>*/}
+                {/*                {leaderboardDef.abbreviation}*/}
+                {/*            </div>*/}
+                {/*        ))*/}
+                {/*    }*/}
+                {/*</div>*/}
+
+                {
+                    data && leaderboard &&
+                    <Tabs tabs={
+                        [
+                            ...data?.map((leaderboardDef: ILeaderboardDef) => ({
+                                name: leaderboardDef.abbreviation,
+                                current: leaderboardDef.leaderboardId === leaderboard?.leaderboardId,
+                                onClick: () => setLeaderboard(leaderboardDef),
+                            })),
+                        ]
+                    }/>
+                }
+
             </div>
 
             <div className="my-4 text-sm text-gray-500">

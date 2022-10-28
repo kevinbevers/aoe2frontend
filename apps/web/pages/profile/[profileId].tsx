@@ -19,6 +19,8 @@ import {faChartLine, faCheckCircle, faCrown, faSkull, faStairs} from "@fortaweso
 import Rating from "../../components/rating";
 import Tabs from "../../components/tabs";
 import {classNames} from "../../components/global-search";
+import LocalSearch from "../../components/local-search";
+import Image from "next/image";
 
 
 export default function ProfilePage() {
@@ -73,17 +75,20 @@ export default function ProfilePage() {
         <div className="flex flex-col">
 
             <div className="flex flex-col ml-6 space-y-1">
-                <div className="flex flex-row text-lg">
+                <div className="flex flex-row items-center text-lg">
+                    <span style={{fontSize: 26}} className="mr-2">{profile?.data?.countryIcon + ' '}</span>
                     {profile?.data?.name}
+                    <span className="ml-1">
                     {profile?.data?.verified &&
                         <FontAwesomeIcon
                             className={classNames(
-                                'w-3.5 ml-1 text-[#397AF9]',
+                                'w-4 ml-1 text-[#397AF9]',
                             )}
                             icon={faCheckCircle}/>
                     }
+                    </span>
                 </div>
-                <div className="text-md">
+                <div className="text-md ml-9">
                     {profile?.data?.games} games
                 </div>
             </div>
@@ -222,6 +227,11 @@ export default function ProfilePage() {
                 {/*    }*/}
                 {/*</div>*/}
             </div>
+
+            <LocalSearch className="w-full" placeholder="Search for match name, map, player" query={search}
+                         setQuery={setSearch}></LocalSearch>
+
+            <br/>
 
             {
                 profileId && profile?.data && (
