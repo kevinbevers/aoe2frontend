@@ -186,6 +186,8 @@ export interface IProfileResult {
     name: string;
     games: number;
     country: string;
+    countryIcon: string;
+    verified: boolean;
     leaderboards: IProfileLeaderboardResult[];
     ratings: IProfileRatingsLeaderboard[];
 }
@@ -287,6 +289,7 @@ export interface IMatchesMatchPlayer {
     slot: number
     team?: number
     won?: boolean
+    verified: boolean
 }
 
 
