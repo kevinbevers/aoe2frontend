@@ -126,10 +126,10 @@ export default function ApiNightbot() {
             <div className="ml-2 space-y-2">
                 <div className="">
                     <div className="text-base">
-                        leaderboard_id (Optional, defaults to 3)
+                        leaderboard_id (Optional)
                     </div>
                     <div className="text-sm">
-                        Leaderboard ID is used when search is defined, will find the highest rated player matching the search term (Unranked=0, 1v1 Deathmatch=1, Team Deathmatch=2, 1v1 Random Map=3, Team Random Map=4, 1v1 Empire Wars=13, Team Empire Wars=14)
+                        Leaderboard ID can be used to restrict player result to a leaderboard (Unranked=0, 1v1 Deathmatch=1, Team Deathmatch=2, 1v1 Random Map=3, Team Random Map=4, 1v1 Empire Wars=13, Team Empire Wars=14)
                     </div>
                 </div>
                 <div className="">
