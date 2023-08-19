@@ -6,10 +6,8 @@ import {useRouter} from "next/router";
 import {fetchLeaderboards, fetchMatches, fetchProfile, fetchProfileRatings} from "../../helper/api";
 import {
     ILeaderboardDef,
-    IMatchesMatch,
-    IMatchesMatchPlayer,
-    IMatchesMatchTeam,
-    IProfileLeaderboardResult
+    IMatchesMatch, IPlayerNew,
+    IProfileLeaderboardResult, ITeamNew
 } from "../../helper/api.types";
 import useDebounce from "../../hooks/use-debounce";
 import {formatAgo} from "../../helper/util";
@@ -307,8 +305,8 @@ export function PlayerList({
 
     console.log('data', data);
 
-    const sortTeamByCurrentPlayer = (teams: IMatchesMatchTeam[]) => {
-        const focusIndex = teams.findIndex(teamPlayers => teamPlayers.some(player => player.profileId === profileId));
+    const sortTeamByCurrentPlayer = (teams: ITeamNew[]) => {
+        const focusIndex = teams.findIndex(team => team.players.some(player => player.profileId === profileId));
         return [
             teams[focusIndex],
             ...teams.slice(0, focusIndex),
@@ -360,11 +358,11 @@ export function PlayerList({
 
                                     <div className="flex flex-row space-x-4">
                                         {
-                                            sortTeamByCurrentPlayer(match.teams).map((teamPlayers, index) => (
+                                            sortTeamByCurrentPlayer(match.teams).map((team, index) => (
                                                 <div key={index} className="flex flex-row items-center space-x-3">
                                                     <div key={index} className="flex flex-col space-y-3">
                                                         {
-                                                            teamPlayers.map((player) => (
+                                                            team.players.map((player) => (
                                                                 <Player key={player.profileId}
                                                                         bold={player.profileId == profileId}
                                                                         player={player} reversed={index % 2 == 0}/>
@@ -421,7 +419,7 @@ function signed(number: number, reversed: boolean = false) {
 }
 
 interface Props {
-    player: IMatchesMatchPlayer;
+    player: IPlayerNew;
     reversed: boolean;
     bold: boolean;
 }

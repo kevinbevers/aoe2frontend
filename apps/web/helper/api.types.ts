@@ -93,7 +93,7 @@ export interface ILobbiesMatch {
     victory: number
     revealMap: number
     privacy: number
-    players: IMatchesMatchPlayer[];
+    players: IPlayerNew[];
 }
 
 
@@ -267,30 +267,33 @@ export interface IMatchesMatch {
     victory: number
     revealMap: number
     privacy: number
-    teams: IMatchesMatchTeam[]
+    teams: ITeamNew[]
 }
 
-export type IMatchesMatchTeam = IMatchesMatchPlayer[];
+export interface ITeamNew {
+    teamId?: number
+    players: IPlayerNew[]
+}
 
-export interface IMatchesMatchPlayer {
+export interface IPlayerNew {
     profileId: number
-    name?: string
+    name: string
     rating?: number
-    ratingDiff?: number
-    games?: number
-    wins?: number
-    losses?: number
-    drops?: number
+    ratingDiff: number
+    civFix: number
     civ: number
     civName: string
     civImageUrl: string
     color: number
     colorHex: string
+    status: number
     slot: number
     team?: number
     won?: boolean
+    replay?: boolean
     verified: boolean
 }
+
 
 
 
