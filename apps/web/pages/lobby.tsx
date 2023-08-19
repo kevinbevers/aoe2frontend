@@ -2,7 +2,7 @@ import React, {Fragment, useEffect, useState} from "react";
 import Link from "next/link";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faChevronDown, faChevronRight, faCrown, faSkull} from "@fortawesome/free-solid-svg-icons";
-import {ILobbiesMatch, IMatchesMatchPlayer, IMatchesMatchPlayer2} from "../helper/api.types";
+import {ILobbiesMatch, IMatchesMatchPlayer2, IPlayerNew} from "../helper/api.types";
 import {ICloseEvent, w3cwebsocket} from "websocket";
 import produce from "immer"
 import LocalSearch from "../components/local-search";
@@ -352,7 +352,7 @@ export function PlayerList({search}: { search: string }) {
 
 
 interface Props {
-    player: IMatchesMatchPlayer;
+    player: IPlayerNew;
 }
 
 export function Player({player}: Props) {

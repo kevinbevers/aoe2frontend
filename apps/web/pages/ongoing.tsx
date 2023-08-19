@@ -5,7 +5,7 @@ import Link from "next/link";
 import {differenceInSeconds, parseISO} from "date-fns";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faChevronDown, faChevronRight, faCrown, faSkull} from "@fortawesome/free-solid-svg-icons";
-import {ILeaderboardDef, ILobbiesMatch, IMatchesMatch, IMatchesMatchPlayer} from "../helper/api.types";
+import {ILeaderboardDef, ILobbiesMatch, IMatchesMatch, IPlayerNew} from "../helper/api.types";
 import {fetchLeaderboards} from "../helper/api";
 import {dateReviver, formatAgo} from "../helper/util";
 import {gql} from "graphql-request";
@@ -369,7 +369,7 @@ export function PlayerList({search}: { search: string }) {
 
 
 interface Props {
-    player: IMatchesMatchPlayer;
+    player: IPlayerNew;
 }
 
 export function Player({ player }: Props) {
