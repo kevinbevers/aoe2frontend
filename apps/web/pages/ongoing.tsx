@@ -1,19 +1,11 @@
 import React, {Fragment, useEffect, useState} from "react";
-import {useInfiniteQuery, useQuery} from "@tanstack/react-query";
-import {flatten} from "next/dist/shared/lib/flatten";
 import Link from "next/link";
-import {differenceInSeconds, parseISO} from "date-fns";
+import {differenceInSeconds} from "date-fns";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faChevronDown, faChevronRight, faCrown, faSkull} from "@fortawesome/free-solid-svg-icons";
-import {ILeaderboardDef, ILobbiesMatch, IMatchesMatch, IPlayerNew} from "../helper/api.types";
-import {fetchLeaderboards} from "../helper/api";
+import {ILobbiesMatch, IMatchesMatch, IPlayerNew} from "../helper/api.types";
 import {dateReviver, formatAgo} from "../helper/util";
-import {gql} from "graphql-request";
-import { GRAPHQL_TRANSPORT_WS_PROTOCOL } from 'graphql-ws';
-import {GraphQLWebSocketClientCustom} from "../other/graphql-ws";
-import {applyPatch} from "fast-json-patch";
-import {camelizeKeys} from "humps";
-import {orderBy, sortBy} from "lodash";
+import {orderBy} from "lodash";
 import Image from 'next/image'
 
 import {ICloseEvent, w3cwebsocket} from "websocket";
