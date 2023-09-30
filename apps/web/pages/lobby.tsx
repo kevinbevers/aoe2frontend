@@ -202,7 +202,7 @@ export function PlayerList({search}: { search: string }) {
                     match.mapName.toLowerCase().includes(part.toLowerCase()) ||
                     match.gameModeName.toLowerCase().includes(part.toLowerCase()) ||
                     match.server.toLowerCase().includes(part.toLowerCase()) ||
-                    match.players.some((player) => player.name?.toLowerCase().includes(part.toLowerCase()));
+                    match.players?.some((player) => player?.name?.toLowerCase().includes(part.toLowerCase()));
             });
         });
         setFilteredLobbies(filtered);
@@ -317,7 +317,7 @@ export function PlayerList({search}: { search: string }) {
                                                 <div className="flex flex-row items-center space-x-3">
                                                     <div className="flex flex-col space-y-3">
                                                         {
-                                                            match.players.map((player, playerIndex) => (
+                                                            match.players?.map((player, playerIndex) => (
                                                                 <Player key={playerIndex} player={player}/>
                                                             ))
                                                         }

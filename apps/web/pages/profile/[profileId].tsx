@@ -353,33 +353,58 @@ export function PlayerList({
 
                                 </td>
                                 <td className="py-4 px-6">
-
-                                    {/*<div>{match.teams.length} TEAMS</div>*/}
-
-                                    <div className="flex flex-row space-x-4">
-                                        {
-                                            sortTeamByCurrentPlayer(match.teams).map((team, index) => (
-                                                <div key={index} className="flex flex-row items-center space-x-3">
-                                                    <div key={index} className="flex flex-col space-y-3">
+                                    {
+                                        match.teams.length == 2 &&
+                                        <div className="flex flex-row space-x-4">
+                                            {
+                                                sortTeamByCurrentPlayer(match.teams).map((team, index) => (
+                                                    <div key={index} className="flex flex-row items-center space-x-3">
+                                                        <div key={index} className="flex flex-col space-y-3">
+                                                            {
+                                                                team.players.map((player) => (
+                                                                    <Player key={player.profileId}
+                                                                            bold={player.profileId == profileId}
+                                                                            player={player} reversed={index % 2 == 0}/>
+                                                                ))
+                                                            }
+                                                        </div>
                                                         {
-                                                            team.players.map((player) => (
-                                                                <Player key={player.profileId}
-                                                                        bold={player.profileId == profileId}
-                                                                        player={player} reversed={index % 2 == 0}/>
-                                                            ))
+                                                            index < match.teams.length - 1 &&
+                                                            <div className="">
+                                                                <div className="">VS</div>
+                                                            </div>
                                                         }
                                                     </div>
-                                                    {
-                                                        index < match.teams.length - 1 &&
-                                                        <div className="">
-                                                            <div className="">VS</div>
+                                                ))
+                                            }
+                                        </div>
+                                    }
+                                    {
+                                        match.teams.length != 2 &&
+                                        <div className="flex flex-col space-y-4">
+                                            {
+                                                sortTeamByCurrentPlayer(match.teams).map((team, index) => (
+                                                    <div key={index} className="flex flex-col space-y-3">
+                                                        <div key={index} className="flex flex-col space-y-3">
+                                                            {
+                                                                team.players.map((player) => (
+                                                                    <Player key={player.profileId}
+                                                                            bold={player.profileId == profileId}
+                                                                            player={player} reversed={true} />
+                                                                ))
+                                                            }
                                                         </div>
-                                                    }
-                                                </div>
-                                            ))
-                                        }
-                                    </div>
-
+                                                        {
+                                                            index < match.teams.length - 1 &&
+                                                            <div className="">
+                                                                <div className="">VS</div>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                ))
+                                            }
+                                        </div>
+                                    }
                                 </td>
                             </tr>
                         )
@@ -429,7 +454,7 @@ export function Player({player, reversed, bold}: Props) {
     const bb = bold ? '#777' : '#EEE';
     if (reversed) {
         return (
-            <div className={`flex flex-row space-x-2 items-center border border-1 p-2 rounded`}
+            <div className={`flex flex-row space-x-2 max-w-[400px] items-center border border-1 p-2 rounded`}
                  style={{borderColor: bb, background: `linear-gradient(to right, ${player.colorHex + alpha}, #00000000)`}}>
                 <Link className="flex flex-row space-x-1 items-center" href='/profile/[profileId]'
                       as={`/profile/${player.profileId}`}>
@@ -465,7 +490,7 @@ export function Player({player, reversed, bold}: Props) {
         )
     }
     return (
-        <div className={`flex flex-row space-x-2 items-center border border-1 p-2 rounded`}
+        <div className={`flex flex-row space-x-2 max-w-[400px] items-center border border-1 p-2 rounded`}
              style={{borderColor: bb, background: `linear-gradient(to left, ${player.colorHex + alpha}, #00000000)`}}>
             <div className="w-[16px]">
                 {
