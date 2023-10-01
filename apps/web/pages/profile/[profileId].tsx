@@ -358,8 +358,8 @@ export function PlayerList({
                                         <div className="flex flex-row space-x-4">
                                             {
                                                 sortTeamByCurrentPlayer(match.teams).map((team, index) => (
-                                                    <div key={index} className="flex flex-row items-center space-x-3">
-                                                        <div key={index} className="flex flex-col space-y-3">
+                                                    <div key={team.teamId} className="flex flex-row items-center space-x-3">
+                                                        <div className="flex flex-col space-y-3">
                                                             {
                                                                 team.players.map((player) => (
                                                                     <Player key={player.profileId}
@@ -384,8 +384,8 @@ export function PlayerList({
                                         <div className="flex flex-col space-y-4">
                                             {
                                                 sortTeamByCurrentPlayer(match.teams).map((team, index) => (
-                                                    <div key={index} className="flex flex-col space-y-3">
-                                                        <div key={index} className="flex flex-col space-y-3">
+                                                    <div key={team.teamId} className="flex flex-col space-y-3">
+                                                        <div className="flex flex-col space-y-3">
                                                             {
                                                                 team.players.map((player) => (
                                                                     <Player key={player.profileId}
