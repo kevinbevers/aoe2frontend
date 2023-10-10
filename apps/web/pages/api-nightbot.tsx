@@ -6,7 +6,9 @@ import {ILeaderboardDef} from "../helper/api.types";
 import useDebounce from "../hooks/use-debounce";
 import Link from "next/link";
 import {formatAgo} from "../helper/util";
+import {getConfig} from "../helper/config";
 
+const config = getConfig();
 
 export default function ApiNightbot() {
     return (
@@ -85,7 +87,7 @@ export default function ApiNightbot() {
             <div className="ml-2 space-y-2">
                 <div className="">
                     <div className="text-sm">
-                        !addcom !rank $(urlfetch https://legacy.aoe2companion.com/api/nightbot/rank?leaderboard_id=3&search=$(querystring)&steam_id=76561199003184910&flag=false)
+                        !addcom !rank $(urlfetch https://legacy.{config.host}/api/nightbot/rank?leaderboard_id=3&search=$(querystring)&steam_id=76561199003184910&flag=false)
                     </div>
                 </div>
             </div>
@@ -173,7 +175,7 @@ export default function ApiNightbot() {
             <div className="ml-2 space-y-2">
                 <div className="">
                     <div className="text-sm">
-                        !addcom !match $(urlfetch https://legacy.aoe2companion.com/api/nightbot/match?search=$(querystring)&steam_id=76561199003184910&color=false&flag=false)
+                        !addcom !match $(urlfetch https://legacy.{config.host}/api/nightbot/match?search=$(querystring)&steam_id=76561199003184910&color=false&flag=false)
                     </div>
                 </div>
             </div>

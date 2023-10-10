@@ -11,6 +11,9 @@ import Image from 'next/image'
 import {ICloseEvent, w3cwebsocket} from "websocket";
 import produce from "immer"
 import LocalSearch from "../components/local-search";
+import {getConfig} from "../helper/config";
+
+const config = getConfig();
 
 interface IConnectionHandler {
     onOpen?: () => void;
@@ -22,7 +25,7 @@ function initConnection(handler: IConnectionHandler): Promise<w3cwebsocket> {
     return new Promise(resolve => {
         // const client = new w3cwebsocket(`wss://aoe2backend-socket.deno.dev/listen/ongoing-matches`);
         // const client = new w3cwebsocket(`ws://localhost:8000/listen/ongoing-matches`);
-        const client = new w3cwebsocket(`${process.env.NEXT_PUBLIC_SOCKET_URL}/listen?handler=ongoing-matches`);
+        const client = new w3cwebsocket(`wss://socket.${config.host}/listen?handler=ongoing-matches`);
 
         client.onopen = () => {
             console.log('WebSocket client connected');
@@ -309,9 +312,12 @@ export function PlayerList({search}: { search: string }) {
                                     {match.server}
                                 </td>
                                 <td className="py-4 px-6">
-                                    <button className="bg-blue-500 hover:bg-blue-700 disabled:bg-gray-300 text-white font-bold py-2 px-4 rounded"
-                                            onClick={(e) => handleSpectate(e, match.matchId)}
-                                    >Spectate</button>
+                                    {
+                                        config.game === 'aoe2' &&
+                                        <button className="bg-blue-500 hover:bg-blue-700 disabled:bg-gray-300 text-white font-bold py-2 px-4 rounded"
+                                                onClick={(e) => handleSpectate(e, match.matchId)}
+                                        >Spectate</button>
+                                    }
                                 </td>
                             </tr>
                             {

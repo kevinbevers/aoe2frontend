@@ -6,6 +6,9 @@ import {ILobbiesMatch, IMatchesMatchPlayer2, IPlayerNew} from "../helper/api.typ
 import {ICloseEvent, w3cwebsocket} from "websocket";
 import produce from "immer"
 import LocalSearch from "../components/local-search";
+import {getConfig} from "../helper/config";
+
+const config = getConfig();
 
 interface IConnectionHandler {
     onOpen?: () => void;
@@ -18,7 +21,7 @@ function initConnection(handler: IConnectionHandler): Promise<w3cwebsocket> {
         // const client = new w3cwebsocket(`wss://aoe2backend-socket.deno.dev/listen/lobbies`);
         // const client = new w3cwebsocket(`ws://localhost:8080`);
         // const client = new w3cwebsocket(`ws://localhost:3336/listen/lobbies`);
-        const client = new w3cwebsocket(`${process.env.NEXT_PUBLIC_SOCKET_URL}/listen?handler=lobbies`);
+        const client = new w3cwebsocket(`wss://socket.${config.host}/listen?handler=lobbies`);
 
         client.onopen = () => {
             console.log('WebSocket client connected');
@@ -298,11 +301,14 @@ export function PlayerList({search}: { search: string }) {
                                     {match.blockedSlotCount} / {match.totalSlotCount}
                                 </td>
                                 <td className="py-4 px-6">
-                                    <button disabled={match.blockedSlotCount >= match.totalSlotCount}
-                                            className="bg-green-500 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold py-2 px-4 rounded"
-                                            onClick={(e) => handleJoin(e, match.matchId)}
-                                    >Join
-                                    </button>
+                                    {
+                                        config.game === 'aoe2' &&
+                                        <button disabled={match.blockedSlotCount >= match.totalSlotCount}
+                                                className="bg-green-500 hover:bg-green-700 disabled:bg-gray-300 text-white font-bold py-2 px-4 rounded"
+                                                onClick={(e) => handleJoin(e, match.matchId)}
+                                        >Join
+                                        </button>
+                                    }
                                 </td>
                             </tr>
                             {

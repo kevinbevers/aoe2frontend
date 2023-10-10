@@ -1,31 +1,22 @@
-import styles from './index.module.scss';
-import {useEffect} from "react";
+import {getConfig} from "../helper/config";
 
-
+const config = getConfig();
 
 export function Index() {
-
     return (
         <div className="flex flex-row">
             <div className="flex-1 p-8 pt-32">
-                {/*<h1><span className="main-title">{appName}</span></h1>*/}
                 <h3 style={{ fontFamily: 'Merriweather,sans-serif' }}>
                     Track your games now.
                 </h3>
 
-                {/*<div className="phone-container phone-container-mobile">*/}
-                {/*    <AspectRatio ratio="360/718" style={{maxWidth: '80vw', margin: '20px auto'}}>*/}
-                {/*        <div className="frame"/>*/}
-                {/*    </AspectRatio>*/}
-                {/*</div>*/}
-
                 <br/>
                 <div className="flex flex-row space-x-4">
-                    <a href={`https://play.google.com/store/apps/details?id=com.aoe2companion`}>
+                    <a href={`https://play.google.com/store/apps/details?id=${config.app.android.bundleId}`}>
                         <img src="/app-button-play-store.png" className="max-h-[50px]" />
                     </a>
                     <div className="app-button-spacer"/>
-                    <a href={`https://apps.apple.com/app/id1518463195`}>
+                    <a href={`https://apps.apple.com/app/id${config.app.ios.bundleId}`}>
                         <img src="/app-button-app-store.png" className="max-h-[50px]" />
                     </a>
                 </div>
@@ -33,13 +24,9 @@ export function Index() {
                 <br/>
                 <br/>
                 <p className="text-sm py-3">Also available:</p>
-                <a href={`https://app.aoe2companion.com`} target="_blank">
+                <a href={`https://app.${config.host}`} target="_blank">
                     <img src="https://img.shields.io/static/v1?label=Web&logo=google-chrome&message=Open&logoColor=FFFFFF&color=brightgreen"/>
                 </a>
-                {/*<div style={{height: '10px'}}/>*/}
-                {/*<a onClick={downloadWindowsApp} href="#">*/}
-                {/*    <img src="https://img.shields.io/static/v1?label=Windows&logo=windows&message=Download&logoColor=FFFFFF&color=brightgreen"/>*/}
-                {/*</a>*/}
 
                 <br/>
                 <br/>
@@ -59,7 +46,7 @@ export function Index() {
             </div>
 
             <div className="p-8">
-                <img src="ios-shot-aoe2companion.png" style={{maxWidth: '400px'}}/>
+                <img src={`/web/${config.game}/ios-shot.png`} style={{maxWidth: '400px'}}/>
             </div>
         </div>
     );

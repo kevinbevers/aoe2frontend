@@ -9,8 +9,10 @@ import {
     ILeaderboardDef,
     IMatchesResult, IProfileRatingsResult, IProfileResult, IProfilesResult
 } from "./api.types";
+import {getConfig} from "./config";
 
-const baseUrl = process.env.NEXT_PUBLIC_DATA_API_URL;
+const config = getConfig();
+const baseUrl = `https://data.${config.host}`;
 
 export async function fetchProfileRatings(params: IFetchProfileRatingParams) {
     console.log('fetchProfileRatings', params);

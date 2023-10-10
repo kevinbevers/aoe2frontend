@@ -1,9 +1,12 @@
 import Head from 'next/head'
 import React from "react";
+import {getConfig} from "../helper/config";
+
+const config = getConfig();
 
 export default function Privacy() {
-    const appSlug = 'aoe2companion';
-    const appName = 'AoE II Companion';
+    const appSlug = config.app.slug;
+    const appName = config.app.name;
     return (
         <div>
             <Head>
