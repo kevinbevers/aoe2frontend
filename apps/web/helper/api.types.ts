@@ -276,6 +276,7 @@ export interface ITeamNew {
 }
 
 export interface IPlayerNew {
+    teamName?: any;
     profileId: number
     name: string
     rating?: number

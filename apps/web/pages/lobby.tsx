@@ -390,7 +390,7 @@ export function Player({player}: Props) {
             </Link>
             <Link className="flex flex-row space-x-1 items-center" href='/profile/[profileId]' as={`/profile/${player.profileId}`}>
                 {
-                    player.civ &&
+                    (player.name != 'Open' && player.name != 'Closed' && player.civ) &&
                     <>
                         <img src={player.civImageUrl} className="w-[18px]"/>
                         <div className="w-[100px] truncate">{player.civName}</div>
@@ -398,15 +398,11 @@ export function Player({player}: Props) {
                 }
             </Link>
             {
-                player.name != 'Open' && player.name != 'Closed' && player.team &&
-                <div className="flex flex-row items-center justify-center w-5 h-5 border border-black text-black">
-                    {getTeamStr(player.team)}
+                (player.name != 'Open' && player.name != 'Closed' && player.team != null) &&
+                <div className="">
+                    {player.teamName}
                 </div>
             }
         </div>
     )
-}
-
-function getTeamStr(team: number) {
-    return ['', '-', '1', '2', '3', '4', '?'][team];
 }
