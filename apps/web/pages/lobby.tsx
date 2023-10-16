@@ -347,7 +347,7 @@ export function PlayerList({search}: { search: string }) {
                     onClick={() => setListSize(listSize + 10)}
                     disabled={filteredLobbies?.length <= listSize}
                 >
-                    {filteredLobbies?.length === 0 ? 'Fetching...' : filteredLobbies?.length > listSize
+                    {lobbies?.length === 0 ? 'Fetching...' : filteredLobbies?.length > listSize
                         ? 'Show More'
                         : 'Nothing more to show'}
                 </button>

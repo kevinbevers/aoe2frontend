@@ -356,7 +356,7 @@ export function PlayerList({search}: { search: string }) {
                     onClick={() => setListSize(listSize + 10)}
                     disabled={filteredMatches?.length <= listSize}
                 >
-                    {filteredMatches?.length === 0 ? 'Fetching...' : filteredMatches?.length > listSize
+                    {matches?.length === 0 ? 'Fetching...' : filteredMatches?.length > listSize
                         ? 'Show More'
                         : 'Nothing more to show'}
                 </button>
