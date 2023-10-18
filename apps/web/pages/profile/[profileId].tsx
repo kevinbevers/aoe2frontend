@@ -362,7 +362,7 @@ export function PlayerList({
                                                         <div className="flex flex-col space-y-3">
                                                             {
                                                                 team.players.map((player) => (
-                                                                    <Player key={player.profileId}
+                                                                    <Player key={player.slot}
                                                                             bold={player.profileId == profileId}
                                                                             player={player} reversed={index % 2 == 0}/>
                                                                 ))
@@ -388,7 +388,7 @@ export function PlayerList({
                                                         <div className="flex flex-col space-y-3">
                                                             {
                                                                 team.players.map((player) => (
-                                                                    <Player key={player.profileId}
+                                                                    <Player key={player.slot}
                                                                             bold={player.profileId == profileId}
                                                                             player={player} reversed={true} />
                                                                 ))
