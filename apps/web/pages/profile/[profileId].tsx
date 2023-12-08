@@ -10,8 +10,8 @@ import {
     IProfileLeaderboardResult, ITeamNew
 } from "../../helper/api.types";
 import useDebounce from "../../hooks/use-debounce";
-import {formatAgo} from "../../helper/util";
-import {differenceInSeconds} from "date-fns";
+import {formatAgo, formatDate} from "../../helper/util";
+import {differenceInSeconds, format} from "date-fns";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faChartLine, faCheckCircle, faCrown, faSkull, faStairs} from "@fortawesome/free-solid-svg-icons";
 import Rating from "../../components/rating";
@@ -347,7 +347,7 @@ export function PlayerList({
                                                 {match.mapName}
                                             </div>
                                             <div>{match.leaderboardName}</div>
-                                            <div>{formatMatchDuration(match)}</div>
+                                            <div title={format(match.started, 'Pp')}>{formatMatchDuration(match)}</div>
                                         </div>
                                     </div>
 
