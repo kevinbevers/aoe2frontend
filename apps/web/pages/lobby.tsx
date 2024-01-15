@@ -390,7 +390,7 @@ export function Player({player}: Props) {
             </Link>
             <Link className="flex flex-row space-x-1 items-center" href='/profile/[profileId]' as={`/profile/${player.profileId}`}>
                 {
-                    (player.name != 'Open' && player.name != 'Closed' && player.civ) &&
+                    (player.name != 'Open' && player.name != 'Closed' && player.civName) &&
                     <>
                         <img src={player.civImageUrl} className="w-[18px]"/>
                         <div className="w-[100px] truncate">{player.civName}</div>
