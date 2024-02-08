@@ -1,0 +1,6 @@
+
+sync assets with s3 github actions
+
+https://forum.rclone.org/t/sync-with-cloudflare-r2-overrides-all-files-on-remote/32160
+https://medium.com/@bipingiri27/deploy-nextjs-app-to-s3-and-cloudfront-with-github-actions-c24cb58f2c6f
+
