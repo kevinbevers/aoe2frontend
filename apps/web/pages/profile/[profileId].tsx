@@ -1,24 +1,19 @@
 import {useState} from "react";
 import {useInfiniteQuery, useQuery} from "@tanstack/react-query";
-import {flatten} from "next/dist/shared/lib/flatten";
+import {flatten} from "lodash";
 import Link from "next/link";
 import {useRouter} from "next/router";
-import {fetchLeaderboards, fetchMatches, fetchProfile, fetchProfileRatings} from "../../helper/api";
-import {
-    ILeaderboardDef,
-    IMatchesMatch, IPlayerNew,
-    IProfileLeaderboardResult, ITeamNew
-} from "../../helper/api.types";
+import {fetchLeaderboards, fetchMatches, fetchProfile} from "../../helper/api";
+import {ILeaderboardDef, IMatchesMatch, IPlayerNew, IProfileLeaderboardResult, ITeamNew} from "../../helper/api.types";
 import useDebounce from "../../hooks/use-debounce";
-import {formatAgo, formatDate} from "../../helper/util";
+import {formatAgo} from "../../helper/util";
 import {differenceInSeconds, format} from "date-fns";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faChartLine, faCheckCircle, faCrown, faSkull, faStairs} from "@fortawesome/free-solid-svg-icons";
+import {faChartLine, faCheckCircle, faCrown, faSkull} from "@fortawesome/free-solid-svg-icons";
 import Rating from "../../components/rating";
 import Tabs from "../../components/tabs";
 import {classNames} from "../../components/global-search";
 import LocalSearch from "../../components/local-search";
-import Image from "next/image";
 
 
 export default function ProfilePage() {

@@ -1,7 +1,7 @@
 import {useState} from "react";
 import {fetchLeaderboard, fetchLeaderboards} from "../helper/api";
 import {useInfiniteQuery, useQuery} from "@tanstack/react-query";
-import {flatten} from "next/dist/shared/lib/flatten";
+import {flatten} from "lodash";
 import {ILeaderboardDef} from "../helper/api.types";
 import useDebounce from "../hooks/use-debounce";
 import Link from "next/link";
