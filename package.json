@@ -6,10 +6,16 @@
         "start": "nx serve",
         "web": "nx serve web --port 4300",
         "build:web": "nx build web",
-        "test": "nx test"
+        "upload:assets": "ts-node tools/upload-public-s3.ts"
     },
     "private": true,
     "devDependencies": {
+        "rxjs": "^7.8.1",
+        "@types/mime-types": "^2.1.4",
+        "mime-types": "^2.1.35",
+        "dotenv": "^16.4.1",
+        "ts-node": "^10.9.2",
+        "@aws-sdk/client-s3": "^3.509.0",
         "@nrwl/js": "18.0.3",
         "@nx/eslint": "18.0.3",
         "@nx/eslint-plugin": "18.0.3",
