@@ -9,6 +9,8 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faUpRightFromSquare} from "@fortawesome/free-solid-svg-icons";
 import GlobalSearch from "../components/global-search";
 import {getConfig} from "../helper/config";
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const config = getConfig();
 
@@ -79,7 +81,8 @@ function CustomApp({Component, pageProps}: AppProps) {
                                 </div>
 
                                 <Component {...pageProps} />
-
+                                <Analytics />
+                                <SpeedInsights/>
 
                                 <div className="flex-1"></div>
 
