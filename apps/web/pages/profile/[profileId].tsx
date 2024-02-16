@@ -268,6 +268,15 @@ function formatMatchDuration(match: IMatchesMatch) {
     return duration;
 }
 
+function formatMatchDuration2(match: IMatchesMatch) {
+    let duration: string = '';
+    if (match.started) {
+        const finished = match.finished || new Date();
+        duration = formatDuration(differenceInSeconds(finished, match.started) * getSpeedFactor(match.speed as AoeSpeed));
+    }
+    return duration;
+}
+
 
 export function PlayerList({
                                leaderboard,
@@ -343,6 +352,10 @@ export function PlayerList({
                                             </div>
                                             <div>{match.leaderboardName}</div>
                                             <div title={format(match.started, 'Pp')}>{formatMatchDuration(match)}</div>
+                                            {
+                                                match.finished &&
+                                                <div>{formatMatchDuration2(match)}</div>
+                                            }
                                         </div>
                                     </div>
 
