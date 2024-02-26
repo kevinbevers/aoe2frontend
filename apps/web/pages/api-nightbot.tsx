@@ -79,7 +79,7 @@ export default function ApiNightbot() {
             <div className="ml-2 space-y-2">
                 <div className="">
                     <div className="text-sm">
-                        !addcom !rank $(urlfetch https://legacy.{config.host}/api/nightbot/rank?leaderboard_id=3&search=$(querystring)&steam_id=76561199003184910&flag=false)
+                        !addcom !rank $(urlfetch https://data.{config.host}/api/nightbot/rank?leaderboard_id=3&search=$(querystring)&steam_id=76561199003184910&flag=false)
                     </div>
                 </div>
             </div>
@@ -167,7 +167,7 @@ export default function ApiNightbot() {
             <div className="ml-2 space-y-2">
                 <div className="">
                     <div className="text-sm">
-                        !addcom !match $(urlfetch https://legacy.{config.host}/api/nightbot/match?search=$(querystring)&steam_id=76561199003184910&color=false&flag=false)
+                        !addcom !match $(urlfetch https://data.{config.host}/api/nightbot/match?search=$(querystring)&steam_id=76561199003184910&color=false&flag=false)
                     </div>
                 </div>
             </div>
