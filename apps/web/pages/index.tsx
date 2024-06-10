@@ -46,7 +46,11 @@ export function Index() {
             </div>
 
             <div className="p-8">
-                <img src={`/web/${config.game}/ios-shot.png`} style={{maxWidth: '400px'}}/>
+                <picture>
+                    <source srcSet={`/web/${config.game}/ios-shot.png`} media="(prefers-color-scheme: light)"/>
+                    <source srcSet={`/web/${config.game}/ios-shot-dark.png`} media="(prefers-color-scheme: dark)"/>
+                    <img src={`/web/${config.game}/ios-shot.png`} style={{maxWidth: '400px'}}/>
+                </picture>
             </div>
         </div>
     );
