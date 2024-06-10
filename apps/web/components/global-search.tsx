@@ -5,6 +5,7 @@ import {fetchProfile, fetchProfiles} from "../helper/api";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCheckCircle, faSearch} from "@fortawesome/free-solid-svg-icons";
 import {useRouter} from "next/router";
+import {bgColor, borderColor, textColor} from "./style.utils";
 
 export function classNames(...classes) {
     return classes.filter(Boolean).join(' ')
@@ -45,7 +46,7 @@ export default function GlobalSearch() {
                 </Combobox.Button>
 
                 <Combobox.Input
-                    className="w-full rounded-md border border-gray-300 bg-white py-2 pl-8 pr-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                    className={`w-full rounded-md ${textColor.default} ${bgColor.default} border ${borderColor.default} py-2 pl-8 pr-3 shadow-sm sm:text-sm`}
                     onChange={(event) => setQuery(event.target.value)}
                     displayValue={(person: any) => person?.name}
                 />

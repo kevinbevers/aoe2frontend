@@ -14,6 +14,7 @@ import Rating from "../../components/rating";
 import Tabs from "../../components/tabs";
 import {classNames} from "../../components/global-search";
 import LocalSearch from "../../components/local-search";
+import {bgColor, borderColor, textColor} from "../../components/style.utils";
 
 
 export default function ProfilePage() {
@@ -88,15 +89,16 @@ export default function ProfilePage() {
 
             <br/>
 
-            <div className="flex flex-col w-full lg:flex-row gap-4 lg:gap-8 text-black mb-4 md:mb-6">
+
+            <div className="flex flex-col w-full lg:flex-row gap-4 lg:gap-8 mb-4 md:mb-6">
 
                 {
                     profile?.data?.leaderboards.filter(l => l.rank).map((leaderboardDef: IProfileLeaderboardResult) => (
 
                         <div key={leaderboardDef.leaderboardId}
-                             className="flex-auto bg-white overflow-visible border border-black/10 rounded-2xl px-4 py-4 flex flex-wrap gap-6 justify-center group only:items-center only:justify-start only:px-8">
+                             className={`flex-auto ${bgColor.default} overflow-visible border ${borderColor.default} rounded-2xl px-4 py-4 flex flex-wrap gap-6 justify-center group only:items-center only:justify-start only:px-8`}>
                             <div
-                                className="text-black/50 uppercase font-bold flex-none w-full sm:w-auto lg:w-full text-center group-only:w-auto">
+                                className={`${textColor.subtle} uppercase font-bold flex-none w-full sm:w-auto lg:w-full text-center group-only:w-auto`}>
                                 {leaderboardDef.leaderboardName}
                             </div>
                             {
@@ -106,7 +108,7 @@ export default function ProfilePage() {
                                         className="flex-auto basis-auto flex gap-4 justify-center lg:basis-full text-center group-only:basis-1/12">
                                         <div className="flex-none">
                                             <div
-                                                className="text-black/50 uppercase text-xs font-bold tracking-widest mb-1">Rank
+                                                className={`${textColor.subtle} uppercase text-xs font-bold tracking-widest mb-1`}>Rank
                                             </div>
                                             <div className="inline-flex inline-flex items-center">
                                                 <div className="text-xl lg:text-4xl"><span
@@ -117,18 +119,18 @@ export default function ProfilePage() {
                                     </div>
                                     <div className="flex-auto justify-evenly flex flex-wrap gap-y-6 gap-x-4">
                                         <div className="flex-none text-center"><h5
-                                            className="text-black/50 uppercase text-xs font-bold tracking-widest mb-1">Rating</h5>
+                                            className={`${textColor.subtle} uppercase text-xs font-bold tracking-widest mb-1`}>Rating</h5>
                                             <div className="text-xl lg:text-2xl">{leaderboardDef.rating}</div>
                                         </div>
                                         <div className="flex-none text-center"><h5
-                                            className="text-black/50 uppercase text-xs font-bold tracking-widest mb-1">Win
+                                            className={`${textColor.subtle} uppercase text-xs font-bold tracking-widest mb-1`}>Win
                                             Rate</h5>
                                             <div
                                                 className="text-xl lg:text-2xl">{(leaderboardDef.wins / (leaderboardDef.wins + leaderboardDef.losses) * 100).toFixed(0)} %
                                             </div>
                                         </div>
                                         <div className="flex-none text-center"><h5
-                                            className="text-black/50 uppercase text-xs font-bold tracking-widest mb-1">Games</h5>
+                                            className={`${textColor.subtle} uppercase text-xs font-bold tracking-widest mb-1`}>Games</h5>
                                             <div
                                                 className="text-xl lg:text-2xl">{leaderboardDef.wins + leaderboardDef.losses}</div>
                                         </div>
@@ -142,10 +144,10 @@ export default function ProfilePage() {
             </div>
 
 
-            <div className="overflow-hidden bg-white sm:rounded-lg sm:shadow">
+            <div className={`overflow-hidden ${bgColor.default} border ${borderColor.default} sm:rounded-lg sm:shadow`}>
 
-                <div className="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
-                    <h3 className="flex flex-row space-x-4 text-lg font-medium leading-6 text-gray-900">
+                <div className={`border-b ${borderColor.default} px-4 py-5 sm:px-6`}>
+                    <h3 className="flex flex-row space-x-4 text-lg font-medium leading-6">
                         <FontAwesomeIcon icon={faChartLine} className="w-4"/>
                         <span>Rating History</span>
                     </h3>

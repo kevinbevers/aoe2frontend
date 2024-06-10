@@ -1,5 +1,6 @@
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faSearch} from "@fortawesome/free-solid-svg-icons";
+import {bgColor, borderColor, textColor} from "./style.utils";
 
 export default function LocalSearch({className, placeholder, query, setQuery}) {
     return (
@@ -11,7 +12,7 @@ export default function LocalSearch({className, placeholder, query, setQuery}) {
                 </button>
 
                 <input
-                    className="w-full rounded-md border border-gray-300 bg-white py-2 pl-8 pr-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm"
+                    className={`w-full rounded-md ${textColor.default} ${bgColor.default} border ${borderColor.default} py-2 pl-8 pr-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:text-sm`}
                     onChange={(event) => setQuery(event.target.value)}
                     value={query}
                     placeholder={placeholder}

@@ -4,13 +4,14 @@ import useDimensions from "../hooks/use-dimensions";
 import {isAfter, subDays, subMonths, subWeeks} from "date-fns";
 import {IProfileRatingsResult} from "../helper/api.types";
 import {formatDateShort, formatMonth, formatTime, formatYear} from "../helper/util";
+import {merge} from "lodash";
 
 interface IRatingProps {
     ratingHistories: IProfileRatingsResult;
 }
 
 function getLeaderboardColor(leaderboardId: string) {
-    return '#000000';
+    return 'var(--text-main)';
 }
 
 export default function Rating({ratingHistories}: IRatingProps) {
@@ -94,6 +95,18 @@ export default function Rating({ratingHistories}: IRatingProps) {
         ratings: sampleData(r.ratings),
     }));
 
+    const themeCustomizations = {
+        axis: {
+            style: {
+                tickLabels: {
+                    fill: 'var(--text-main)',
+                },
+            },
+        },
+    };
+
+    const chartTheme = merge({...VictoryTheme.material}, themeCustomizations);
+
     return (
         <div className="flex flex-col">
 
@@ -124,7 +137,7 @@ export default function Rating({ratingHistories}: IRatingProps) {
                         width &&
                         <VictoryChart
                             width={width} height={300}
-                            theme={VictoryTheme.material}
+                            theme={chartTheme}
                             padding={{left: 50, bottom: 30, top: 20, right: 20}}
                             scale={{x: "time"}}
                         >

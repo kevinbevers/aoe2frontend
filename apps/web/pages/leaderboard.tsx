@@ -54,7 +54,7 @@ export default function Index() {
                 {/*    </div>*/}
                 {/*</div>*/}
 
-                <LocalSearch className="w-80" placeholder="Search for player" query={search}
+                <LocalSearch className="w-60 mr-4" placeholder="Search for player" query={search}
                              setQuery={setSearch}></LocalSearch>
 
                 <div className="flex-1"></div>
