@@ -7,6 +7,7 @@ import {ICloseEvent, w3cwebsocket} from "websocket";
 import produce from "immer"
 import LocalSearch from "../components/local-search";
 import {getConfig} from "../helper/config";
+import {bgColor} from "../components/style.utils";
 
 const config = getConfig();
 
@@ -233,8 +234,8 @@ export function PlayerList({search}: { search: string }) {
                 }
             </div>
 
-            <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+            <table className={`w-full text-sm text-left ${bgColor.subtle} text-gray-500 dark:text-gray-400`}>
+                <thead className={`text-xs text-gray-700 uppercase ${bgColor.subtle} dark:text-gray-400`}>
                 <tr>
                     <th scope="col" className="py-3 px-6">
 
@@ -263,7 +264,7 @@ export function PlayerList({search}: { search: string }) {
                 {
                     filteredLobbies?.filter((m, i) => i < listSize).map((match, index) =>
                         <Fragment key={match.matchId}>
-                            <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
+                            <tr className={`bg-white border-b ${bgColor.default} dark:border-gray-700`}
                                 onClick={() => toggleExpanded(match.matchId)}
                             >
 
@@ -313,7 +314,7 @@ export function PlayerList({search}: { search: string }) {
                             </tr>
                             {
                                 expandedDict[match.matchId] && (
-                                    <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                    <tr className={`bg-white border-b ${bgColor.default} dark:border-gray-700`}>
 
                                         <td className="py-4 px-6">
                                         </td>
@@ -341,7 +342,7 @@ export function PlayerList({search}: { search: string }) {
                 </tbody>
             </table>
 
-            <div className="flex flex-row justify-center p-4">
+            <div className={`flex flex-row justify-center p-4 ${bgColor.subtle}`}>
                 <button
                     className="btn btn-primary"
                     onClick={() => setListSize(listSize + 10)}

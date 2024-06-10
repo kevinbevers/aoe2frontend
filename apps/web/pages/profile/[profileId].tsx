@@ -322,11 +322,11 @@ export function PlayerList({
 
     return (
         <div
-            className="overflow-hidden bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 sm:rounded-lg sm:shadow">
+            className={`overflow-hidden ${bgColor.subtle} text-gray-500 dark:text-gray-400 sm:rounded-lg sm:shadow`}>
             <div className="flex flex-col">
 
                 <table className="w-full text-sm text-left text-gray-700 dark:text-gray-400">
-                    <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <thead className={`text-xs text-gray-700 uppercase ${bgColor.subtle} dark:text-gray-400`}>
                     <tr>
                         <th scope="col" className="py-3 px-6">
                             Map / Mode / Duration
@@ -339,7 +339,7 @@ export function PlayerList({
                     <tbody>
                     {
                         flatten(data?.pages?.map(p => p.matches) || []).map((match, index) =>
-                            <tr key={match.matchId} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                            <tr key={match.matchId} className={`bg-white border-b ${bgColor.default} dark:border-gray-700`}>
                                 <td className="py-4 px-6">
 
                                     <div className="flex flex-row space-x-4 items-center w-[200px]">

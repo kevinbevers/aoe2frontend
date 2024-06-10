@@ -7,6 +7,7 @@ export const textColor = {
 
 export const bgColor = {
     default: 'bg-white dark:bg-blue-900',
+    subtle: 'bg-gray-100 dark:bg-blue-800',
     selected: 'bg-gray-200 dark:bg-blue-800',
     surface: 'bg-gray-100 dark:bg-blue-900',
 };
