@@ -5,6 +5,8 @@ import { orderBy } from 'lodash';
 import { formatAgo } from '../helper/util';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
+import { getUnixTime } from 'date-fns';
+import { useEffect, useState } from 'react';
 
 export function Index() {
     const leaderboard = {
@@ -72,6 +74,22 @@ export function PlayerList({
     leaderboard: ILeaderboardDef;
     search: string;
 }) {
+    const [time, setTime] = useState(getUnixTime(new Date()));
+
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            setTime(getUnixTime(new Date()));
+        }, 60000);
+        return () => {
+            clearInterval(intervalId);
+        };
+    });
+
+    useEffect(() => {
+        refetch();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [time]);
+
     const { data, isFetching, refetch } = useQuery(
         ['leaderboard-players', leaderboard.leaderboardId],
         async (context) => {
@@ -172,7 +190,10 @@ export function PlayerList({
                                 <td className="py-3 px-6 text-lg border-t border-t-gray-700">
                                     {player.games}
                                 </td>
-                                <td className="py-3 px-6 text-lg border-t border-t-gray-700">
+                                <td
+                                    className="py-3 px-6 text-lg border-t border-t-gray-700"
+                                    key={time.toString()}
+                                >
                                     {formatAgo(player.lastMatchTime)}
                                 </td>
                             </tr>
