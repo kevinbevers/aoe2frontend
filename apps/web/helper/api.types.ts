@@ -172,6 +172,7 @@ export interface IProfileLeaderboardResult {
     name?: string
     rank?: number
     rating?: number
+    maxRating?: number
     lastMatchTime?: string
     drops?: number
     losses?: number
