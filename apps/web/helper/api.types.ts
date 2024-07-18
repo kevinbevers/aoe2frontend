@@ -23,6 +23,7 @@ export interface ILeaderboardPlayer {
     rank: number;
     rankCountry: number;
     rating: number;
+    maxRating?: number;
     lastMatchTime: Date;
     streak: number;
     wins: number;
@@ -31,6 +32,7 @@ export interface ILeaderboardPlayer {
     updatedAt: string;
     games: number;
     country: string;
+    countryIcon?: string;
 }
 
 export interface IFetchLeaderboardParams {
@@ -39,7 +41,10 @@ export interface IFetchLeaderboardParams {
     search?: string;
     steamId?: string;
     profileId?: number;
+    profileIds?: string;
     country?: string;
+    extend?: string;
+    perPage?: number
 
     pageParam?: string;
 }
