@@ -335,15 +335,12 @@ export function PlayerList({
                                 status="invited"
                             />
                         ))}
-                        {players.map((player, index) => {
-                            const match =
-                                matches.find((m) =>
-                                    m.players.some(
-                                        (p) => p.profileId === player.profileId
-                                    )
-                                ) ?? qualifiedPlayers.includes(player.profileId)
-                                    ? matches[0]
-                                    : undefined;
+                        {players.map((player) => {
+                            const match = matches.find((m) =>
+                                m.players.some(
+                                    (p) => p.profileId === player.profileId
+                                )
+                            );
 
                             const isQualified = qualifiedPlayers.includes(
                                 player.profileId
