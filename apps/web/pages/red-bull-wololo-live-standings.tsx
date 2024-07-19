@@ -5,7 +5,7 @@ import {
     ILeaderboardPlayer,
     ILobbiesMatch,
 } from '../helper/api.types';
-import { isEmpty, orderBy } from 'lodash';
+import { isEmpty, orderBy, shuffle } from 'lodash';
 import { formatAgo } from '../helper/util';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -16,7 +16,7 @@ import {
     faCaretUp,
     faExternalLink,
 } from '@fortawesome/free-solid-svg-icons';
-import { differenceInSeconds, format, formatISO } from 'date-fns';
+import { differenceInSeconds, format, formatISO, getUnixTime } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
 import {
     AoeSpeed,
@@ -24,6 +24,7 @@ import {
     getSpeedFactor,
     initMatchSubscription,
 } from './ongoing';
+import { useTransition, animated, SpringValue } from 'react-spring';
 
 export function Index() {
     const leaderboard = {
@@ -37,25 +38,10 @@ export function Index() {
 
     return (
         <main className="flex flex-row px-12 py-8 gap-12 text-white min-h-screen items-center relative">
-            <div className="absolute bg-[url('/red-bull-wololo-el-reinado-background.jpg')] bg-cover inset-0" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/90 to-black" />
+            <div className="fixed bg-[url('/red-bull-wololo-el-reinado-background.jpg')] bg-cover inset-0" />
+            <div className="fixed inset-0 bg-gradient-to-r from-black/80 via-black/90 to-black" />
             <div className="flex-1 relative">
                 <PlayerList leaderboard={leaderboard} search="" />
-
-                <div className="flex flex-row gap-6 justify-end py-4">
-                    <div className="flex flex-row gap-2 items-center">
-                        <div className="w-6 h-6 bg-[#EAC65E]" />
-                        <p className="text-lg uppercase font-semibold inline-block pt-1">
-                            Invited
-                        </p>
-                    </div>
-                    <div className="flex flex-row gap-2 items-center">
-                        <div className="w-6 h-6 bg-[#D00E4D]" />
-                        <p className="text-lg uppercase font-semibold inline-block pt-1">
-                            In Qualified Position
-                        </p>
-                    </div>
-                </div>
             </div>
 
             <div className="relative w-[473px] flex flex-col gap-4">
@@ -89,13 +75,17 @@ export function PlayerList({
         'desc' | 'asc'
     ]);
     const [matches, setMatches] = useState<ILobbiesMatch[]>([]);
+    const [events, setEvents] = useState<
+        Array<{ match: ILobbiesMatch; event: 'added' | 'removed' }>
+    >([]);
     const [connected, setConnected] = useState(false);
+    const [screenTime, refreshScreen] = useState(getUnixTime(new Date()));
     const ref = useRef(null);
 
     useEffect(() => {
         const intervalId = setInterval(() => {
-            refetch();
-        }, 60000);
+            refreshScreen(getUnixTime(new Date()));
+        }, 5000);
         return () => {
             clearInterval(intervalId);
         };
@@ -119,12 +109,34 @@ export function PlayerList({
                         )
                     );
                 },
+                onMatchAdded: (match: ILobbiesMatch) => {
+                    if (match.leaderboardId === leaderboard.leaderboardId) {
+                        setEvents((prev) => [
+                            ...prev.filter(
+                                (e) => e.match.matchId !== match.matchId
+                            ),
+                            { event: 'added', match },
+                        ]);
+                    }
+                },
+                onMatchRemoved: (match: ILobbiesMatch) => {
+                    if (match.leaderboardId === leaderboard.leaderboardId) {
+                        setEvents((prev) => [
+                            ...prev.filter(
+                                (e) => e.match.matchId !== match.matchId
+                            ),
+                            { event: 'removed', match },
+                        ]);
+
+                        refetch();
+                    }
+                },
             },
             profileIds
         );
     };
 
-    const { data, isFetching, refetch } = useQuery(
+    const { data, isFetching, refetch, isLoading } = useQuery(
         ['leaderboard-players', leaderboard.leaderboardId],
         async (context) => {
             const leaderboardData = await fetchLeaderboard({
@@ -144,31 +156,12 @@ export function PlayerList({
         }
     );
 
-    const { data: invited, isFetching: isInvitedFetching } = useQuery(
-        ['leaderboard-players-invited', leaderboard.leaderboardId],
-        async (context) => {
-            const leaderboardData = await fetchLeaderboard({
-                ...context,
-                leaderboardId: context.queryKey[1] as number,
-                profileIds: '196240,197388',
-                extend: 'max_rating,verified,players.country_icon',
-            });
-
-            setTime(new Date());
-
-            return leaderboardData;
-        },
-        {
-            staleTime: Infinity,
-            cacheTime: Infinity,
-        }
-    );
+    const invitedPlayerIds = [196240, 197388];
 
     const playerNames = Object.fromEntries(
         data?.players.map((p) => [p.profileId, p.name]) ?? []
     );
     const allProfileIds = data?.players.map((p) => p.profileId);
-    const invitedPlayerIds = invited?.players.map((p) => p.profileId);
 
     useEffect(() => {
         let socket = null;
@@ -186,26 +179,36 @@ export function PlayerList({
     const qualifiedPlayers = sortedPlayerIds?.slice(0, 4);
     const players = orderBy(data?.players, ...sort)?.slice(0, 25);
 
+    const transitions = useTransition(
+        players.map((data, i) => ({ ...data, y: i * 64 })),
+        {
+            from: { position: 'absolute', opacity: 0 } as {
+                opacity: number;
+                position: React.CSSProperties['position'];
+            },
+            leave: { height: 0, opacity: 0 },
+            enter: ({ y }) => ({ y, opacity: 1 }),
+            update: ({ y }) => ({ y }),
+            key: (item) => item?.name,
+        }
+    );
+
     useEffect(() => {
-        if (!isFetching && isEmpty(initialRankings) && sortedPlayerIds) {
+        if (!isLoading && isEmpty(initialRankings) && sortedPlayerIds) {
             setInitialRankings(
                 Object.fromEntries(
                     sortedPlayerIds.map((pid, index) => [pid, index + 1])
                 )
             );
         }
-    }, [isFetching]);
-
-    useEffect(() => {
-        if (!isFetching && ref.current) {
-            ref.current.scrollTop = !isInvitedFetching ? 128 : 0;
-        }
-    }, [isFetching, isInvitedFetching]);
+    }, [isLoading]);
 
     return (
         <div>
             <div className="pb-2 mb-8 border-b-2 border-[#EAC65E] flex flex-row justify-between items-center">
-                <h2 className="text-5xl uppercase font-bold">Current Top 10</h2>
+                <h2 className="text-5xl uppercase font-bold">
+                    Current Top Players
+                </h2>
 
                 <div className="flex gap-2">
                     <time dateTime={formatISO(time)}>
@@ -227,7 +230,7 @@ export function PlayerList({
                     {isFetching ? 'Loading...' : 'Unable to fetch players'}
                 </p>
             ) : (
-                <table className={`w-full text-sm text-left`}>
+                <table className={`w-full text-sm text-left relative z-40`}>
                     <thead className={`text-lg uppercase block`}>
                         <tr className="flex">
                             <th
@@ -306,6 +309,12 @@ export function PlayerList({
                             </th>
                             <th
                                 scope="col"
+                                className="py-2 px-6 w-64 whitespace-nowrap block"
+                            >
+                                Last Match
+                            </th>
+                            <th
+                                scope="col"
                                 className="py-2 px-6 w-24 whitespace-nowrap block"
                             >
                                 Win %
@@ -316,27 +325,13 @@ export function PlayerList({
                             >
                                 Games
                             </th>
-                            <th
-                                scope="col"
-                                className="py-2 px-6 w-64 whitespace-nowrap block"
-                            >
-                                Last Match
-                            </th>
                         </tr>
                     </thead>
                     <tbody
-                        className="h-[640px] block overflow-y-scroll overflow-x-hidden"
+                        className="min-h-[640px] block overflow-y-scroll overflow-x-hidden"
                         ref={ref}
                     >
-                        {invited?.players?.map((player) => (
-                            <PlayerRow
-                                player={player}
-                                key={`invited-${player.profileId}`}
-                                playerNames={playerNames}
-                                status="invited"
-                            />
-                        ))}
-                        {players.map((player) => {
+                        {transitions((style, player, { key }, index) => {
                             const match = matches.find((m) =>
                                 m.players.some(
                                     (p) => p.profileId === player.profileId
@@ -349,6 +344,18 @@ export function PlayerList({
 
                             return (
                                 <PlayerRow
+                                    style={{
+                                        ...style,
+                                        zIndex: 100 - (index + 1),
+                                        height:
+                                            index === players.length - 1
+                                                ? 204
+                                                : 64,
+                                        paddingBottom:
+                                            index === players.length - 1
+                                                ? 140
+                                                : 0,
+                                    }}
                                     initialRank={
                                         initialRankings[player.profileId]
                                     }
@@ -358,7 +365,7 @@ export function PlayerList({
                                         ) + 1
                                     }
                                     player={player}
-                                    key={player.profileId}
+                                    key={key}
                                     playerNames={playerNames}
                                     match={match}
                                     status={
@@ -376,6 +383,125 @@ export function PlayerList({
                     </tbody>
                 </table>
             )}
+
+            <div className="flex fixed inset-0 top-auto bg-black z-50 px-8 py-4 gap-8 justify-between items-center">
+                <div className="flex flex-row gap-6 justify-end py-4">
+                    <div className="flex flex-row gap-2 items-center">
+                        <div className="w-6 h-6 bg-[#EAC65E]" />
+                        <p className="text-lg uppercase font-semibold inline-block pt-1 whitespace-nowrap">
+                            Invited
+                        </p>
+                    </div>
+                    <div className="flex flex-row gap-2 items-center">
+                        <div className="w-6 h-6 bg-[#D00E4D]" />
+                        <p className="text-lg uppercase font-semibold inline-block pt-1 whitespace-nowrap">
+                            In Qualified Position
+                        </p>
+                    </div>
+                </div>
+
+                {events && events.length > 0 && (
+                    <div className="flex-1">
+                        <p className="text-lg">Activity</p>
+                        <div className="flex gap-2 flex-wrap h-20 overflow-hidden">
+                            {orderBy(
+                                events,
+                                ({ event, match }) =>
+                                    event === 'added'
+                                        ? match.started
+                                        : match.finished,
+                                'desc'
+                            ).map(({ event, match }) => (
+                                <div
+                                    className="flex flex-col bg-blue-800 px-2 pt-2 pb-1 rounded h-20 justify-between min-w-[180px] relative"
+                                    key={`${event}-${match.matchId}`}
+                                >
+                                    <div className="flex gap-1 self-center">
+                                        <img
+                                            src={match.players[0]?.civImageUrl}
+                                            className="w-5 h-5"
+                                        />
+                                        <span className="whitespace-nowrap">
+                                            <b>
+                                                {playerNames[
+                                                    match.players[0]?.profileId
+                                                ] ?? match.players[0]?.name}
+                                            </b>{' '}
+                                            vs{' '}
+                                            <b>
+                                                {playerNames[
+                                                    match.players[1]?.profileId
+                                                ] ?? match.players[1]?.name}
+                                            </b>
+                                        </span>
+                                        <img
+                                            src={match.players[1]?.civImageUrl}
+                                            className="w-5 h-5"
+                                        />
+                                    </div>
+                                    {event === 'added' ? (
+                                        <div className="flex gap-2 justify-between">
+                                            <b className="text-[#EAC65E]">
+                                                LIVE
+                                            </b>
+
+                                            <time
+                                                dateTime={formatISO(
+                                                    match.started
+                                                )}
+                                            >
+                                                {formatDuration(
+                                                    differenceInSeconds(
+                                                        match.finished ||
+                                                            new Date(),
+                                                        match.started
+                                                    ) *
+                                                        getSpeedFactor(
+                                                            match.speed as AoeSpeed
+                                                        )
+                                                )}
+                                            </time>
+                                        </div>
+                                    ) : (
+                                        <p className="whitespace-nowrap">
+                                            Game ended
+                                        </p>
+                                    )}
+                                    <div className="flex justify-between items-center">
+                                        <time
+                                            className="whitespace-nowrap text-xs"
+                                            dateTime={formatISO(
+                                                event === 'added'
+                                                    ? match.started
+                                                    : match.finished
+                                            )}
+                                        >
+                                            {formatAgo(
+                                                event === 'added'
+                                                    ? match.started
+                                                    : match.finished
+                                            )}
+                                        </time>
+
+                                        {event === 'added' && (
+                                            <a
+                                                href={`aoe2de://1/${match.matchId}`}
+                                                target="_blank"
+                                                className="text-[#EAC65E]"
+                                                rel="noreferrer"
+                                            >
+                                                <FontAwesomeIcon
+                                                    icon={faExternalLink}
+                                                />
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
@@ -387,6 +513,7 @@ const PlayerRow = ({
     initialRank,
     rank,
     status = 'none',
+    style,
 }: {
     player: ILeaderboardPlayer;
     playerNames: Record<string, string>;
@@ -394,6 +521,10 @@ const PlayerRow = ({
     rank?: number;
     match?: ILobbiesMatch;
     status?: 'invited' | 'qualified' | 'none';
+    style?: {
+        position: SpringValue<React.CSSProperties['position']>;
+        opacity: SpringValue<number>;
+    } & Omit<React.CSSProperties, 'position' | 'opacity'>;
 }) => {
     const opponent = match?.players.find(
         (p) => p.profileId !== player.profileId
@@ -406,7 +537,7 @@ const PlayerRow = ({
     };
 
     return (
-        <tr key={player.profileId} className="h-16 flex">
+        <animated.tr key={player.profileId} className="flex" style={style}>
             <Cell className={`w-20 border-l-4 ${statusClasses[status]}`}>
                 {rank && (
                     <div className="flex gap-2 items-center">
@@ -437,10 +568,6 @@ const PlayerRow = ({
             </Cell>
             <Cell className="font-bold w-48">{player.maxRating}</Cell>
             <Cell className="w-48">{player.rating}</Cell>
-            <Cell className="w-24">
-                {((player.wins / player.games) * 100).toFixed(0)}%
-            </Cell>
-            <Cell className="w-24">{player.games}</Cell>
             <Cell className="w-64 group py-2">
                 {match ? (
                     <div className="relative cursor-pointer">
@@ -450,7 +577,7 @@ const PlayerRow = ({
                             <br />
                             <p className="text-sm">vs {opponentName}</p>
                         </div>
-                        <div className="absolute top-12 left-1/2 -translate-x-1/2 mx-auto scale-0 bg-blue-800 rounded-lg border-gray-800 px-3 py-2 group-hover:scale-100 z-10 flex flex-row w-72 gap-3 items-center text-sm shadow-2xl">
+                        <div className="absolute top-12 left-1/2 -translate-x-1/2 mx-auto scale-0 bg-blue-800 rounded-lg border-gray-800 px-3 py-2 group-hover:scale-100 z-20 flex flex-row w-80 gap-3 items-center text-sm shadow-2xl">
                             <div className="h-0 w-0 border-x-8 border-x-transparent border-b-[8px] border-b-blue-800 absolute -top-2 mx-auto left-0 right-0"></div>
                             <img
                                 src={match.mapImageUrl}
@@ -498,7 +625,7 @@ const PlayerRow = ({
                                     className="text-[#EAC65E]"
                                     rel="noreferrer"
                                 >
-                                    <span className="underline">Spectacte</span>{' '}
+                                    <span className="underline">Spectate</span>{' '}
                                     <FontAwesomeIcon icon={faExternalLink} />
                                 </a>
                             </div>
@@ -508,7 +635,11 @@ const PlayerRow = ({
                     formatAgo(player.lastMatchTime)
                 )}
             </Cell>
-        </tr>
+            <Cell className="w-24">
+                {((player.wins / player.games) * 100).toFixed(0)}%
+            </Cell>
+            <Cell className="w-24">{player.games}</Cell>
+        </animated.tr>
     );
 };
 

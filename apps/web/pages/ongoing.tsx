@@ -5,7 +5,7 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faChevronDown, faChevronRight, faCrown, faSkull} from "@fortawesome/free-solid-svg-icons";
 import {ILobbiesMatch, IMatchesMatch, IPlayerNew} from "../helper/api.types";
 import {dateReviver, formatAgo} from "../helper/util";
-import {orderBy} from "lodash";
+import {cloneDeep, orderBy} from "lodash";
 import Image from 'next/image'
 
 import {ICloseEvent, w3cwebsocket} from "websocket";
@@ -20,6 +20,9 @@ interface IConnectionHandler {
     onOpen?: () => void;
     onMatches?: (_matches: any[]) => void;
     onClose?: (event: ICloseEvent) => void;
+    onMatchAdded?: (match: any) => void;
+    onMatchRemoved?: (match: any) => void;
+    onMatchUpdated?: (match: any) => void;
 }
 
 function initConnection(handler: IConnectionHandler, followingIds?: number[]): Promise<w3cwebsocket> {
@@ -83,11 +86,14 @@ export function initMatchSubscription(handler: IConnectionHandler, followingIds?
                     switch (event.type) {
                         case 'matchAdded':
                             matches.push(event.data);
+                            handler.onMatchAdded?.(event.data);
                             break;
                         case 'matchUpdated':
                             Object.assign(match, event.data);
+                            handler.onMatchUpdated?.(match);
                             break;
                         case 'matchRemoved':
+                            handler.onMatchRemoved?.(cloneDeep({...match, finished: new Date()}));
                             matches.splice(matches.indexOf(match), 1);
                             break;
                     }
