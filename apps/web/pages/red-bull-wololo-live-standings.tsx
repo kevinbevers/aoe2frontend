@@ -128,9 +128,64 @@ export function PlayerList({
                             { event: 'removed', match },
                         ]);
 
-                        setTimeout(() => {
+                        const profileIds = match.players.map(
+                            (p) => p.profileId
+                        );
+
+                        setTimeout(async () => {
+                            const { matches } = await fetchMatches({
+                                leaderboardIds:
+                                    leaderboard.leaderboardId as unknown as number[],
+                                profileIds: profileIds.join(
+                                    ','
+                                ) as unknown as number[],
+                            });
+
+                            setEvents((prev) =>
+                                prev.map((e) => {
+                                    if (
+                                        e.event === 'removed' &&
+                                        matches
+                                            .map((m) => m.matchId)
+                                            .includes(e.match.matchId)
+                                    ) {
+                                        const newMatchPlayers = matches
+                                            .find(
+                                                (m) =>
+                                                    m.matchId ===
+                                                    e.match.matchId
+                                            )
+                                            ?.teams.flatMap((t) => t.players);
+                                        return {
+                                            ...e,
+                                            match: {
+                                                ...e.match,
+                                                players: e.match.players.map(
+                                                    (x) => {
+                                                        const newP =
+                                                            newMatchPlayers.find(
+                                                                (p) =>
+                                                                    x.profileId ===
+                                                                    p.profileId
+                                                            );
+                                                        return {
+                                                            ...x,
+                                                            rating: newP.rating,
+                                                            ratingDiff:
+                                                                newP.ratingDiff,
+                                                        };
+                                                    }
+                                                ),
+                                            },
+                                        };
+                                    } else {
+                                        return e;
+                                    }
+                                })
+                            );
+
                             refetch();
-                        }, 1000);
+                        }, 15000);
                     }
                 },
             },
@@ -148,50 +203,29 @@ export function PlayerList({
                 perPage: 25,
             });
 
-            const profileIds = orderBy(
-                events.filter((e) => e.event === 'removed'),
-                ({ match }) => match.finished,
-                'desc'
-            )
-                .flatMap((e) => e.match.players.map((p) => p.profileId))
-                .slice(0, 4);
+            const matchPlayers = uniqBy(
+                events
+                    ?.flatMap(({ match }) => match.players)
+                    .filter((p) => p.rating && p.ratingDiff),
+                'profileId'
+            );
 
-            let leaderboardPlayers = leaderboardData.players;
-
-            if (profileIds && profileIds.length > 0) {
-                const { matches } = await fetchMatches({
-                    ...context,
-                    leaderboardIds: context.queryKey[1] as unknown as number[],
-                    profileIds: profileIds.join(',') as unknown as number[],
-                });
-
-                const matchPlayers = uniqBy(
-                    matches
-                        ?.flatMap((match) =>
-                            match.teams.flatMap((team) => team.players)
-                        )
-                        .filter((p) => p.rating && p.ratingDiff),
-                    'profileId'
+            const leaderboardPlayers = leaderboardData.players.map((p) => {
+                const player = matchPlayers.find(
+                    (x) => x.profileId === p.profileId
                 );
 
-                leaderboardPlayers = leaderboardData.players.map((p) => {
-                    const player = matchPlayers.find(
-                        (x) => x.profileId === p.profileId
-                    );
-
-                    if (player) {
-                        const rating = player.rating + player.ratingDiff;
-                        return {
-                            ...p,
-                            rating,
-                            maxRating:
-                                rating > p.maxRating ? rating : p.maxRating,
-                        };
-                    } else {
-                        return p;
-                    }
-                });
-            }
+                if (player) {
+                    const rating = player.rating + player.ratingDiff;
+                    return {
+                        ...p,
+                        rating,
+                        maxRating: rating > p.maxRating ? rating : p.maxRating,
+                    };
+                } else {
+                    return p;
+                }
+            });
 
             setTime(new Date());
 
@@ -458,93 +492,114 @@ export function PlayerList({
                                         ? match.started
                                         : match.finished,
                                 'desc'
-                            ).map(({ event, match }) => (
-                                <div
-                                    className="flex flex-col bg-blue-800 px-2 pt-2 pb-1 rounded h-20 justify-between min-w-[180px] relative"
-                                    key={`${event}-${match.matchId}`}
-                                >
-                                    <div className="flex gap-1 self-center">
-                                        <img
-                                            src={match.players[0]?.civImageUrl}
-                                            className="w-5 h-5"
-                                        />
-                                        <span className="whitespace-nowrap">
-                                            <b>
-                                                {playerNames[
-                                                    match.players[0]?.profileId
-                                                ] ?? match.players[0]?.name}
-                                            </b>{' '}
-                                            vs{' '}
-                                            <b>
-                                                {playerNames[
-                                                    match.players[1]?.profileId
-                                                ] ?? match.players[1]?.name}
-                                            </b>
-                                        </span>
-                                        <img
-                                            src={match.players[1]?.civImageUrl}
-                                            className="w-5 h-5"
-                                        />
-                                    </div>
-                                    {event === 'added' ? (
-                                        <div className="flex gap-2 justify-between">
-                                            <b className="text-[#EAC65E]">
-                                                LIVE
-                                            </b>
+                            ).map(({ event, match }) => {
+                                const winner = match.players.find(
+                                    (p) => p.ratingDiff && p.ratingDiff > 0
+                                );
+                                return (
+                                    <div
+                                        className="flex flex-col bg-blue-800 px-2 pt-2 pb-1 rounded h-20 justify-between min-w-[180px] relative"
+                                        key={`${event}-${match.matchId}`}
+                                    >
+                                        <div className="flex gap-1 self-center">
+                                            <img
+                                                src={
+                                                    match.players[0]
+                                                        ?.civImageUrl
+                                                }
+                                                className="w-5 h-5"
+                                            />
+                                            <span className="whitespace-nowrap">
+                                                <b>
+                                                    {playerNames[
+                                                        match.players[0]
+                                                            ?.profileId
+                                                    ] ?? match.players[0]?.name}
+                                                </b>{' '}
+                                                vs{' '}
+                                                <b>
+                                                    {playerNames[
+                                                        match.players[1]
+                                                            ?.profileId
+                                                    ] ?? match.players[1]?.name}
+                                                </b>
+                                            </span>
+                                            <img
+                                                src={
+                                                    match.players[1]
+                                                        ?.civImageUrl
+                                                }
+                                                className="w-5 h-5"
+                                            />
+                                        </div>
+                                        {event === 'added' ? (
+                                            <div className="flex gap-2 justify-between">
+                                                <b className="text-[#EAC65E]">
+                                                    LIVE
+                                                </b>
 
+                                                <time
+                                                    dateTime={formatISO(
+                                                        match.started
+                                                    )}
+                                                >
+                                                    {formatDuration(
+                                                        differenceInSeconds(
+                                                            match.finished ||
+                                                                new Date(),
+                                                            match.started
+                                                        ) *
+                                                            getSpeedFactor(
+                                                                match.speed as AoeSpeed
+                                                            )
+                                                    )}
+                                                </time>
+                                            </div>
+                                        ) : (
+                                            <p className="whitespace-nowrap">
+                                                {winner
+                                                    ? `${
+                                                          playerNames[
+                                                              winner.profileId
+                                                          ] ?? winner.name
+                                                      } gained ${
+                                                          winner.ratingDiff
+                                                      } points`
+                                                    : 'Game ended'}
+                                            </p>
+                                        )}
+                                        <div className="flex justify-between items-center">
                                             <time
+                                                className="whitespace-nowrap text-xs"
                                                 dateTime={formatISO(
-                                                    match.started
+                                                    event === 'added'
+                                                        ? match.started
+                                                        : match.finished
                                                 )}
                                             >
-                                                {formatDuration(
-                                                    differenceInSeconds(
-                                                        match.finished ||
-                                                            new Date(),
-                                                        match.started
-                                                    ) *
-                                                        getSpeedFactor(
-                                                            match.speed as AoeSpeed
-                                                        )
+                                                {formatAgo(
+                                                    event === 'added'
+                                                        ? match.started
+                                                        : match.finished
                                                 )}
                                             </time>
-                                        </div>
-                                    ) : (
-                                        <p className="whitespace-nowrap">
-                                            Game ended
-                                        </p>
-                                    )}
-                                    <div className="flex justify-between items-center">
-                                        <time
-                                            className="whitespace-nowrap text-xs"
-                                            dateTime={formatISO(
-                                                event === 'added'
-                                                    ? match.started
-                                                    : match.finished
-                                            )}
-                                        >
-                                            {formatAgo(
-                                                event === 'added'
-                                                    ? match.started
-                                                    : match.finished
-                                            )}
-                                        </time>
 
-                                        {event === 'added' && (
-                                            <a
-                                                href={`aoe2de://1/${match.matchId}`}
-                                                target="_blank"
-                                                className="text-[#EAC65E]"
-                                                rel="noreferrer"
-                                            >
-                                                <FontAwesomeIcon
-                                                    icon={faExternalLink}
-                                                />
-                                            </a>
-                                        )}
+                                            {event === 'added' && (
+                                                <a
+                                                    href={`aoe2de://1/${match.matchId}`}
+                                                    target="_blank"
+                                                    className="text-[#EAC65E]"
+                                                    rel="noreferrer"
+                                                >
+                                                    <FontAwesomeIcon
+                                                        icon={faExternalLink}
+                                                    />
+                                                </a>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 )}
