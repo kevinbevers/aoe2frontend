@@ -61,7 +61,7 @@ export function Index() {
             <div className="relative w-[473px] flex flex-col gap-4">
                 <img
                     src="/red-bull-wololo-el-reinado.png"
-                    className="h-[635px] w-[473px]"
+                    className="h-[506px] w-[384px]"
                 />
                 <p className="text-lg pb-8 inline-block text-center">
                     On the 28th of July, the four players with the
@@ -441,14 +441,16 @@ const PlayerRow = ({
                 {((player.wins / player.games) * 100).toFixed(0)}%
             </Cell>
             <Cell className="w-24">{player.games}</Cell>
-            <Cell className="w-64 group">
+            <Cell className="w-64 group py-2">
                 {match ? (
                     <div className="relative cursor-pointer">
-                        <div className="flex items-center gap-2">
+                        <div className="text-base">
                             <b className="text-[#EAC65E]">LIVE</b> on{' '}
                             {match.mapName}
+                            <br />
+                            <p className="text-sm">vs {opponentName}</p>
                         </div>
-                        <div className="absolute top-8 left-1/2 -translate-x-1/2 mx-auto scale-0 bg-blue-800 rounded-lg border-gray-800 px-3 py-2 group-hover:scale-100 z-10 flex flex-row w-72 gap-3 items-center text-sm shadow-2xl">
+                        <div className="absolute top-12 left-1/2 -translate-x-1/2 mx-auto scale-0 bg-blue-800 rounded-lg border-gray-800 px-3 py-2 group-hover:scale-100 z-10 flex flex-row w-72 gap-3 items-center text-sm shadow-2xl">
                             <div className="h-0 w-0 border-x-8 border-x-transparent border-b-[8px] border-b-blue-800 absolute -top-2 mx-auto left-0 right-0"></div>
                             <img
                                 src={match.mapImageUrl}
