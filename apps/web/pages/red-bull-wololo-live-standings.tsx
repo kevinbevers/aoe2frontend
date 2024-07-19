@@ -1,16 +1,28 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchLeaderboard } from '../helper/api';
-import { ILeaderboardDef, ILeaderboardPlayer } from '../helper/api.types';
-import { orderBy } from 'lodash';
+import {
+    ILeaderboardDef,
+    ILeaderboardPlayer,
+    ILobbiesMatch,
+} from '../helper/api.types';
+import { isEmpty, orderBy } from 'lodash';
 import { formatAgo } from '../helper/util';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faAngleDown,
     faAngleUp,
     faArrowsRotate,
+    faCaretDown,
+    faCaretUp,
 } from '@fortawesome/free-solid-svg-icons';
-import { format, formatISO, getUnixTime } from 'date-fns';
-import { useEffect, useState } from 'react';
+import { differenceInSeconds, format, formatISO } from 'date-fns';
+import { useEffect, useRef, useState } from 'react';
+import {
+    AoeSpeed,
+    formatDuration,
+    getSpeedFactor,
+    initMatchSubscription,
+} from './ongoing';
 
 export function Index() {
     const leaderboard = {
@@ -29,11 +41,19 @@ export function Index() {
             <div className="flex-1 relative">
                 <PlayerList leaderboard={leaderboard} search="" />
 
-                <div className="flex flex-row gap-2 items-center justify-end py-4">
-                    <div className="w-6 h-6 bg-[#D00E4D]"></div>
-                    <p className="text-lg uppercase font-semibold">
-                        In Qualified Position
-                    </p>
+                <div className="flex flex-row gap-6 justify-end py-4">
+                    <div className="flex flex-row gap-2 items-center">
+                        <div className="w-6 h-6 bg-[#EAC65E]" />
+                        <p className="text-lg uppercase font-semibold inline-block pt-1">
+                            Invited
+                        </p>
+                    </div>
+                    <div className="flex flex-row gap-2 items-center">
+                        <div className="w-6 h-6 bg-[#D00E4D]" />
+                        <p className="text-lg uppercase font-semibold inline-block pt-1">
+                            In Qualified Position
+                        </p>
+                    </div>
                 </div>
             </div>
 
@@ -60,10 +80,16 @@ export function PlayerList({
     search: string;
 }) {
     const [time, setTime] = useState(new Date());
+    const [initialRankings, setInitialRankings] = useState<
+        Record<string, number>
+    >({});
     const [sort, setSort] = useState(['maxRating', 'desc'] as [
         keyof ILeaderboardPlayer,
         'desc' | 'asc'
     ]);
+    const [matches, setMatches] = useState<ILobbiesMatch[]>([]);
+    const [connected, setConnected] = useState(false);
+    const ref = useRef(null);
 
     useEffect(() => {
         const intervalId = setInterval(() => {
@@ -74,6 +100,28 @@ export function PlayerList({
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    const connect = async (profileIds?: number[]) => {
+        return await initMatchSubscription(
+            {
+                onOpen: () => {
+                    setConnected(true);
+                },
+                onClose: () => {
+                    setConnected(false);
+                },
+                onMatches: (games: ILobbiesMatch[]) => {
+                    setMatches(
+                        games.filter(
+                            (game) =>
+                                game.leaderboardId === leaderboard.leaderboardId
+                        )
+                    );
+                },
+            },
+            profileIds
+        );
+    };
 
     const { data, isFetching, refetch } = useQuery(
         ['leaderboard-players', leaderboard.leaderboardId],
@@ -95,10 +143,63 @@ export function PlayerList({
         }
     );
 
-    const qualifiedPlayers = orderBy(data?.players, 'maxRating', 'desc')
-        ?.slice(0, 4)
+    const { data: invited, isFetching: isInvitedFetching } = useQuery(
+        ['leaderboard-players-invited', leaderboard.leaderboardId],
+        async (context) => {
+            const leaderboardData = await fetchLeaderboard({
+                ...context,
+                leaderboardId: context.queryKey[1] as number,
+                profileIds: '196240,197388',
+                extend: 'max_rating,verified,players.country_icon',
+            });
+
+            setTime(new Date());
+
+            return leaderboardData;
+        },
+        {
+            staleTime: Infinity,
+            cacheTime: Infinity,
+        }
+    );
+
+    const playerNames = Object.fromEntries(
+        data?.players.map((p) => [p.profileId, p.name]) ?? []
+    );
+    const allProfileIds = data?.players.map((p) => p.profileId);
+    const invitedPlayerIds = invited?.players.map((p) => p.profileId);
+
+    useEffect(() => {
+        let socket = null;
+        if (!isFetching && allProfileIds && allProfileIds.length > 0) {
+            connect(allProfileIds).then((s) => (socket = s));
+        }
+        return () => {
+            socket?.close();
+        };
+    }, [isFetching]);
+
+    const sortedPlayerIds = orderBy(data?.players, 'maxRating', 'desc')
+        ?.slice(0, 25)
         .map((p) => p.profileId);
-    const players = orderBy(data?.players, ...sort)?.slice(0, 10);
+    const qualifiedPlayers = sortedPlayerIds?.slice(0, 4);
+    const players = orderBy(data?.players, ...sort)?.slice(0, 25);
+
+    useEffect(() => {
+        if (!isFetching && isEmpty(initialRankings) && sortedPlayerIds) {
+            setInitialRankings(
+                Object.fromEntries(
+                    sortedPlayerIds.map((pid, index) => [pid, index + 1])
+                )
+            );
+        }
+    }, [isFetching]);
+
+    useEffect(() => {
+        if (!isFetching && ref.current) {
+            ref.current.scrollTop = !isInvitedFetching ? 128 : 0;
+        }
+    }, [isFetching, isInvitedFetching]);
 
     return (
         <div>
@@ -126,17 +227,23 @@ export function PlayerList({
                 </p>
             ) : (
                 <table className={`w-full text-sm text-left`}>
-                    <thead className={`text-lg uppercase`}>
-                        <tr>
+                    <thead className={`text-lg uppercase block`}>
+                        <tr className="flex">
                             <th
                                 scope="col"
-                                className="py-2 px-6 w-72 whitespace-nowrap"
+                                className="py-2 px-6 w-20 whitespace-nowrap block border-l-4 border-transparent"
+                            >
+                                Rank
+                            </th>
+                            <th
+                                scope="col"
+                                className="py-2 px-6 w-72 whitespace-nowrap block"
                             >
                                 Player
                             </th>
                             <th
                                 scope="col"
-                                className="py-2 px-6 w-56 whitespace-nowrap"
+                                className="py-2 px-6 w-48 whitespace-nowrap block"
                             >
                                 <button
                                     type="button"
@@ -167,7 +274,7 @@ export function PlayerList({
                             </th>
                             <th
                                 scope="col"
-                                className="py-2 px-6 w-56 whitespace-nowrap"
+                                className="py-2 px-6 w-48 whitespace-nowrap block"
                             >
                                 <button
                                     type="button"
@@ -198,73 +305,216 @@ export function PlayerList({
                             </th>
                             <th
                                 scope="col"
-                                className="py-2 px-6 whitespace-nowrap"
+                                className="py-2 px-6 w-24 whitespace-nowrap block"
                             >
-                                Wins
+                                Win %
                             </th>
                             <th
                                 scope="col"
-                                className="py-2 px-6 whitespace-nowrap"
+                                className="py-2 px-6 w-24 whitespace-nowrap block"
                             >
                                 Games
                             </th>
                             <th
                                 scope="col"
-                                className="py-2 px-6 whitespace-nowrap"
+                                className="py-2 px-6 w-64 whitespace-nowrap block"
                             >
                                 Last Match
                             </th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {players.map((player, index) => (
-                            <tr key={player.profileId} className="">
-                                <th
-                                    scope="row"
-                                    className={`py-3 px-6 font-bold text-lg border-t border-l-4 border-t-gray-700 w-72 whitespace-nowrap ${
-                                        qualifiedPlayers.includes(
-                                            player.profileId
-                                        )
-                                            ? 'border-[#D00E4D]'
-                                            : 'border-transparent'
-                                    }`}
-                                >
-                                    <span className="text-2xl mr-2 align-middle">
-                                        {player.countryIcon}
-                                    </span>
-                                    <span className="text-ellipsis overflow-hidden">
-                                        {player.name}
-                                    </span>
-                                </th>
-                                <td className="py-3 px-6 text-lg font-bold border-t border-t-gray-700 w-56 whitespace-nowrap">
-                                    {player.maxRating}
-                                </td>
-                                <td className="py-3 px-6 text-lg border-t border-t-gray-700 w-56 whitespace-nowrap">
-                                    {player.rating}
-                                </td>
-                                <td className="py-3 px-6 text-lg border-t border-t-gray-700 whitespace-nowrap">
-                                    {(
-                                        (player.wins / player.games) *
-                                        100
-                                    ).toFixed(0)}
-                                    %
-                                </td>
-                                <td className="py-3 px-6 text-lg border-t border-t-gray-700 whitespace-nowrap">
-                                    {player.games}
-                                </td>
-                                <td
-                                    className="py-3 px-6 text-lg border-t border-t-gray-700 whitespace-nowrap"
-                                    key={getUnixTime(time).toString()}
-                                >
-                                    {formatAgo(player.lastMatchTime)}
-                                </td>
-                            </tr>
+                    <tbody
+                        className="h-[640px] block overflow-y-scroll overflow-x-hidden"
+                        ref={ref}
+                    >
+                        {invited?.players?.map((player) => (
+                            <PlayerRow
+                                player={player}
+                                key={`invited-${player.profileId}`}
+                                playerNames={playerNames}
+                                status="invited"
+                            />
                         ))}
+                        {players.map((player, index) => {
+                            const match =
+                                matches.find((m) =>
+                                    m.players.some(
+                                        (p) => p.profileId === player.profileId
+                                    )
+                                ) ?? qualifiedPlayers.includes(player.profileId)
+                                    ? matches[0]
+                                    : undefined;
+
+                            const isQualified = qualifiedPlayers.includes(
+                                player.profileId
+                            );
+
+                            return (
+                                <PlayerRow
+                                    initialRank={
+                                        initialRankings[player.profileId]
+                                    }
+                                    rank={
+                                        sortedPlayerIds.findIndex(
+                                            (pid) => player.profileId === pid
+                                        ) + 1
+                                    }
+                                    player={player}
+                                    key={player.profileId}
+                                    playerNames={playerNames}
+                                    match={match}
+                                    status={
+                                        isQualified
+                                            ? 'qualified'
+                                            : invitedPlayerIds?.includes(
+                                                  player.profileId
+                                              )
+                                            ? 'invited'
+                                            : 'none'
+                                    }
+                                />
+                            );
+                        })}
                     </tbody>
                 </table>
             )}
         </div>
     );
 }
+
+const PlayerRow = ({
+    player,
+    match,
+    playerNames,
+    initialRank,
+    rank,
+    status = 'none',
+}: {
+    player: ILeaderboardPlayer;
+    playerNames: Record<string, string>;
+    initialRank?: number;
+    rank?: number;
+    match?: ILobbiesMatch;
+    status?: 'invited' | 'qualified' | 'none';
+}) => {
+    const opponent = match?.players.find(
+        (p) => p.profileId !== player.profileId
+    );
+    const opponentName = playerNames[opponent?.profileId] ?? opponent?.name;
+    const statusClasses: Record<'invited' | 'qualified' | 'none', string> = {
+        invited: 'border-[#EAC65E]',
+        qualified: 'border-[#D00E4D]',
+        none: 'border-transparent',
+    };
+
+    return (
+        <tr key={player.profileId} className="h-16 flex">
+            <Cell className={`w-20 border-l-4 ${statusClasses[status]}`}>
+                {rank && (
+                    <div className="flex gap-2 items-center">
+                        #{rank}
+                        {initialRank && initialRank !== rank && (
+                            <FontAwesomeIcon
+                                icon={
+                                    initialRank > rank ? faCaretUp : faCaretDown
+                                }
+                                color={
+                                    initialRank > rank ? '#22C55E' : '#EF4444'
+                                }
+                                className={
+                                    initialRank > rank ? '-mt-0.5' : '-mt-1.5'
+                                }
+                            />
+                        )}
+                    </div>
+                )}
+            </Cell>
+            <Cell className="font-bold w-72">
+                <span className="text-2xl mr-2 align-middle">
+                    {player.countryIcon}
+                </span>
+                <span className="text-ellipsis overflow-hidden">
+                    {player.name}
+                </span>
+            </Cell>
+            <Cell className="font-bold w-48">{player.maxRating}</Cell>
+            <Cell className="w-48">{player.rating}</Cell>
+            <Cell className="w-24">
+                {((player.wins / player.games) * 100).toFixed(0)}%
+            </Cell>
+            <Cell className="w-24">{player.games}</Cell>
+            <Cell className="w-64">
+                {match ? (
+                    <div className="group relative">
+                        <div className="flex items-center gap-2 cursor-pointer">
+                            <b>LIVE</b> vs {opponentName}
+                        </div>
+                        <div className="absolute top-8 left-1/2 -translate-x-1/2 mx-auto scale-0 bg-blue-800 rounded-lg border-gray-800 px-3 py-2 group-hover:scale-100 z-10 flex flex-row w-72 gap-3 items-center text-sm shadow-2xl">
+                            <div className="h-0 w-0 border-x-8 border-x-transparent border-b-[8px] border-b-blue-800 absolute -top-2 mx-auto left-0 right-0"></div>
+                            <img
+                                src={match.mapImageUrl}
+                                className="w-16 h-16"
+                            />
+                            <div className="flex-1 flex flex-col gap-2">
+                                <div className="flex justify-between">
+                                    <b className="text-base font-semibold">
+                                        {match.mapName}
+                                    </b>
+                                    <time dateTime={formatISO(match.started)}>
+                                        {formatDuration(
+                                            differenceInSeconds(
+                                                match.finished || new Date(),
+                                                match.started
+                                            ) *
+                                                getSpeedFactor(
+                                                    match.speed as AoeSpeed
+                                                )
+                                        )}
+                                    </time>
+                                </div>
+
+                                {match.players.map((p) => (
+                                    <div
+                                        className="flex justify-between"
+                                        key={p.profileId}
+                                    >
+                                        <div className="flex gap-1.5">
+                                            <img
+                                                src={p.civImageUrl}
+                                                className="w-5 h-5"
+                                            />
+                                            <span>
+                                                {playerNames[p.profileId] ??
+                                                    p.name}
+                                            </span>
+                                        </div>
+
+                                        {p.rating}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    formatAgo(player.lastMatchTime)
+                )}
+            </Cell>
+        </tr>
+    );
+};
+
+const Cell = ({
+    className,
+    children,
+}: {
+    className?: string;
+    children: React.ReactNode;
+}) => (
+    <td
+        className={`py-3 px-6 text-lg border-t border-t-gray-700 whitespace-nowrap flex items-center ${className}`}
+    >
+        {children}
+    </td>
+);
 
 export default Index;
