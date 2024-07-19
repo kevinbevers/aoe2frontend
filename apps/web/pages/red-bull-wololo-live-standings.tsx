@@ -14,6 +14,7 @@ import {
     faArrowsRotate,
     faCaretDown,
     faCaretUp,
+    faExternalLink,
 } from '@fortawesome/free-solid-svg-icons';
 import { differenceInSeconds, format, formatISO } from 'date-fns';
 import { useEffect, useRef, useState } from 'react';
@@ -440,11 +441,12 @@ const PlayerRow = ({
                 {((player.wins / player.games) * 100).toFixed(0)}%
             </Cell>
             <Cell className="w-24">{player.games}</Cell>
-            <Cell className="w-64">
+            <Cell className="w-64 group">
                 {match ? (
-                    <div className="group relative">
-                        <div className="flex items-center gap-2 cursor-pointer">
-                            <b>LIVE</b> vs {opponentName}
+                    <div className="relative cursor-pointer">
+                        <div className="flex items-center gap-2">
+                            <b className="text-[#EAC65E]">LIVE</b> on{' '}
+                            {match.mapName}
                         </div>
                         <div className="absolute top-8 left-1/2 -translate-x-1/2 mx-auto scale-0 bg-blue-800 rounded-lg border-gray-800 px-3 py-2 group-hover:scale-100 z-10 flex flex-row w-72 gap-3 items-center text-sm shadow-2xl">
                             <div className="h-0 w-0 border-x-8 border-x-transparent border-b-[8px] border-b-blue-800 absolute -top-2 mx-auto left-0 right-0"></div>
@@ -469,7 +471,6 @@ const PlayerRow = ({
                                         )}
                                     </time>
                                 </div>
-
                                 {match.players.map((p) => (
                                     <div
                                         className="flex justify-between"
@@ -489,6 +490,15 @@ const PlayerRow = ({
                                         {p.rating}
                                     </div>
                                 ))}
+                                <a
+                                    href={`aoe2de://1/${match.matchId}`}
+                                    target="_blank"
+                                    className="text-[#EAC65E]"
+                                    rel="noreferrer"
+                                >
+                                    <span className="underline">Spectacte</span>{' '}
+                                    <FontAwesomeIcon icon={faExternalLink} />
+                                </a>
                             </div>
                         </div>
                     </div>
