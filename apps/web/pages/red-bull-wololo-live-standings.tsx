@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchLeaderboard } from '../helper/api';
+import { fetchLeaderboard, fetchMatches } from '../helper/api';
 import {
     ILeaderboardDef,
     ILeaderboardPlayer,
     ILobbiesMatch,
 } from '../helper/api.types';
-import { isEmpty, orderBy, shuffle } from 'lodash';
+import { isEmpty, orderBy, uniqBy } from 'lodash';
 import { formatAgo } from '../helper/util';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -128,7 +128,9 @@ export function PlayerList({
                             { event: 'removed', match },
                         ]);
 
-                        refetch();
+                        setTimeout(() => {
+                            refetch();
+                        }, 1000);
                     }
                 },
             },
@@ -146,9 +148,54 @@ export function PlayerList({
                 perPage: 25,
             });
 
+            const profileIds = orderBy(
+                events.filter((e) => e.event === 'removed'),
+                ({ match }) => match.finished,
+                'desc'
+            )
+                .flatMap((e) => e.match.players.map((p) => p.profileId))
+                .slice(0, 4);
+
+            let leaderboardPlayers = leaderboardData.players;
+
+            if (profileIds && profileIds.length > 0) {
+                const { matches } = await fetchMatches({
+                    ...context,
+                    leaderboardIds: context.queryKey[1] as unknown as number[],
+                    profileIds: profileIds.join(',') as unknown as number[],
+                });
+
+                const matchPlayers = uniqBy(
+                    matches
+                        ?.flatMap((match) =>
+                            match.teams.flatMap((team) => team.players)
+                        )
+                        .filter((p) => p.rating && p.ratingDiff),
+                    'profileId'
+                );
+
+                leaderboardPlayers = leaderboardData.players.map((p) => {
+                    const player = matchPlayers.find(
+                        (x) => x.profileId === p.profileId
+                    );
+
+                    if (player) {
+                        const rating = player.rating + player.ratingDiff;
+                        return {
+                            ...p,
+                            rating,
+                            maxRating:
+                                rating > p.maxRating ? rating : p.maxRating,
+                        };
+                    } else {
+                        return p;
+                    }
+                });
+            }
+
             setTime(new Date());
 
-            return leaderboardData;
+            return { ...leaderboardData, players: leaderboardPlayers };
         },
         {
             staleTime: Infinity,
@@ -537,7 +584,12 @@ const PlayerRow = ({
     };
 
     return (
-        <animated.tr key={player.profileId} className="flex" style={style}>
+        <animated.tr
+            key={player.profileId}
+            className="flex"
+            style={style}
+            data-id={player.profileId}
+        >
             <Cell className={`w-20 border-l-4 ${statusClasses[status]}`}>
                 {rank && (
                     <div className="flex gap-2 items-center">
