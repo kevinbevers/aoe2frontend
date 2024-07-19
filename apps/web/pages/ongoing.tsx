@@ -22,11 +22,11 @@ interface IConnectionHandler {
     onClose?: (event: ICloseEvent) => void;
 }
 
-function initConnection(handler: IConnectionHandler): Promise<w3cwebsocket> {
+function initConnection(handler: IConnectionHandler, followingIds?: number[]): Promise<w3cwebsocket> {
     return new Promise(resolve => {
         // const client = new w3cwebsocket(`wss://aoe2backend-socket.deno.dev/listen/ongoing-matches`);
         // const client = new w3cwebsocket(`ws://localhost:8000/listen/ongoing-matches`);
-        const client = new w3cwebsocket(`wss://socket.${config.host}/listen?handler=ongoing-matches`);
+        const client = new w3cwebsocket(`wss://socket.${config.host}/listen?handler=ongoing-matches${followingIds ? `&profile_ids=${followingIds.join(',')}` : ''}`);
 
         client.onopen = () => {
             console.log('WebSocket client connected');
@@ -69,7 +69,7 @@ interface IMatchRemovedEvent {
 
 type IMatchEvent = IMatchAddedEvent | IMatchUpdatedEvent | IMatchRemovedEvent;
 
-export function initMatchSubscription(handler: IConnectionHandler): Promise<w3cwebsocket> {
+export function initMatchSubscription(handler: IConnectionHandler, followingIds?: number[]): Promise<w3cwebsocket> {
     let _matches: any[] = [];
 
     return initConnection({
@@ -94,7 +94,7 @@ export function initMatchSubscription(handler: IConnectionHandler): Promise<w3cw
                 }
             })
             handler.onMatches?.(_matches);
-        }});
+        }}, followingIds);
 }
 
 
@@ -155,7 +155,7 @@ export function getSpeedFactor(speed: AoeSpeed) {
     return speedFactorDict[speed];
 }
 
-const formatDuration = (durationInSeconds: number) => {
+export const formatDuration = (durationInSeconds: number) => {
     if (!durationInSeconds) return '00:00'; // divide by 0 protection
     const minutes = Math.abs(Math.floor(durationInSeconds / 60) % 60);
     const hours = Math.abs(Math.floor(durationInSeconds / 60 / 60));

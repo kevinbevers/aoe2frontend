@@ -14,7 +14,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const config = getConfig();
 
-function CustomApp({Component, pageProps}: AppProps) {
+function CustomApp({Component, pageProps, router}: AppProps) {
     const [queryClient] = useState(() => new QueryClient({
         defaultOptions: {
             queries: {
@@ -22,6 +22,43 @@ function CustomApp({Component, pageProps}: AppProps) {
             },
         },
     }));
+
+    if (router.pathname.startsWith('/red-bull-wololo-live-standings')) {
+        return (
+            <>
+                <Head>
+                    <title>{config.app.name}</title>
+                    <link
+                        rel="icon"
+                        type="image/png"
+                        href={`/web/${config.game}/favicon-16x16.png?v=200706014637`}
+                        sizes="16x16"
+                    />
+                    <link
+                        rel="icon"
+                        type="image/png"
+                        href={`/web/${config.game}/favicon-32x32.png?v=200706014637`}
+                        sizes="32x32"
+                    />
+                    <link
+                        rel="icon"
+                        type="image/png"
+                        href={`/web/${config.game}/favicon-96x96.png?v=200706014637`}
+                        sizes="96x96"
+                    />
+                </Head>
+
+                <QueryClientProvider client={queryClient}>
+                    <Hydrate state={(pageProps as any).dehydratedState}>
+                        <NoSSRWrapper>
+                            <Component {...pageProps} />
+                        </NoSSRWrapper>
+                    </Hydrate>
+                    {/*<ReactQueryDevtools />*/}
+                </QueryClientProvider>
+            </>
+        );
+    }
 
     return (
         <>
