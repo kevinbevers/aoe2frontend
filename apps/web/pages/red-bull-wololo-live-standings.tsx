@@ -76,90 +76,129 @@ export function Index() {
     } as unknown as ILeaderboardDef;
 
     return (
-        <main className="flex flex-row px-12 py-8 gap-12 text-white min-h-screen items-center relative">
+        <main
+            className="flex flex-row px-12 py-8 gap-12 text-white min-h-screen relative"
+            style={{ colorScheme: 'dark' }}
+        >
             <div className="fixed bg-[url('/red-bull-wololo-el-reinado-background.jpg')] bg-cover inset-0" />
             <div className="fixed inset-0 bg-gradient-to-r from-black/80 via-black/90 to-black" />
             <div className="flex-1 relative">
                 <PlayerList leaderboard={leaderboard} search="" />
             </div>
 
-            <div className="relative w-[473px] flex flex-col gap-4">
-                <img
-                    src="/red-bull-wololo-el-reinado.png"
-                    className="h-[506px] w-[384px]"
-                />
-                <p className="text-lg inline-block text-center">
-                    On the 28th of July, the four players with the
-                    highest-achieved rating will be directly invited to the main
-                    event at Castillo de Almodóvar del Río in Spain.
-                </p>
+            <div className="relative w-[384px] flex flex-col justify-between">
+                <div className="flex flex-col gap-4">
+                    <img
+                        src="/red-bull-wololo-el-reinado.png"
+                        className="h-[506px] w-[384px]"
+                    />
+                    <p className="text-lg inline-block text-center">
+                        On the 28th of July, the four players with the
+                        highest-achieved rating will be directly invited to the
+                        main event at Castillo de Almodóvar del Río in Spain.
+                    </p>
 
-                <Countdown
-                    date={endDate}
-                    renderer={({
-                        days,
-                        hours,
-                        minutes,
-                        seconds,
-                        completed,
-                    }) => {
-                        return (
-                            <div className="bg-blue-800 px-4 py-2 rounded-lg flex flex-col items-center justify-center">
-                                {completed ? (
-                                    <p className="text-2xl font-bold">
-                                        Qualification has Ended
-                                    </p>
-                                ) : (
-                                    <>
-                                        <div className="font-bold">
-                                            Qualification ends in...
-                                        </div>
-                                        <div className="flex justify-center text-center">
-                                            {(days > 0
-                                                ? [
-                                                      ['DAY', days],
-                                                      ['HRS', hours],
-                                                      ['MIN', minutes],
-                                                      ['SEC', seconds],
-                                                  ]
-                                                : [
-                                                      ['HRS', hours],
-                                                      ['MIN', minutes],
-                                                      ['SEC', seconds],
-                                                  ]
-                                            ).map(([label, seg], index) => (
-                                                <>
-                                                    {index !== 0 && (
-                                                        <div className="w-8 text-2xl font-bold">
-                                                            :
+                    <Countdown
+                        date={endDate}
+                        renderer={({
+                            days,
+                            hours,
+                            minutes,
+                            seconds,
+                            completed,
+                        }) => {
+                            return (
+                                <div className="bg-blue-800 px-4 py-2 rounded-lg flex flex-col items-center justify-center">
+                                    {completed ? (
+                                        <p className="text-2xl font-bold">
+                                            Qualification has Ended
+                                        </p>
+                                    ) : (
+                                        <>
+                                            <div className="font-bold">
+                                                Qualification ends in...
+                                            </div>
+                                            <div className="flex justify-center text-center">
+                                                {(days > 0
+                                                    ? [
+                                                          ['DAY', days],
+                                                          ['HRS', hours],
+                                                          ['MIN', minutes],
+                                                          ['SEC', seconds],
+                                                      ]
+                                                    : [
+                                                          ['HRS', hours],
+                                                          ['MIN', minutes],
+                                                          ['SEC', seconds],
+                                                      ]
+                                                ).map(([label, seg], index) => (
+                                                    <>
+                                                        {index !== 0 && (
+                                                            <div className="w-8 text-2xl font-bold">
+                                                                :
+                                                            </div>
+                                                        )}
+                                                        <div>
+                                                            <div className="text-2xl font-bold leading-tight">
+                                                                {seg
+                                                                    .toString()
+                                                                    .padStart(
+                                                                        2,
+                                                                        '0'
+                                                                    )}
+                                                            </div>
+                                                            <div className="text-sm">
+                                                                {label}
+                                                            </div>
                                                         </div>
-                                                    )}
-                                                    <div>
-                                                        <div className="text-2xl font-bold leading-tight">
-                                                            {seg
-                                                                .toString()
-                                                                .padStart(
-                                                                    2,
-                                                                    '0'
-                                                                )}
-                                                        </div>
-                                                        <div className="text-sm">
-                                                            {label}
-                                                        </div>
-                                                    </div>
-                                                </>
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        );
-                    }}
-                />
+                                                    </>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            );
+                        }}
+                    />
+
+                    <div className="flex flex-row gap-6 justify-end py-4">
+                        <div className="flex flex-row gap-2 items-center">
+                            <div className="w-6 h-6 bg-[#EAC65E]" />
+                            <p className="text-lg uppercase font-semibold inline-block pt-1 whitespace-nowrap">
+                                Invited
+                            </p>
+                        </div>
+                        <div className="flex flex-row gap-2 items-center">
+                            <div className="w-6 h-6 bg-[#D00E4D]" />
+                            <p className="text-lg uppercase font-semibold inline-block pt-1 whitespace-nowrap">
+                                In Qualified Position
+                            </p>
+                        </div>
+                    </div>
+                </div>
 
                 <div>
                     <p className="text-center mb-4 italic">
-                        For bug reports or suggestions, see Discord
+                        Inspired by{' '}
+                        <a
+                            className="underline"
+                            href="https://www.twitch.tv/dave_aoe"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            Dave_AoE
+                        </a>
+                        &apos;s{' '}
+                        <a
+                            href="/dave-aoe-redbull-graphic.jpg"
+                            target="_blank"
+                            className="underline"
+                        >
+                            amazing graphic
+                        </a>
+                    </p>
+                    <p className="text-center mb-4 italic">
+                        For bug reports or suggestions, join the Discord below
                     </p>
                     <div className="flex gap-2 justify-center mb-4">
                         <a
@@ -455,118 +494,121 @@ export function PlayerList({
                     </button>
                 </div>
             </div>
-            {!players || players.length === 0 ? (
-                <p className="text-lg text-center">
-                    {isFetching ? 'Loading...' : 'Unable to fetch players'}
-                </p>
-            ) : (
-                <table className={`w-full text-sm text-left relative z-20`}>
-                    <thead className={`text-lg uppercase block`}>
-                        <tr className="flex">
-                            <th
-                                scope="col"
-                                className="py-2 px-6 w-20 whitespace-nowrap block border-l-4 border-transparent"
+            <table className={`w-full text-sm text-left relative z-20`}>
+                <thead className={`text-lg uppercase block`}>
+                    <tr className="flex">
+                        <th
+                            scope="col"
+                            className="py-2 px-6 w-20 whitespace-nowrap block border-l-4 border-transparent"
+                        >
+                            Rank
+                        </th>
+                        <th
+                            scope="col"
+                            className="py-2 px-6 w-72 whitespace-nowrap block"
+                        >
+                            Player
+                        </th>
+                        <th
+                            scope="col"
+                            className="py-2 px-6 w-48 whitespace-nowrap block"
+                        >
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setSort([
+                                        'maxRating',
+                                        sort[1] === 'asc' ||
+                                        sort[0] !== 'maxRating'
+                                            ? 'desc'
+                                            : 'asc',
+                                    ])
+                                }
                             >
-                                Rank
-                            </th>
-                            <th
-                                scope="col"
-                                className="py-2 px-6 w-72 whitespace-nowrap block"
-                            >
-                                Player
-                            </th>
-                            <th
-                                scope="col"
-                                className="py-2 px-6 w-48 whitespace-nowrap block"
-                            >
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setSort([
-                                            'maxRating',
-                                            sort[1] === 'asc' ||
-                                            sort[0] !== 'maxRating'
-                                                ? 'desc'
-                                                : 'asc',
-                                        ])
+                                Highest Rating{' '}
+                                <FontAwesomeIcon
+                                    icon={
+                                        sort[1] === 'asc'
+                                            ? faAngleUp
+                                            : faAngleDown
                                     }
-                                >
-                                    Highest Rating{' '}
-                                    <FontAwesomeIcon
-                                        icon={
-                                            sort[1] === 'asc'
-                                                ? faAngleUp
-                                                : faAngleDown
-                                        }
-                                        color={
-                                            sort[0] === 'maxRating'
-                                                ? 'white'
-                                                : 'transparent'
-                                        }
-                                    />
-                                </button>
-                            </th>
-                            <th
-                                scope="col"
-                                className="py-2 px-6 w-48 whitespace-nowrap block"
-                            >
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setSort([
-                                            'rating',
-                                            sort[1] === 'asc' ||
-                                            sort[0] !== 'rating'
-                                                ? 'desc'
-                                                : 'asc',
-                                        ])
+                                    color={
+                                        sort[0] === 'maxRating'
+                                            ? 'white'
+                                            : 'transparent'
                                     }
-                                >
-                                    Current Rating{' '}
-                                    <FontAwesomeIcon
-                                        icon={
-                                            sort[1] === 'asc'
-                                                ? faAngleUp
-                                                : faAngleDown
-                                        }
-                                        color={
-                                            sort[0] === 'rating'
-                                                ? 'white'
-                                                : 'transparent'
-                                        }
-                                    />
-                                </button>
-                            </th>
-                            <th
-                                scope="col"
-                                className="py-2 px-6 w-64 whitespace-nowrap block"
+                                />
+                            </button>
+                        </th>
+                        <th
+                            scope="col"
+                            className="py-2 px-6 w-48 whitespace-nowrap block"
+                        >
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setSort([
+                                        'rating',
+                                        sort[1] === 'asc' ||
+                                        sort[0] !== 'rating'
+                                            ? 'desc'
+                                            : 'asc',
+                                    ])
+                                }
                             >
-                                Last Match
-                            </th>
-                            <th
-                                scope="col"
-                                className="py-2 px-6 w-24 whitespace-nowrap block"
-                            >
-                                Win %
-                            </th>
-                            <th
-                                scope="col"
-                                className="py-2 px-6 w-24 whitespace-nowrap block"
-                            >
-                                Games
-                            </th>
+                                Current Rating{' '}
+                                <FontAwesomeIcon
+                                    icon={
+                                        sort[1] === 'asc'
+                                            ? faAngleUp
+                                            : faAngleDown
+                                    }
+                                    color={
+                                        sort[0] === 'rating'
+                                            ? 'white'
+                                            : 'transparent'
+                                    }
+                                />
+                            </button>
+                        </th>
+                        <th
+                            scope="col"
+                            className="py-2 px-6 w-64 whitespace-nowrap block"
+                        >
+                            Last Match
+                        </th>
+                        <th
+                            scope="col"
+                            className="py-2 px-6 w-24 whitespace-nowrap block"
+                        >
+                            Win %
+                        </th>
+                        <th
+                            scope="col"
+                            className="py-2 px-6 w-24 whitespace-nowrap block"
+                        >
+                            Games
+                        </th>
+                    </tr>
+                </thead>
+                <tbody className="block min-h-[1600px]" ref={ref}>
+                    {!players || players.length === 0 ? (
+                        <tr className="flex h-96 items-center justify-center">
+                            <FontAwesomeIcon spin icon={faSpinner} size="2xl" />
                         </tr>
-                    </thead>
-                    <tbody
-                        className="min-h-[640px] block overflow-y-scroll overflow-x-hidden"
-                        ref={ref}
-                    >
-                        {transitions((style, player, { key }, index) => {
-                            const match = matches.find((m) =>
-                                m.players.some(
-                                    (p) => p.profileId === player.profileId
-                                )
-                            );
+                    ) : (
+                        transitions((style, player, { key }, index) => {
+                            const match =
+                                events.find((e) =>
+                                    e.match.players.some(
+                                        (p) => p.profileId === player.profileId
+                                    )
+                                )?.match ??
+                                matches.find((m) =>
+                                    m.players.some(
+                                        (p) => p.profileId === player.profileId
+                                    )
+                                );
 
                             const isQualified = qualifiedPlayers.includes(
                                 player.profileId
@@ -577,14 +619,7 @@ export function PlayerList({
                                     style={{
                                         ...style,
                                         zIndex: 100 - (index + 1),
-                                        height:
-                                            index === players.length - 1
-                                                ? 204
-                                                : 64,
-                                        paddingBottom:
-                                            index === players.length - 1
-                                                ? 140
-                                                : 0,
+                                        height: 64,
                                     }}
                                     initialRank={
                                         initialRankings[player.profileId]
@@ -609,152 +644,10 @@ export function PlayerList({
                                     }
                                 />
                             );
-                        })}
-                    </tbody>
-                </table>
-            )}
-
-            <div className="flex fixed inset-0 top-auto bg-black z-30 px-8 py-4 gap-8 justify-between items-center">
-                <div className="flex flex-row gap-6 justify-end py-4">
-                    <div className="flex flex-row gap-2 items-center">
-                        <div className="w-6 h-6 bg-[#EAC65E]" />
-                        <p className="text-lg uppercase font-semibold inline-block pt-1 whitespace-nowrap">
-                            Invited
-                        </p>
-                    </div>
-                    <div className="flex flex-row gap-2 items-center">
-                        <div className="w-6 h-6 bg-[#D00E4D]" />
-                        <p className="text-lg uppercase font-semibold inline-block pt-1 whitespace-nowrap">
-                            In Qualified Position
-                        </p>
-                    </div>
-                </div>
-
-                {events && events.length > 0 && (
-                    <div className="flex-1">
-                        <p className="text-lg">Activity</p>
-                        <div className="flex gap-2 flex-wrap h-20 overflow-hidden">
-                            {orderBy(
-                                events,
-                                ({ event, match }) =>
-                                    event === 'added'
-                                        ? match.started
-                                        : match.finished,
-                                'desc'
-                            ).map(({ event, match }) => {
-                                const winner = match.players.find(
-                                    (p) => p.ratingDiff && p.ratingDiff > 0
-                                );
-                                return (
-                                    <div
-                                        className="flex flex-col bg-blue-800 px-2 pt-2 pb-1 rounded h-20 justify-between min-w-[200px] relative"
-                                        key={`${event}-${match.matchId}`}
-                                    >
-                                        <div className="flex gap-1 self-center">
-                                            <img
-                                                src={
-                                                    match.players[0]
-                                                        ?.civImageUrl
-                                                }
-                                                className="w-5 h-5"
-                                            />
-                                            <span className="whitespace-nowrap">
-                                                <b>
-                                                    {playerNames[
-                                                        match.players[0]
-                                                            ?.profileId
-                                                    ]?.name ??
-                                                        match.players[0]?.name}
-                                                </b>{' '}
-                                                vs{' '}
-                                                <b>
-                                                    {playerNames[
-                                                        match.players[1]
-                                                            ?.profileId
-                                                    ]?.name ??
-                                                        match.players[1]?.name}
-                                                </b>
-                                            </span>
-                                            <img
-                                                src={
-                                                    match.players[1]
-                                                        ?.civImageUrl
-                                                }
-                                                className="w-5 h-5"
-                                            />
-                                        </div>
-                                        {event === 'added' ? (
-                                            <div className="flex gap-2 justify-between">
-                                                <b className="text-[#EAC65E]">
-                                                    LIVE
-                                                </b>
-
-                                                <time
-                                                    dateTime={formatISO(
-                                                        match.started
-                                                    )}
-                                                >
-                                                    {formatDuration(
-                                                        differenceInSeconds(
-                                                            match.finished ||
-                                                                new Date(),
-                                                            match.started
-                                                        ) *
-                                                            getSpeedFactor(
-                                                                match.speed as AoeSpeed
-                                                            )
-                                                    )}
-                                                </time>
-                                            </div>
-                                        ) : (
-                                            <p className="whitespace-nowrap">
-                                                {winner
-                                                    ? `${
-                                                          playerNames[
-                                                              winner.profileId
-                                                          ]?.name ?? winner.name
-                                                      } gained ${
-                                                          winner.ratingDiff
-                                                      } points`
-                                                    : 'Game ended'}
-                                            </p>
-                                        )}
-                                        <div className="flex justify-between items-center">
-                                            <time
-                                                className="whitespace-nowrap text-xs"
-                                                dateTime={formatISO(
-                                                    event === 'added'
-                                                        ? match.started
-                                                        : match.finished
-                                                )}
-                                            >
-                                                {formatAgo(
-                                                    event === 'added'
-                                                        ? match.started
-                                                        : match.finished
-                                                )}
-                                            </time>
-
-                                            {event === 'added' && (
-                                                <a
-                                                    href={`aoe2de://1/${match.matchId}`}
-                                                    target="_blank"
-                                                    className="text-[#EAC65E]"
-                                                    rel="noreferrer"
-                                                >
-                                                    <FontAwesomeIcon
-                                                        icon={faExternalLink}
-                                                    />
-                                                </a>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-            </div>
+                        })
+                    )}
+                </tbody>
+            </table>
         </div>
     );
 }
@@ -789,6 +682,8 @@ const PlayerRow = ({
         qualified: 'border-[#D00E4D]',
         none: 'border-transparent',
     };
+    const { won, ratingDiff } =
+        match?.players.find((p) => p.profileId === player.profileId) ?? {};
 
     const [isOpen, setIsOpen] = useState(false);
 
@@ -840,14 +735,30 @@ const PlayerRow = ({
             <Cell className="w-48">{player.rating}</Cell>
             <Cell className="w-64 group py-2">
                 {match ? (
-                    <div className="relative cursor-pointer">
-                        <div className="text-base">
-                            <b className="text-[#EAC65E]">LIVE</b> on{' '}
-                            {match.mapName}
-                            <br />
-                            <p className="text-sm">vs {opponentName}</p>
-                        </div>
-                        <div className="absolute top-12 left-1/2 -translate-x-1/2 mx-auto scale-0 bg-blue-800 rounded-lg border-gray-800 px-3 py-2 group-hover:scale-100 z-10 flex flex-row w-80 gap-3 items-center text-sm shadow-2xl transition-transform">
+                    <div className="relative cursor-pointer max-w-full">
+                        {match.finished ? (
+                            <div className="text-base">
+                                {formatAgo(match.finished)}
+                                <p className="text-sm whitespace-nowrap overflow-hidden text-ellipsis">
+                                    {ratingDiff
+                                        ? `${
+                                              ratingDiff > 0 ? 'Gained' : 'Lost'
+                                          } ${Math.abs(ratingDiff)} points ${
+                                              ratingDiff > 0 ? 'from' : 'to'
+                                          } `
+                                        : 'vs '}
+                                    {opponentName}
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="text-base">
+                                <b className="text-[#EAC65E]">LIVE</b> on{' '}
+                                {match.mapName}
+                                <br />
+                                <p className="text-sm">vs {opponentName}</p>
+                            </div>
+                        )}
+                        <div className="absolute top-12 left-1/2 -translate-x-1/2 mx-auto scale-0 bg-blue-800 rounded-lg border-gray-800 px-3 py-2 group-hover:scale-100 z-10 flex flex-row w-96 gap-3 items-center text-sm shadow-2xl transition-transform">
                             <div className="h-0 w-0 border-x-8 border-x-transparent border-b-[8px] border-b-blue-800 absolute -top-2 mx-auto left-0 right-0"></div>
                             <MatchCard
                                 match={match}
@@ -928,7 +839,7 @@ const MatchCard = ({
                         className="flex gap-2 items-center"
                     >
                         {match.finished
-                            ? formatAgo(match.started)
+                            ? formatAgo(match.finished)
                             : formatDuration(
                                   differenceInSeconds(
                                       match.finished || new Date(),
@@ -1140,7 +1051,10 @@ const PlayerModal = ({
                         <div className="fixed inset-0 bg-black/25" />
                     </Transition.Child>
 
-                    <div className="fixed inset-0 overflow-y-auto">
+                    <div
+                        className="fixed inset-0 overflow-y-auto"
+                        style={{ colorScheme: 'dark' }}
+                    >
                         <div className="flex min-h-full items-center justify-center p-4 text-center">
                             <Transition.Child
                                 as={Fragment}
@@ -1176,7 +1090,7 @@ const PlayerModal = ({
                                             <h3 className="text-lg font-bold -mb-2">
                                                 Statistics
                                             </h3>
-                                            <div className="flex flex-wrap gap-3">
+                                            <div className="flex flex-wrap gap-3 justify-center">
                                                 {[
                                                     {
                                                         name: 'Rank',
@@ -1307,7 +1221,7 @@ const PlayerModal = ({
                                                 </VictoryChart>
                                             )}
                                         </div>
-                                        <div className="flex-1 flex flex-col gap-3 h-[460px] overflow-scroll">
+                                        <div className="flex-1 flex flex-col gap-3 h-[500px] overflow-y-scroll">
                                             <h3 className="text-lg font-bold -mb-2">
                                                 Winrates
                                             </h3>
@@ -1408,7 +1322,7 @@ const PlayerModal = ({
                                                 </>
                                             )}
                                         </div>
-                                        <div className="flex-1 flex flex-col gap-3 h-[460px] overflow-scroll">
+                                        <div className="flex-1 flex flex-col gap-3 h-[500px] overflow-y-scroll">
                                             <h3 className="text-lg font-bold -mb-2">
                                                 Recent Games
                                             </h3>
