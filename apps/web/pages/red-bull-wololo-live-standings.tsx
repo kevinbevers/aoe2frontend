@@ -1,12 +1,20 @@
+/* eslint-disable jsx-a11y/alt-text */
+/* eslint-disable @next/next/no-img-element */
 import { useQuery } from '@tanstack/react-query';
-import { fetchLeaderboard, fetchMatches } from '../helper/api';
+import { fetchLeaderboard, fetchMatches, fetchProfile } from '../helper/api';
 import {
     ILeaderboardDef,
     ILeaderboardPlayer,
     ILobbiesMatch,
 } from '../helper/api.types';
-import { isEmpty, orderBy, uniqBy } from 'lodash';
-import { formatAgo } from '../helper/util';
+import { isEmpty, merge, orderBy, uniqBy } from 'lodash';
+import {
+    formatAgo,
+    formatDateShort,
+    formatMonth,
+    formatTime,
+    formatYear,
+} from '../helper/util';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faAngleDown,
@@ -14,10 +22,21 @@ import {
     faArrowsRotate,
     faCaretDown,
     faCaretUp,
+    faCrown,
     faExternalLink,
+    faSkull,
+    faSpinner,
+    faTimes,
 } from '@fortawesome/free-solid-svg-icons';
-import { differenceInSeconds, format, formatISO, getUnixTime } from 'date-fns';
-import { useEffect, useRef, useState } from 'react';
+import {
+    differenceInSeconds,
+    format,
+    formatISO,
+    getUnixTime,
+    isAfter,
+    subWeeks,
+} from 'date-fns';
+import { Fragment, HTMLAttributes, useEffect, useRef, useState } from 'react';
 import {
     AoeSpeed,
     formatDuration,
@@ -25,6 +44,15 @@ import {
     initMatchSubscription,
 } from './ongoing';
 import { useTransition, animated, SpringValue } from 'react-spring';
+import { Dialog, Transition } from '@headlessui/react';
+import {
+    LineSegment,
+    VictoryAxis,
+    VictoryChart,
+    VictoryLine,
+    VictoryScatter,
+    VictoryTheme,
+} from 'victory';
 
 export function Index() {
     const leaderboard = {
@@ -240,7 +268,10 @@ export function PlayerList({
     const invitedPlayerIds = [196240, 197388];
 
     const playerNames = Object.fromEntries(
-        data?.players.map((p) => [p.profileId, p.name]) ?? []
+        data?.players.map((p) => [
+            p.profileId,
+            { name: p.name, icon: p.countryIcon },
+        ]) ?? []
     );
     const allProfileIds = data?.players.map((p) => p.profileId);
 
@@ -311,7 +342,7 @@ export function PlayerList({
                     {isFetching ? 'Loading...' : 'Unable to fetch players'}
                 </p>
             ) : (
-                <table className={`w-full text-sm text-left relative z-40`}>
+                <table className={`w-full text-sm text-left relative z-20`}>
                     <thead className={`text-lg uppercase block`}>
                         <tr className="flex">
                             <th
@@ -465,7 +496,7 @@ export function PlayerList({
                 </table>
             )}
 
-            <div className="flex fixed inset-0 top-auto bg-black z-50 px-8 py-4 gap-8 justify-between items-center">
+            <div className="flex fixed inset-0 top-auto bg-black z-30 px-8 py-4 gap-8 justify-between items-center">
                 <div className="flex flex-row gap-6 justify-end py-4">
                     <div className="flex flex-row gap-2 items-center">
                         <div className="w-6 h-6 bg-[#EAC65E]" />
@@ -498,7 +529,7 @@ export function PlayerList({
                                 );
                                 return (
                                     <div
-                                        className="flex flex-col bg-blue-800 px-2 pt-2 pb-1 rounded h-20 justify-between min-w-[180px] relative"
+                                        className="flex flex-col bg-blue-800 px-2 pt-2 pb-1 rounded h-20 justify-between min-w-[200px] relative"
                                         key={`${event}-${match.matchId}`}
                                     >
                                         <div className="flex gap-1 self-center">
@@ -514,14 +545,16 @@ export function PlayerList({
                                                     {playerNames[
                                                         match.players[0]
                                                             ?.profileId
-                                                    ] ?? match.players[0]?.name}
+                                                    ]?.name ??
+                                                        match.players[0]?.name}
                                                 </b>{' '}
                                                 vs{' '}
                                                 <b>
                                                     {playerNames[
                                                         match.players[1]
                                                             ?.profileId
-                                                    ] ?? match.players[1]?.name}
+                                                    ]?.name ??
+                                                        match.players[1]?.name}
                                                 </b>
                                             </span>
                                             <img
@@ -618,7 +651,7 @@ const PlayerRow = ({
     style,
 }: {
     player: ILeaderboardPlayer;
-    playerNames: Record<string, string>;
+    playerNames: Record<string, { name: string; icon?: string }>;
     initialRank?: number;
     rank?: number;
     match?: ILobbiesMatch;
@@ -631,12 +664,15 @@ const PlayerRow = ({
     const opponent = match?.players.find(
         (p) => p.profileId !== player.profileId
     );
-    const opponentName = playerNames[opponent?.profileId] ?? opponent?.name;
+    const opponentName =
+        playerNames[opponent?.profileId]?.name ?? opponent?.name;
     const statusClasses: Record<'invited' | 'qualified' | 'none', string> = {
         invited: 'border-[#EAC65E]',
         qualified: 'border-[#D00E4D]',
         none: 'border-transparent',
     };
+
+    const [isOpen, setIsOpen] = useState(false);
 
     return (
         <animated.tr
@@ -664,8 +700,17 @@ const PlayerRow = ({
                         )}
                     </div>
                 )}
+                <PlayerModal
+                    playerNames={playerNames}
+                    player={{ ...player, rank }}
+                    onClose={() => setIsOpen(false)}
+                    isVisible={isOpen}
+                />
             </Cell>
-            <Cell className="font-bold w-72">
+            <Cell
+                className="font-bold w-72 cursor-pointer"
+                onClick={() => setIsOpen(true)}
+            >
                 <span className="text-2xl mr-2 align-middle">
                     {player.countryIcon}
                 </span>
@@ -684,58 +729,12 @@ const PlayerRow = ({
                             <br />
                             <p className="text-sm">vs {opponentName}</p>
                         </div>
-                        <div className="absolute top-12 left-1/2 -translate-x-1/2 mx-auto scale-0 bg-blue-800 rounded-lg border-gray-800 px-3 py-2 group-hover:scale-100 z-20 flex flex-row w-80 gap-3 items-center text-sm shadow-2xl">
+                        <div className="absolute top-12 left-1/2 -translate-x-1/2 mx-auto scale-0 bg-blue-800 rounded-lg border-gray-800 px-3 py-2 group-hover:scale-100 z-10 flex flex-row w-80 gap-3 items-center text-sm shadow-2xl transition-transform">
                             <div className="h-0 w-0 border-x-8 border-x-transparent border-b-[8px] border-b-blue-800 absolute -top-2 mx-auto left-0 right-0"></div>
-                            <img
-                                src={match.mapImageUrl}
-                                className="w-16 h-16"
+                            <MatchCard
+                                match={match}
+                                playerNames={playerNames}
                             />
-                            <div className="flex-1 flex flex-col gap-2">
-                                <div className="flex justify-between">
-                                    <b className="text-base font-semibold">
-                                        {match.mapName}
-                                    </b>
-                                    <time dateTime={formatISO(match.started)}>
-                                        {formatDuration(
-                                            differenceInSeconds(
-                                                match.finished || new Date(),
-                                                match.started
-                                            ) *
-                                                getSpeedFactor(
-                                                    match.speed as AoeSpeed
-                                                )
-                                        )}
-                                    </time>
-                                </div>
-                                {match.players.map((p) => (
-                                    <div
-                                        className="flex justify-between"
-                                        key={p.profileId}
-                                    >
-                                        <div className="flex gap-1.5">
-                                            <img
-                                                src={p.civImageUrl}
-                                                className="w-5 h-5"
-                                            />
-                                            <span>
-                                                {playerNames[p.profileId] ??
-                                                    p.name}
-                                            </span>
-                                        </div>
-
-                                        {p.rating}
-                                    </div>
-                                ))}
-                                <a
-                                    href={`aoe2de://1/${match.matchId}`}
-                                    target="_blank"
-                                    className="text-[#EAC65E]"
-                                    rel="noreferrer"
-                                >
-                                    <span className="underline">Spectate</span>{' '}
-                                    <FontAwesomeIcon icon={faExternalLink} />
-                                </a>
-                            </div>
                         </div>
                     </div>
                 ) : (
@@ -753,15 +752,592 @@ const PlayerRow = ({
 const Cell = ({
     className,
     children,
+    ...props
 }: {
     className?: string;
     children: React.ReactNode;
-}) => (
+} & HTMLAttributes<HTMLTableCellElement>) => (
     <td
         className={`py-3 px-6 text-lg border-t border-t-gray-700 whitespace-nowrap flex items-center ${className}`}
+        {...props}
     >
         {children}
     </td>
 );
+
+const MatchCard = ({
+    match,
+    playerNames,
+    userId,
+}: {
+    userId?: number;
+    match: ILobbiesMatch;
+    playerNames: Record<string, { name: string; icon?: string }>;
+}) => {
+    return (
+        <div className="relative flex flex-row gap-3 items-center text-sm w-full">
+            {match.players.some(
+                (p) => p.profileId === userId && p.won === true
+            ) && (
+                <FontAwesomeIcon
+                    icon={faCrown}
+                    color="#f9b806"
+                    className="absolute top-1"
+                />
+            )}
+
+            {match.players.some(
+                (p) => p.profileId === userId && p.won === false
+            ) && <FontAwesomeIcon icon={faSkull} className="absolute top-1" />}
+
+            {!match.finished && (
+                <a
+                    href={`aoe2de://1/${match.matchId}`}
+                    target="_blank"
+                    className="text-[#EAC65E] absolute top-1"
+                    rel="noreferrer"
+                >
+                    <FontAwesomeIcon icon={faExternalLink} />
+                </a>
+            )}
+
+            <img src={match.mapImageUrl} className="w-16 h-16" />
+            <div className="flex-1 flex flex-col gap-1">
+                <div className="flex justify-between">
+                    <b className="text-base font-semibold">{match.mapName}</b>
+                    <time dateTime={formatISO(match.started)}>
+                        {formatDuration(
+                            differenceInSeconds(
+                                match.finished || new Date(),
+                                match.started
+                            ) * getSpeedFactor(match.speed as AoeSpeed)
+                        )}
+                    </time>
+                </div>
+                {match.players.map((p) => (
+                    <div className="flex justify-between" key={p.profileId}>
+                        <div className="flex gap-1.5">
+                            <img src={p.civImageUrl} className="w-5 h-5" />
+                            <span
+                                className={
+                                    p.profileId === userId ? 'font-bold' : ''
+                                }
+                            >
+                                {playerNames[p.profileId]?.name ?? p.name}
+                            </span>
+                        </div>
+
+                        <span className="flex gap-2">
+                            {p.ratingDiff && (
+                                <span
+                                    className={
+                                        p.ratingDiff > 0
+                                            ? 'text-green-500'
+                                            : 'text-red-500'
+                                    }
+                                >
+                                    {signed(p.ratingDiff)}
+                                </span>
+                            )}
+                            {p.rating}
+                        </span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+const formatTick = (tick: any, index: number, ticks: any[]) => {
+    const date = ticks[index] as Date;
+    if (
+        date.getMonth() == 0 &&
+        date.getDate() == 1 &&
+        date.getHours() == 0 &&
+        date.getMinutes() == 0 &&
+        date.getSeconds() == 0
+    ) {
+        return formatYear(date);
+    }
+    if (
+        date.getDate() == 1 &&
+        date.getHours() == 0 &&
+        date.getMinutes() == 0 &&
+        date.getSeconds() == 0
+    ) {
+        return formatMonth(date);
+    }
+    if (
+        date.getHours() == 0 &&
+        date.getMinutes() == 0 &&
+        date.getSeconds() == 0
+    ) {
+        return formatDateShort(date);
+    }
+    return formatTime(ticks[index]);
+};
+
+const PlayerModal = ({
+    player,
+    onClose,
+    isVisible,
+    playerNames,
+}: {
+    player: ILeaderboardPlayer;
+    isVisible: boolean;
+    onClose: () => void;
+    playerNames: Record<string, { name: string; icon?: string }>;
+}) => {
+    const { data, isLoading } = useQuery(
+        ['leaderboard-player', player.profileId],
+        async (context) => {
+            const { matches } = await fetchMatches({
+                leaderboardIds: 'ew_1v1_redbullwololo' as unknown as number[],
+                profileIds: player.profileId as unknown as number[],
+            });
+
+            return matches;
+        },
+        {
+            enabled: isVisible,
+            staleTime: 30 * 1000,
+        }
+    );
+    const { data: profile, isLoading: isProfileLoading } = useQuery(
+        ['leaderboard-player-stats', player.profileId],
+        () =>
+            fetchProfile({
+                profileId: player.profileId,
+                extend: 'stats',
+            }),
+        {
+            enabled: isVisible,
+            cacheTime: Infinity,
+        }
+    );
+
+    let streakText = '';
+    if (player.streak === 1) {
+        streakText = 'Win';
+    } else if (player.streak > 1) {
+        streakText = 'Wins';
+    } else if (player.streak === -1) {
+        streakText = 'Loss';
+    } else {
+        streakText = 'Losses';
+    }
+
+    let ratingHistory = profile?.ratings?.find(
+        (r) => r.leaderboardId === 'ew_1v1_redbullwololo'
+    );
+    const since = subWeeks(new Date(), 1);
+
+    ratingHistory = ratingHistory
+        ? {
+              ...ratingHistory,
+              ratings: ratingHistory.ratings.filter(
+                  (d) => since == null || isAfter(d.date, since)
+              ),
+          }
+        : undefined;
+
+    const themeCustomizations = {
+        axis: {
+            style: {
+                tickLabels: {
+                    fill: 'white',
+                },
+            },
+        },
+    };
+
+    const stats = profile?.stats.find(
+        (s) => s.leaderboardId === 'ew_1v1_redbullwololo'
+    );
+
+    const chartTheme = merge({ ...VictoryTheme.material }, themeCustomizations);
+
+    const tabs = ['Civilizations', 'Maps', 'Opponents'] as const;
+    const [tab, setTab] = useState<typeof tabs[number]>('Civilizations');
+    let tabData: Array<{
+        games: number;
+        wins: number;
+        key: string;
+        imageUrl?: string;
+        name: string;
+        icon?: string;
+    }> = [];
+    if (stats) {
+        switch (tab) {
+            case 'Civilizations':
+                tabData = stats.civ.map((c) => ({
+                    ...c,
+                    key: c.civ,
+                    imageUrl: c.civImageUrl,
+                    name: c.civName,
+                }));
+                break;
+            case 'Maps':
+                tabData = stats.map.map((m) => ({
+                    ...m,
+                    key: m.map,
+                    imageUrl: m.mapImageUrl,
+                    name: m.mapName,
+                }));
+                break;
+            case 'Opponents':
+                tabData = stats.opponents.map((o) => ({
+                    ...o,
+                    key: o.profileId.toString(),
+                    name: playerNames[o.profileId]?.name ?? o.name,
+                    icon: playerNames[o.profileId]?.icon ?? o.countryIcon,
+                }));
+                break;
+            default:
+                tabData = [];
+                break;
+        }
+    }
+
+    return (
+        <>
+            <Transition appear show={isVisible} as={Fragment}>
+                <Dialog as="div" className="relative z-50" onClose={onClose}>
+                    <Transition.Child
+                        as={Fragment}
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                    >
+                        <div className="fixed inset-0 bg-black/25" />
+                    </Transition.Child>
+
+                    <div className="fixed inset-0 overflow-y-auto">
+                        <div className="flex min-h-full items-center justify-center p-4 text-center">
+                            <Transition.Child
+                                as={Fragment}
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 scale-95"
+                                enterTo="opacity-100 scale-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 scale-100"
+                                leaveTo="opacity-0 scale-95"
+                            >
+                                <Dialog.Panel className="w-full max-w-3xl transform overflow-hidden rounded-2xl bg-blue-950 p-6 text-left align-middle shadow-xl transition-all">
+                                    <div className="flex justify-between">
+                                        <Dialog.Title
+                                            as="h2"
+                                            className="text-xl font-semibold"
+                                        >
+                                            <span className="text-3xl mr-2 align-middle">
+                                                {player.countryIcon}
+                                            </span>
+                                            {player.name}
+                                        </Dialog.Title>
+
+                                        <button onClick={onClose}>
+                                            <FontAwesomeIcon
+                                                icon={faTimes}
+                                                size="xl"
+                                            />
+                                        </button>
+                                    </div>
+
+                                    <div className="flex gap-4">
+                                        <div className="flex-1 flex flex-col gap-3 h-96 overflow-scroll">
+                                            <h3 className="text-lg font-bold -mb-2">
+                                                Statistics
+                                            </h3>
+                                            <div className="flex flex-wrap gap-3">
+                                                {[
+                                                    {
+                                                        name: 'Rank',
+                                                        value: `#${player.rank}`,
+                                                        desc: `${
+                                                            player.rank > 4
+                                                                ? `${
+                                                                      player.rank -
+                                                                      4
+                                                                  } Below Qualifying`
+                                                                : 'Qualified Position'
+                                                        }`,
+                                                    },
+                                                    {
+                                                        name: 'Highest Rating',
+                                                        value: player.maxRating,
+                                                        desc: `Current Rating ${player.rating}`,
+                                                    },
+                                                    {
+                                                        name: 'Streak',
+                                                        value: `${player.streak}`,
+                                                        desc: `${Math.abs(
+                                                            player.streak
+                                                        )} ${streakText} in a Row`,
+                                                    },
+                                                    {
+                                                        name: 'Games Played',
+                                                        value: `${player.games}`,
+                                                        desc: `${player.wins} Wins, ${player.losses} Losses`,
+                                                    },
+                                                ].map((stat) => (
+                                                    <div
+                                                        className="bg-blue-800 rounded-lg border border-gray-800 p-2 items-center text-center w-36"
+                                                        key={stat.name}
+                                                    >
+                                                        <div className="stat-title">
+                                                            {stat.name}
+                                                        </div>
+                                                        <div className="text-2xl">
+                                                            {stat.value}
+                                                        </div>
+                                                        <div className="text-xs">
+                                                            {stat.desc}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {isProfileLoading ||
+                                            !ratingHistory ? (
+                                                <FontAwesomeIcon
+                                                    spin={isLoading}
+                                                    icon={faSpinner}
+                                                    size="2xl"
+                                                />
+                                            ) : (
+                                                <>
+                                                    <VictoryChart
+                                                        width={350}
+                                                        height={250}
+                                                        theme={chartTheme}
+                                                        padding={{
+                                                            left: 50,
+                                                            bottom: 30,
+                                                            top: 20,
+                                                            right: 20,
+                                                        }}
+                                                        scale={{ x: 'time' }}
+                                                    >
+                                                        <VictoryAxis
+                                                            crossAxis
+                                                            gridComponent={
+                                                                <LineSegment
+                                                                    active={
+                                                                        false
+                                                                    }
+                                                                    style={{
+                                                                        stroke: 'transparent',
+                                                                    }}
+                                                                />
+                                                            }
+                                                            tickFormat={
+                                                                formatTick
+                                                            }
+                                                            tickCount={7}
+                                                        />
+                                                        <VictoryAxis
+                                                            dependentAxis
+                                                            crossAxis
+                                                            gridComponent={
+                                                                <LineSegment
+                                                                    active={
+                                                                        false
+                                                                    }
+                                                                    style={{
+                                                                        stroke: '#272e43',
+                                                                    }}
+                                                                />
+                                                            }
+                                                        />
+                                                        <VictoryLine
+                                                            name={
+                                                                'line-' +
+                                                                ratingHistory.leaderboardId
+                                                            }
+                                                            key={
+                                                                'line-' +
+                                                                ratingHistory.leaderboardId
+                                                            }
+                                                            data={
+                                                                ratingHistory.ratings
+                                                            }
+                                                            x="date"
+                                                            y="rating"
+                                                            style={{
+                                                                data: {
+                                                                    stroke: '#D00E4D',
+                                                                },
+                                                            }}
+                                                        />
+                                                        <VictoryScatter
+                                                            name={
+                                                                'scatter-' +
+                                                                ratingHistory.leaderboardId
+                                                            }
+                                                            key={
+                                                                'scatter-' +
+                                                                ratingHistory.leaderboardId
+                                                            }
+                                                            data={
+                                                                ratingHistory.ratings
+                                                            }
+                                                            x="date"
+                                                            y="rating"
+                                                            size={1.5}
+                                                            style={{
+                                                                data: {
+                                                                    fill: 'red',
+                                                                },
+                                                            }}
+                                                        />
+                                                    </VictoryChart>
+
+                                                    <div className="flex gap-2">
+                                                        {tabs.map((t) => (
+                                                            <button
+                                                                onClick={() =>
+                                                                    setTab(t)
+                                                                }
+                                                                className={`flex-1 uppercase font-bold text-xs px-4 pt-2 pb-1.5 rounded ${
+                                                                    tab === t
+                                                                        ? 'bg-gold-700'
+                                                                        : ''
+                                                                }`}
+                                                                key={t}
+                                                            >
+                                                                {t}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+
+                                                    <div
+                                                        className={`flex flex-col ${
+                                                            tab === 'Opponents'
+                                                                ? 'gap-0'
+                                                                : 'gap-3'
+                                                        }`}
+                                                    >
+                                                        <div
+                                                            className={`flex text-xs font-bold  ${
+                                                                tab ===
+                                                                'Opponents'
+                                                                    ? 'mb-2'
+                                                                    : ''
+                                                            }`}
+                                                        >
+                                                            <div className="flex-1">
+                                                                {tab.replace(
+                                                                    /(s)$/,
+                                                                    ''
+                                                                )}
+                                                            </div>
+                                                            <div className="w-12 text-right">
+                                                                Games
+                                                            </div>
+                                                            <div className="w-16 text-right">
+                                                                Won
+                                                            </div>
+                                                        </div>
+                                                        {tabData.map((row) => (
+                                                            <div
+                                                                key={row.key}
+                                                                className="flex items-center"
+                                                            >
+                                                                <div className="flex gap-2 flex-1 items-center">
+                                                                    {row.imageUrl ? (
+                                                                        <img
+                                                                            src={
+                                                                                row.imageUrl
+                                                                            }
+                                                                            className="w-5 h-5"
+                                                                        />
+                                                                    ) : (
+                                                                        <span className="text-lg align-middle">
+                                                                            {
+                                                                                row.icon
+                                                                            }
+                                                                        </span>
+                                                                    )}
+                                                                    {row.name}
+                                                                </div>
+
+                                                                <div className="w-12 text-right">
+                                                                    {row.games}
+                                                                </div>
+                                                                <div className="w-16 text-right">
+                                                                    {(
+                                                                        (row.wins /
+                                                                            row.games) *
+                                                                        100
+                                                                    ).toFixed(
+                                                                        0
+                                                                    )}
+                                                                    %
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 flex flex-col gap-3 h-96 overflow-scroll">
+                                            <h3 className="text-lg font-bold -mb-2">
+                                                Recent Games
+                                            </h3>
+                                            {isLoading ? (
+                                                <FontAwesomeIcon
+                                                    spin={isLoading}
+                                                    icon={faSpinner}
+                                                    size="2xl"
+                                                />
+                                            ) : (
+                                                data?.map((match) => (
+                                                    <div
+                                                        key={match.matchId}
+                                                        className="bg-blue-800 rounded-lg border border-gray-800 px-3 py-2"
+                                                    >
+                                                        <MatchCard
+                                                            userId={
+                                                                player.profileId
+                                                            }
+                                                            match={{
+                                                                ...match,
+                                                                players:
+                                                                    match.teams.flatMap(
+                                                                        (t) =>
+                                                                            t.players
+                                                                    ),
+                                                                totalSlotCount: 0,
+                                                                blockedSlotCount: 0,
+                                                                gameModeName:
+                                                                    '',
+                                                                averageRating: 0,
+                                                            }}
+                                                            playerNames={
+                                                                playerNames
+                                                            }
+                                                        />
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+                                </Dialog.Panel>
+                            </Transition.Child>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition>
+        </>
+    );
+};
+
+function signed(number: number) {
+    if (number == null || number === 0) return '';
+    return number > 0 ? '↑' + number : '↓' + Math.abs(number);
+}
 
 export default Index;
