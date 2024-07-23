@@ -37,12 +37,7 @@ import {
     subWeeks,
 } from 'date-fns';
 import { Fragment, HTMLAttributes, useEffect, useRef, useState } from 'react';
-import {
-    AoeSpeed,
-    formatDuration,
-    getSpeedFactor,
-    initMatchSubscription,
-} from './ongoing';
+import { AoeSpeed, getSpeedFactor, initMatchSubscription } from './ongoing';
 import { useTransition, animated, SpringValue } from 'react-spring';
 import { Dialog, Transition } from '@headlessui/react';
 import {
@@ -53,6 +48,22 @@ import {
     VictoryScatter,
     VictoryTheme,
 } from 'victory';
+import { getConfig } from '../helper/config';
+import Countdown from 'react-countdown';
+
+const config = getConfig();
+const endDate = new Date(1722178800000);
+
+const formatDuration = (durationInSeconds: number) => {
+    if (!durationInSeconds) return '00:00'; // divide by 0 protection
+    const minutes = Math.abs(
+        Math.floor(durationInSeconds / 60) % 60
+    ).toString();
+    const hours = Math.abs(Math.floor(durationInSeconds / 60 / 60)).toString();
+    return `${hours.length < 2 ? hours : hours}:${
+        minutes.length < 2 ? 0 + minutes : minutes
+    } h`;
+};
 
 export function Index() {
     const leaderboard = {
@@ -77,11 +88,118 @@ export function Index() {
                     src="/red-bull-wololo-el-reinado.png"
                     className="h-[506px] w-[384px]"
                 />
-                <p className="text-lg pb-8 inline-block text-center">
+                <p className="text-lg inline-block text-center">
                     On the 28th of July, the four players with the
                     highest-achieved rating will be directly invited to the main
                     event at Castillo de Almodóvar del Río in Spain.
                 </p>
+
+                <Countdown
+                    date={endDate}
+                    renderer={({
+                        days,
+                        hours,
+                        minutes,
+                        seconds,
+                        completed,
+                    }) => {
+                        return (
+                            <div className="bg-blue-800 px-4 py-2 rounded-lg flex flex-col items-center justify-center">
+                                {completed ? (
+                                    <p className="text-2xl font-bold">
+                                        Qualification has Ended
+                                    </p>
+                                ) : (
+                                    <>
+                                        <div className="font-bold">
+                                            Qualification ends in...
+                                        </div>
+                                        <div className="flex justify-center text-center">
+                                            {(days > 0
+                                                ? [
+                                                      ['DAY', days],
+                                                      ['HRS', hours],
+                                                      ['MIN', minutes],
+                                                      ['SEC', seconds],
+                                                  ]
+                                                : [
+                                                      ['HRS', hours],
+                                                      ['MIN', minutes],
+                                                      ['SEC', seconds],
+                                                  ]
+                                            ).map(([label, seg], index) => (
+                                                <>
+                                                    {index !== 0 && (
+                                                        <div className="w-8 text-2xl font-bold">
+                                                            :
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <div className="text-2xl font-bold leading-tight">
+                                                            {seg
+                                                                .toString()
+                                                                .padStart(
+                                                                    2,
+                                                                    '0'
+                                                                )}
+                                                        </div>
+                                                        <div className="text-sm">
+                                                            {label}
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        );
+                    }}
+                />
+
+                <div>
+                    <p className="text-center mb-4 italic">
+                        For bug reports or suggestions, see Discord
+                    </p>
+                    <div className="flex gap-2 justify-center mb-4">
+                        <a
+                            href="https://discord.gg/gCunWKx"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            <img src="https://img.shields.io/discord/727175083977736262.svg?label=Discord&logo=discord&logoColor=ffffff&labelColor=7289DA&color=2c2f33" />
+                        </a>
+                        <div style={{ height: '10px' }} />
+                        <a
+                            href="https://www.buymeacoffee.com/denniskeil"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            <img src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshields-io-buymeacoffee.vercel.app%2Fapi%3Fusername%3Ddenniskeil" />
+                        </a>
+                    </div>
+                    <p className="text-xs text-center">
+                        Age of Empires II© Microsoft Corporation. {config.host}{' '}
+                        was created under Microsoft&apos;s &quot;
+                        <a
+                            className="text-gray-500"
+                            href="https://www.xbox.com/en-US/developers/rules"
+                            rel="noreferrer noopener"
+                        >
+                            Game Content Usage Rules
+                        </a>
+                        &quot; using assets from{' '}
+                        <a
+                            className="text-gray-500"
+                            href={config.ms.url}
+                            rel="noreferrer noopener"
+                        >
+                            {config.ms.name}
+                        </a>
+                        , and it is not endorsed by or affiliated with
+                        Microsoft.
+                    </p>
+                </div>
             </div>
         </main>
     );
@@ -594,7 +712,7 @@ export function PlayerList({
                                                     ? `${
                                                           playerNames[
                                                               winner.profileId
-                                                          ] ?? winner.name
+                                                          ]?.name ?? winner.name
                                                       } gained ${
                                                           winner.ratingDiff
                                                       } points`
@@ -794,7 +912,7 @@ const MatchCard = ({
                 <a
                     href={`aoe2de://1/${match.matchId}`}
                     target="_blank"
-                    className="text-[#EAC65E] absolute top-1"
+                    className="text-[#EAC65E] absolute top-0"
                     rel="noreferrer"
                 >
                     <FontAwesomeIcon icon={faExternalLink} />
@@ -805,13 +923,18 @@ const MatchCard = ({
             <div className="flex-1 flex flex-col gap-1">
                 <div className="flex justify-between">
                     <b className="text-base font-semibold">{match.mapName}</b>
-                    <time dateTime={formatISO(match.started)}>
-                        {formatDuration(
-                            differenceInSeconds(
-                                match.finished || new Date(),
-                                match.started
-                            ) * getSpeedFactor(match.speed as AoeSpeed)
-                        )}
+                    <time
+                        dateTime={formatISO(match.started)}
+                        className="flex gap-2 items-center"
+                    >
+                        {match.finished
+                            ? formatAgo(match.started)
+                            : formatDuration(
+                                  differenceInSeconds(
+                                      match.finished || new Date(),
+                                      match.started
+                                  ) * getSpeedFactor(match.speed as AoeSpeed)
+                              )}
                     </time>
                 </div>
                 {match.players.map((p) => (
@@ -912,7 +1035,7 @@ const PlayerModal = ({
             }),
         {
             enabled: isVisible,
-            cacheTime: Infinity,
+            staleTime: 5 * 60 * 1000,
         }
     );
 
@@ -999,6 +1122,8 @@ const PlayerModal = ({
         }
     }
 
+    tabData = orderBy(tabData, ['games', 'wins'], ['desc', 'desc']);
+
     return (
         <>
             <Transition appear show={isVisible} as={Fragment}>
@@ -1026,7 +1151,7 @@ const PlayerModal = ({
                                 leaveFrom="opacity-100 scale-100"
                                 leaveTo="opacity-0 scale-95"
                             >
-                                <Dialog.Panel className="w-full max-w-3xl transform overflow-hidden rounded-2xl bg-blue-950 p-6 text-left align-middle shadow-xl transition-all">
+                                <Dialog.Panel className="w-full max-w-6xl transform overflow-hidden rounded-2xl bg-blue-950 p-6 text-left align-middle shadow-xl transition-all text-white">
                                     <div className="flex justify-between">
                                         <Dialog.Title
                                             as="h2"
@@ -1047,7 +1172,7 @@ const PlayerModal = ({
                                     </div>
 
                                     <div className="flex gap-4">
-                                        <div className="flex-1 flex flex-col gap-3 h-96 overflow-scroll">
+                                        <div className="flex-1 flex flex-col gap-3">
                                             <h3 className="text-lg font-bold -mb-2">
                                                 Statistics
                                             </h3>
@@ -1100,101 +1225,101 @@ const PlayerModal = ({
                                                 ))}
                                             </div>
 
+                                            {ratingHistory && (
+                                                <VictoryChart
+                                                    width={350}
+                                                    height={250}
+                                                    theme={chartTheme}
+                                                    padding={{
+                                                        left: 50,
+                                                        bottom: 30,
+                                                        top: 20,
+                                                        right: 20,
+                                                    }}
+                                                    scale={{ x: 'time' }}
+                                                >
+                                                    <VictoryAxis
+                                                        crossAxis
+                                                        gridComponent={
+                                                            <LineSegment
+                                                                active={false}
+                                                                style={{
+                                                                    stroke: 'transparent',
+                                                                }}
+                                                            />
+                                                        }
+                                                        tickFormat={formatTick}
+                                                        tickCount={7}
+                                                    />
+                                                    <VictoryAxis
+                                                        dependentAxis
+                                                        crossAxis
+                                                        gridComponent={
+                                                            <LineSegment
+                                                                active={false}
+                                                                style={{
+                                                                    stroke: '#272e43',
+                                                                }}
+                                                            />
+                                                        }
+                                                    />
+                                                    <VictoryLine
+                                                        name={
+                                                            'line-' +
+                                                            ratingHistory.leaderboardId
+                                                        }
+                                                        key={
+                                                            'line-' +
+                                                            ratingHistory.leaderboardId
+                                                        }
+                                                        data={
+                                                            ratingHistory.ratings
+                                                        }
+                                                        x="date"
+                                                        y="rating"
+                                                        style={{
+                                                            data: {
+                                                                stroke: '#D00E4D',
+                                                            },
+                                                        }}
+                                                    />
+                                                    <VictoryScatter
+                                                        name={
+                                                            'scatter-' +
+                                                            ratingHistory.leaderboardId
+                                                        }
+                                                        key={
+                                                            'scatter-' +
+                                                            ratingHistory.leaderboardId
+                                                        }
+                                                        data={
+                                                            ratingHistory.ratings
+                                                        }
+                                                        x="date"
+                                                        y="rating"
+                                                        size={1.5}
+                                                        style={{
+                                                            data: {
+                                                                fill: 'red',
+                                                            },
+                                                        }}
+                                                    />
+                                                </VictoryChart>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 flex flex-col gap-3 h-[460px] overflow-scroll">
+                                            <h3 className="text-lg font-bold -mb-2">
+                                                Winrates
+                                            </h3>
                                             {isProfileLoading ||
                                             !ratingHistory ? (
                                                 <FontAwesomeIcon
-                                                    spin={isLoading}
+                                                    spin
                                                     icon={faSpinner}
                                                     size="2xl"
                                                 />
                                             ) : (
                                                 <>
-                                                    <VictoryChart
-                                                        width={350}
-                                                        height={250}
-                                                        theme={chartTheme}
-                                                        padding={{
-                                                            left: 50,
-                                                            bottom: 30,
-                                                            top: 20,
-                                                            right: 20,
-                                                        }}
-                                                        scale={{ x: 'time' }}
-                                                    >
-                                                        <VictoryAxis
-                                                            crossAxis
-                                                            gridComponent={
-                                                                <LineSegment
-                                                                    active={
-                                                                        false
-                                                                    }
-                                                                    style={{
-                                                                        stroke: 'transparent',
-                                                                    }}
-                                                                />
-                                                            }
-                                                            tickFormat={
-                                                                formatTick
-                                                            }
-                                                            tickCount={7}
-                                                        />
-                                                        <VictoryAxis
-                                                            dependentAxis
-                                                            crossAxis
-                                                            gridComponent={
-                                                                <LineSegment
-                                                                    active={
-                                                                        false
-                                                                    }
-                                                                    style={{
-                                                                        stroke: '#272e43',
-                                                                    }}
-                                                                />
-                                                            }
-                                                        />
-                                                        <VictoryLine
-                                                            name={
-                                                                'line-' +
-                                                                ratingHistory.leaderboardId
-                                                            }
-                                                            key={
-                                                                'line-' +
-                                                                ratingHistory.leaderboardId
-                                                            }
-                                                            data={
-                                                                ratingHistory.ratings
-                                                            }
-                                                            x="date"
-                                                            y="rating"
-                                                            style={{
-                                                                data: {
-                                                                    stroke: '#D00E4D',
-                                                                },
-                                                            }}
-                                                        />
-                                                        <VictoryScatter
-                                                            name={
-                                                                'scatter-' +
-                                                                ratingHistory.leaderboardId
-                                                            }
-                                                            key={
-                                                                'scatter-' +
-                                                                ratingHistory.leaderboardId
-                                                            }
-                                                            data={
-                                                                ratingHistory.ratings
-                                                            }
-                                                            x="date"
-                                                            y="rating"
-                                                            size={1.5}
-                                                            style={{
-                                                                data: {
-                                                                    fill: 'red',
-                                                                },
-                                                            }}
-                                                        />
-                                                    </VictoryChart>
-
                                                     <div className="flex gap-2">
                                                         {tabs.map((t) => (
                                                             <button
@@ -1283,7 +1408,7 @@ const PlayerModal = ({
                                                 </>
                                             )}
                                         </div>
-                                        <div className="flex-1 flex flex-col gap-3 h-96 overflow-scroll">
+                                        <div className="flex-1 flex flex-col gap-3 h-[460px] overflow-scroll">
                                             <h3 className="text-lg font-bold -mb-2">
                                                 Recent Games
                                             </h3>
