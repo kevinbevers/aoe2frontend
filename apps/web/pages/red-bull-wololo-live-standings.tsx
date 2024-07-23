@@ -133,7 +133,7 @@ export function Index() {
                                                           ['SEC', seconds],
                                                       ]
                                                 ).map(([label, seg], index) => (
-                                                    <>
+                                                    <Fragment key={label}>
                                                         {index !== 0 && (
                                                             <div className="w-8 text-2xl font-bold">
                                                                 :
@@ -152,7 +152,7 @@ export function Index() {
                                                                 {label}
                                                             </div>
                                                         </div>
-                                                    </>
+                                                    </Fragment>
                                                 ))}
                                             </div>
                                         </>
@@ -321,7 +321,7 @@ export function PlayerList({
                             (p) => p.profileId
                         );
 
-                        setTimeout(async () => {
+                        const getMatch = async () => {
                             const { matches } = await fetchMatches({
                                 leaderboardIds:
                                     leaderboard.leaderboardId as unknown as number[],
@@ -329,6 +329,10 @@ export function PlayerList({
                                     ','
                                 ) as unknown as number[],
                             });
+
+                            const foundMatch = matches.find(
+                                (m) => m.matchId === match.matchId
+                            );
 
                             setEvents((prev) =>
                                 prev.map((e) => {
@@ -373,7 +377,23 @@ export function PlayerList({
                                 })
                             );
 
-                            refetch();
+                            const hasRatingDiff = foundMatch?.teams
+                                .flatMap((t) => t.players)
+                                .some((p) => p.ratingDiff);
+
+                            return hasRatingDiff;
+                        };
+
+                        setTimeout(async () => {
+                            const foundMatch = await getMatch();
+                            if (foundMatch) {
+                                refetch();
+                            } else {
+                                setTimeout(async () => {
+                                    await getMatch();
+                                    refetch();
+                                }, 15000);
+                            }
                         }, 15000);
                     }
                 },
@@ -449,7 +469,11 @@ export function PlayerList({
     const mappedPlayers = data?.players.map((player) => {
         const match =
             events.find((e) =>
-                e.match.players.some((p) => p.profileId === player.profileId)
+                e.match.players.some(
+                    (p) =>
+                        p.profileId === player.profileId &&
+                        e.event === 'removed'
+                )
             )?.match ??
             matches.find((m) =>
                 m.players.some((p) => p.profileId === player.profileId)
@@ -586,7 +610,9 @@ export function PlayerList({
                             const match =
                                 events.find((e) =>
                                     e.match.players.some(
-                                        (p) => p.profileId === player.profileId
+                                        (p) =>
+                                            p.profileId === player.profileId &&
+                                            e.event === 'removed'
                                     )
                                 )?.match ??
                                 matches.find((m) =>
@@ -708,7 +734,7 @@ const PlayerRow = ({
                 />
             </Cell>
             <Cell
-                className="font-bold w-48 md:w-72 cursor-pointer hover:text-[#EAC65E] transition-colors"
+                className={`font-bold w-48 md:w-72 cursor-pointer hover:text-[#EAC65E] transition-colors border-l-4 md:border-l-0 ${statusClasses[status]}`}
                 onClick={() => setIsOpen(true)}
             >
                 <span className="text-2xl mr-2 align-middle">
