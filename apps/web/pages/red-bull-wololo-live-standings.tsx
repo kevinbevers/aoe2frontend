@@ -77,16 +77,17 @@ export function Index() {
 
     return (
         <main
-            className="flex flex-row px-12 py-8 gap-12 text-white min-h-screen relative"
+            className="flex flex-col 2xl:flex-row px-4 md:px-12 py-8 gap-12 text-white min-h-screen relative items-center 2xl:items-stretch"
             style={{ colorScheme: 'dark' }}
         >
             <div className="fixed bg-[url('/red-bull-wololo-el-reinado-background.jpg')] bg-cover inset-0" />
             <div className="fixed inset-0 bg-gradient-to-r from-black/80 via-black/90 to-black" />
-            <div className="flex-1 relative">
+            <div className="flex-1 relative order-2 2xl:order-1 self-center md:self-start xl:self-center 2xl:self-center">
                 <PlayerList leaderboard={leaderboard} search="" />
+                <Footer className="block 2xl:hidden" />
             </div>
 
-            <div className="relative w-[384px] flex flex-col justify-between">
+            <div className="relative w-[384px] flex flex-col justify-between order-1 2xl:order-2">
                 <div className="flex flex-col gap-4">
                     <img
                         src="/red-bull-wololo-el-reinado.png"
@@ -177,72 +178,75 @@ export function Index() {
                     </div>
                 </div>
 
-                <div>
-                    <p className="text-center mb-4 italic">
-                        Inspired by{' '}
-                        <a
-                            className="underline"
-                            href="https://www.twitch.tv/dave_aoe"
-                            target="_blank"
-                            rel="noreferrer"
-                        >
-                            Dave_AoE
-                        </a>
-                        &apos;s{' '}
-                        <a
-                            href="/dave-aoe-redbull-graphic.jpg"
-                            target="_blank"
-                            className="underline"
-                        >
-                            amazing graphic
-                        </a>
-                    </p>
-                    <p className="text-center mb-4 italic">
-                        For bug reports or suggestions, join the Discord below
-                    </p>
-                    <div className="flex gap-2 justify-center mb-4">
-                        <a
-                            href="https://discord.gg/gCunWKx"
-                            target="_blank"
-                            rel="noreferrer"
-                        >
-                            <img src="https://img.shields.io/discord/727175083977736262.svg?label=Discord&logo=discord&logoColor=ffffff&labelColor=7289DA&color=2c2f33" />
-                        </a>
-                        <div style={{ height: '10px' }} />
-                        <a
-                            href="https://www.buymeacoffee.com/denniskeil"
-                            target="_blank"
-                            rel="noreferrer"
-                        >
-                            <img src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshields-io-buymeacoffee.vercel.app%2Fapi%3Fusername%3Ddenniskeil" />
-                        </a>
-                    </div>
-                    <p className="text-xs text-center">
-                        Age of Empires II© Microsoft Corporation. {config.host}{' '}
-                        was created under Microsoft&apos;s &quot;
-                        <a
-                            className="text-gray-500"
-                            href="https://www.xbox.com/en-US/developers/rules"
-                            rel="noreferrer noopener"
-                        >
-                            Game Content Usage Rules
-                        </a>
-                        &quot; using assets from{' '}
-                        <a
-                            className="text-gray-500"
-                            href={config.ms.url}
-                            rel="noreferrer noopener"
-                        >
-                            {config.ms.name}
-                        </a>
-                        , and it is not endorsed by or affiliated with
-                        Microsoft.
-                    </p>
-                </div>
+                <Footer className="hidden 2xl:block" />
             </div>
         </main>
     );
 }
+
+export const Footer = ({ className }: { className?: string }) => (
+    <div className={className}>
+        <p className="text-center mb-4 italic">
+            Inspired by{' '}
+            <a
+                className="underline"
+                href="https://www.twitch.tv/dave_aoe"
+                target="_blank"
+                rel="noreferrer"
+            >
+                Dave_AoE
+            </a>
+            &apos;s{' '}
+            <a
+                href="/dave-aoe-redbull-graphic.jpg"
+                target="_blank"
+                className="underline"
+            >
+                amazing graphic
+            </a>
+        </p>
+        <p className="text-center mb-4 italic">
+            For bug reports or suggestions, join the Discord below
+        </p>
+        <div className="flex gap-2 justify-center mb-4">
+            <a
+                href="https://discord.gg/gCunWKx"
+                target="_blank"
+                rel="noreferrer"
+            >
+                <img src="https://img.shields.io/discord/727175083977736262.svg?label=Discord&logo=discord&logoColor=ffffff&labelColor=7289DA&color=2c2f33" />
+            </a>
+            <div style={{ height: '10px' }} />
+            <a
+                href="https://www.buymeacoffee.com/denniskeil"
+                target="_blank"
+                rel="noreferrer"
+            >
+                <img src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshields-io-buymeacoffee.vercel.app%2Fapi%3Fusername%3Ddenniskeil" />
+            </a>
+        </div>
+        <p className="text-xs text-center">
+            Age of Empires II© Microsoft Corporation. {config.host} was created
+            under Microsoft&apos;s &quot;
+            <a
+                className="text-gray-500"
+                href="https://www.xbox.com/en-US/developers/rules"
+                rel="noreferrer noopener"
+            >
+                Game Content Usage Rules
+            </a>
+            &quot; using assets from{' '}
+            <a
+                className="text-gray-500"
+                href={config.ms.url}
+                rel="noreferrer noopener"
+            >
+                {config.ms.name}
+            </a>
+            , and it is not endorsed by or affiliated with Microsoft.
+        </p>
+    </div>
+);
 
 export function PlayerList({
     leaderboard,
@@ -385,7 +389,7 @@ export function PlayerList({
                 ...context,
                 leaderboardId: context.queryKey[1] as number,
                 extend: 'max_rating,verified,players.country_icon',
-                perPage: 25,
+                perPage: 50,
             });
 
             const matchPlayers = uniqBy(
@@ -442,11 +446,30 @@ export function PlayerList({
         };
     }, [isFetching]);
 
-    const sortedPlayerIds = orderBy(data?.players, 'maxRating', 'desc')
+    const mappedPlayers = data?.players.map((player) => {
+        const match =
+            events.find((e) =>
+                e.match.players.some((p) => p.profileId === player.profileId)
+            )?.match ??
+            matches.find((m) =>
+                m.players.some((p) => p.profileId === player.profileId)
+            );
+
+        return {
+            ...player,
+            wins: (player.wins / player.games) * 100,
+            lastMatchTime:
+                match?.started ?? match?.finished ?? player.lastMatchTime,
+        };
+    });
+    const sortedPlayerIds = orderBy(mappedPlayers, 'maxRating', 'desc')
         ?.slice(0, 25)
         .map((p) => p.profileId);
     const qualifiedPlayers = sortedPlayerIds?.slice(0, 4);
-    const players = orderBy(data?.players, ...sort)?.slice(0, 25);
+    const players = orderBy(
+        orderBy(mappedPlayers, 'maxRating', 'desc')?.slice(0, 25),
+        ...sort
+    )?.slice(0, 25);
 
     const transitions = useTransition(
         players.map((data, i) => ({ ...data, y: i * 64 })),
@@ -474,8 +497,8 @@ export function PlayerList({
 
     return (
         <div>
-            <div className="pb-2 mb-8 border-b-2 border-[#EAC65E] flex flex-row justify-between items-center">
-                <h2 className="text-5xl uppercase font-bold">
+            <div className="pb-2 mb-8 border-b-2 border-[#EAC65E] flex flex-col md:flex-row justify-between items-center">
+                <h2 className="text-xl md:text-5xl uppercase font-bold">
                     Current Top Players
                 </h2>
 
@@ -497,98 +520,60 @@ export function PlayerList({
             <table className={`w-full text-sm text-left relative z-20`}>
                 <thead className={`text-lg uppercase block`}>
                     <tr className="flex">
-                        <th
-                            scope="col"
-                            className="py-2 px-6 w-20 whitespace-nowrap block border-l-4 border-transparent"
+                        <HeadCell
+                            sort={sort}
+                            setSort={setSort}
+                            className="w-20 hidden md:block"
                         >
                             Rank
-                        </th>
-                        <th
-                            scope="col"
-                            className="py-2 px-6 w-72 whitespace-nowrap block"
+                        </HeadCell>
+                        <HeadCell
+                            sort={sort}
+                            setSort={setSort}
+                            className="w-48 md:w-72"
                         >
                             Player
-                        </th>
-                        <th
-                            scope="col"
-                            className="py-2 px-6 w-48 whitespace-nowrap block"
+                        </HeadCell>
+                        <HeadCell
+                            sort={sort}
+                            setSort={setSort}
+                            className="w-48"
+                            columnName="maxRating"
                         >
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setSort([
-                                        'maxRating',
-                                        sort[1] === 'asc' ||
-                                        sort[0] !== 'maxRating'
-                                            ? 'desc'
-                                            : 'asc',
-                                    ])
-                                }
-                            >
-                                Highest Rating{' '}
-                                <FontAwesomeIcon
-                                    icon={
-                                        sort[1] === 'asc'
-                                            ? faAngleUp
-                                            : faAngleDown
-                                    }
-                                    color={
-                                        sort[0] === 'maxRating'
-                                            ? 'white'
-                                            : 'transparent'
-                                    }
-                                />
-                            </button>
-                        </th>
-                        <th
-                            scope="col"
-                            className="py-2 px-6 w-48 whitespace-nowrap block"
+                            Highest Rating
+                        </HeadCell>
+                        <HeadCell
+                            sort={sort}
+                            setSort={setSort}
+                            className="w-48 hidden md:block"
+                            columnName="rating"
                         >
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setSort([
-                                        'rating',
-                                        sort[1] === 'asc' ||
-                                        sort[0] !== 'rating'
-                                            ? 'desc'
-                                            : 'asc',
-                                    ])
-                                }
-                            >
-                                Current Rating{' '}
-                                <FontAwesomeIcon
-                                    icon={
-                                        sort[1] === 'asc'
-                                            ? faAngleUp
-                                            : faAngleDown
-                                    }
-                                    color={
-                                        sort[0] === 'rating'
-                                            ? 'white'
-                                            : 'transparent'
-                                    }
-                                />
-                            </button>
-                        </th>
-                        <th
-                            scope="col"
-                            className="py-2 px-6 w-64 whitespace-nowrap block"
+                            Current Rating
+                        </HeadCell>
+                        <HeadCell
+                            sort={sort}
+                            setSort={setSort}
+                            className="w-64 hidden md:block"
+                            columnName="lastMatchTime"
                         >
                             Last Match
-                        </th>
-                        <th
-                            scope="col"
-                            className="py-2 px-6 w-24 whitespace-nowrap block"
+                        </HeadCell>
+                        <HeadCell
+                            sort={sort}
+                            setSort={setSort}
+                            className="w-24 hidden md:block"
+                            columnName="wins"
                         >
                             Win %
-                        </th>
-                        <th
-                            scope="col"
-                            className="py-2 px-6 w-24 whitespace-nowrap block"
+                        </HeadCell>
+                        <HeadCell
+                            sort={sort}
+                            setSort={setSort}
+                            className="w-24 hidden md:block"
+                            columnName="games"
                         >
                             Games
-                        </th>
+                        </HeadCell>
                     </tr>
                 </thead>
                 <tbody className="block min-h-[1600px]" ref={ref}>
@@ -682,7 +667,7 @@ const PlayerRow = ({
         qualified: 'border-[#D00E4D]',
         none: 'border-transparent',
     };
-    const { won, ratingDiff } =
+    const { ratingDiff } =
         match?.players.find((p) => p.profileId === player.profileId) ?? {};
 
     const [isOpen, setIsOpen] = useState(false);
@@ -694,7 +679,9 @@ const PlayerRow = ({
             style={style}
             data-id={player.profileId}
         >
-            <Cell className={`w-20 border-l-4 ${statusClasses[status]}`}>
+            <Cell
+                className={`w-20 border-l-4 hidden md:flex ${statusClasses[status]}`}
+            >
                 {rank && (
                     <div className="flex gap-2 items-center">
                         #{rank}
@@ -721,7 +708,7 @@ const PlayerRow = ({
                 />
             </Cell>
             <Cell
-                className="font-bold w-72 cursor-pointer"
+                className="font-bold w-48 md:w-72 cursor-pointer hover:text-[#EAC65E] transition-colors"
                 onClick={() => setIsOpen(true)}
             >
                 <span className="text-2xl mr-2 align-middle">
@@ -732,8 +719,8 @@ const PlayerRow = ({
                 </span>
             </Cell>
             <Cell className="font-bold w-48">{player.maxRating}</Cell>
-            <Cell className="w-48">{player.rating}</Cell>
-            <Cell className="w-64 group py-2">
+            <Cell className="w-48 hidden md:flex">{player.rating}</Cell>
+            <Cell className="w-64 group py-2 hidden md:flex">
                 {match ? (
                     <div className="relative cursor-pointer max-w-full">
                         {match.finished ? (
@@ -761,6 +748,7 @@ const PlayerRow = ({
                         <div className="absolute top-12 left-1/2 -translate-x-1/2 mx-auto scale-0 bg-blue-800 rounded-lg border-gray-800 px-3 py-2 group-hover:scale-100 z-10 flex flex-row w-96 gap-3 items-center text-sm shadow-2xl transition-transform">
                             <div className="h-0 w-0 border-x-8 border-x-transparent border-b-[8px] border-b-blue-800 absolute -top-2 mx-auto left-0 right-0"></div>
                             <MatchCard
+                                userId={player.profileId}
                                 match={match}
                                 playerNames={playerNames}
                             />
@@ -770,13 +758,58 @@ const PlayerRow = ({
                     formatAgo(player.lastMatchTime)
                 )}
             </Cell>
-            <Cell className="w-24">
-                {((player.wins / player.games) * 100).toFixed(0)}%
+            <Cell className="w-24 hidden md:flex">
+                {player.wins.toFixed(0)}%
             </Cell>
-            <Cell className="w-24">{player.games}</Cell>
+            <Cell className="w-24 hidden md:flex">{player.games}</Cell>
         </animated.tr>
     );
 };
+
+const HeadCell = ({
+    className,
+    children,
+    columnName,
+    sort,
+    setSort,
+    ...props
+}: {
+    className?: string;
+    children: React.ReactNode;
+    columnName?: keyof ILeaderboardPlayer;
+    sort: [keyof ILeaderboardPlayer, 'desc' | 'asc'];
+    setSort: (s: [keyof ILeaderboardPlayer, 'desc' | 'asc']) => void;
+} & HTMLAttributes<HTMLTableCellElement>) => (
+    <th
+        scope="col"
+        className={`py-2 px-6 whitespace-nowrap block ${className}`}
+        {...props}
+    >
+        <button
+            type="button"
+            disabled={!columnName}
+            onClick={() =>
+                setSort([
+                    columnName,
+                    sort[1] === 'asc' || sort[0] !== columnName
+                        ? 'desc'
+                        : 'asc',
+                ])
+            }
+        >
+            {children}
+            {columnName && (
+                <>
+                    {' '}
+                    <FontAwesomeIcon
+                        icon={sort[1] === 'asc' ? faAngleUp : faAngleDown}
+                        color={sort[0] === columnName ? 'white' : 'transparent'}
+                    />
+                </>
+            )}
+        </button>
+    </th>
+);
 
 const Cell = ({
     className,
@@ -1065,7 +1098,7 @@ const PlayerModal = ({
                                 leaveFrom="opacity-100 scale-100"
                                 leaveTo="opacity-0 scale-95"
                             >
-                                <Dialog.Panel className="w-full max-w-6xl transform overflow-hidden rounded-2xl bg-blue-950 p-6 text-left align-middle shadow-xl transition-all text-white">
+                                <Dialog.Panel className="w-full md:max-w-md lg:max-w-6xl transform overflow-hidden rounded-2xl bg-blue-950 p-6 text-left align-middle shadow-xl transition-all text-white">
                                     <div className="flex justify-between">
                                         <Dialog.Title
                                             as="h2"
@@ -1085,7 +1118,7 @@ const PlayerModal = ({
                                         </button>
                                     </div>
 
-                                    <div className="flex gap-4">
+                                    <div className="flex flex-col lg:flex-row gap-4 items-center lg:items-stretch">
                                         <div className="flex-1 flex flex-col gap-3">
                                             <h3 className="text-lg font-bold -mb-2">
                                                 Statistics
@@ -1221,7 +1254,7 @@ const PlayerModal = ({
                                                 </VictoryChart>
                                             )}
                                         </div>
-                                        <div className="flex-1 flex flex-col gap-3 h-[500px] overflow-y-scroll">
+                                        <div className="flex-1 flex flex-col gap-3 h-[500px] lg:overflow-y-scroll">
                                             <h3 className="text-lg font-bold -mb-2">
                                                 Winrates
                                             </h3>
@@ -1322,7 +1355,7 @@ const PlayerModal = ({
                                                 </>
                                             )}
                                         </div>
-                                        <div className="flex-1 flex flex-col gap-3 h-[500px] overflow-y-scroll">
+                                        <div className="flex-1 flex flex-col gap-3 h-[500px] lg:overflow-y-scroll">
                                             <h3 className="text-lg font-bold -mb-2">
                                                 Recent Games
                                             </h3>
