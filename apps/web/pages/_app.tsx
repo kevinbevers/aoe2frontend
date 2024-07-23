@@ -11,6 +11,9 @@ import GlobalSearch from "../components/global-search";
 import {getConfig} from "../helper/config";
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { polyfillCountryFlagEmojis } from 'country-flag-emoji-polyfill';
+
+polyfillCountryFlagEmojis();
 
 const config = getConfig();
 
