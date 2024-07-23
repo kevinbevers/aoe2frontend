@@ -260,7 +260,7 @@ export function PlayerList({
         Record<string, number>
     >({});
     const [sort, setSort] = useState(['maxRating', 'desc'] as [
-        keyof ILeaderboardPlayer,
+        keyof ILeaderboardPlayer | 'winrates',
         'desc' | 'asc'
     ]);
     const [matches, setMatches] = useState<ILobbiesMatch[]>([]);
@@ -481,7 +481,7 @@ export function PlayerList({
 
         return {
             ...player,
-            wins: (player.wins / player.games) * 100,
+            winrates: (player.wins / player.games) * 100,
             lastMatchTime:
                 match?.started ?? match?.finished ?? player.lastMatchTime,
         };
@@ -586,7 +586,7 @@ export function PlayerList({
                             sort={sort}
                             setSort={setSort}
                             className="w-24 hidden md:block"
-                            columnName="wins"
+                            columnName="winrates"
                         >
                             Win %
                         </HeadCell>
@@ -672,7 +672,7 @@ const PlayerRow = ({
     status = 'none',
     style,
 }: {
-    player: ILeaderboardPlayer;
+    player: ILeaderboardPlayer & { winrates: number };
     playerNames: Record<string, { name: string; icon?: string }>;
     initialRank?: number;
     rank?: number;
@@ -785,7 +785,7 @@ const PlayerRow = ({
                 )}
             </Cell>
             <Cell className="w-24 hidden md:flex">
-                {player.wins.toFixed(0)}%
+                {player.winrates.toFixed(0)}%
             </Cell>
             <Cell className="w-24 hidden md:flex">{player.games}</Cell>
         </animated.tr>
@@ -802,9 +802,11 @@ const HeadCell = ({
 }: {
     className?: string;
     children: React.ReactNode;
-    columnName?: keyof ILeaderboardPlayer;
-    sort: [keyof ILeaderboardPlayer, 'desc' | 'asc'];
-    setSort: (s: [keyof ILeaderboardPlayer, 'desc' | 'asc']) => void;
+    columnName?: keyof ILeaderboardPlayer | 'winrates';
+    sort: [keyof ILeaderboardPlayer | 'winrates', 'desc' | 'asc'];
+    setSort: (
+        s: [keyof ILeaderboardPlayer | 'winrates', 'desc' | 'asc']
+    ) => void;
 } & HTMLAttributes<HTMLTableCellElement>) => (
     <th
         scope="col"
