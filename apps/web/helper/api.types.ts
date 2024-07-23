@@ -196,9 +196,58 @@ export interface IProfileResult {
     verified: boolean;
     leaderboards: IProfileLeaderboardResult[];
     ratings: IProfileRatingsLeaderboard[];
+    stats?: IStatNew[];
 }
 
+export interface IStatNew {
+    leaderboardId: string;
+    leaderboardName: string;
+    abbreviation: string;
+    civ: IStatCiv[];
+    map: IStatMap[];
+    allies: IStatAlly[];
+    opponents: IStatOpponent[];
+}
 
+export interface IStatCiv {
+    civ: string;
+    civName: string;
+    civImageUrl: string;
+    games: number;
+    wins: number;
+}
+
+export interface IStatMap {
+    map: string;
+    mapName: string;
+    mapImageUrl: string;
+    location?: number;
+    games: number;
+    wins: number;
+    losses: number;
+}
+
+export interface IStatAlly {
+    verified: boolean;
+    countryIcon?: string;
+    profileId: number;
+    name: string;
+    country?: string;
+    games: number;
+    wins: number;
+    losses: number;
+}
+
+export interface IStatOpponent {
+    verified: boolean;
+    countryIcon: string;
+    profileId: number;
+    name: string;
+    country: string;
+    games: number;
+    wins: number;
+    losses: number;
+}
 
 export interface IProfilesResultProfile {
     profileId: number;
@@ -328,6 +377,7 @@ export interface IFetchProfileParams {
     country?: string;
 
     pageParam?: string;
+    extend?: string;
 }
 
 export interface IFetchProfileRatingParams {
