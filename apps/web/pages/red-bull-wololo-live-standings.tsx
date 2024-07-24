@@ -36,7 +36,14 @@ import {
     isAfter,
     subWeeks,
 } from 'date-fns';
-import { Fragment, HTMLAttributes, useEffect, useRef, useState } from 'react';
+import {
+    Fragment,
+    HTMLAttributes,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import { AoeSpeed, getSpeedFactor, initMatchSubscription } from './ongoing';
 import { useTransition, animated, SpringValue } from 'react-spring';
 import { Dialog, Transition } from '@headlessui/react';
@@ -313,6 +320,7 @@ export function PlayerList({
                                 game.leaderboardId === leaderboard.leaderboardId
                         )
                     );
+                    setTime(new Date());
                 },
                 onMatchAdded: (match: ILobbiesMatch) => {
                     if (match.leaderboardId === leaderboard.leaderboardId) {
@@ -349,6 +357,8 @@ export function PlayerList({
                             const foundMatch = matches.find(
                                 (m) => m.matchId === match.matchId
                             );
+
+                            setTime(new Date());
 
                             setEvents((prev) =>
                                 prev.map((e) => {
@@ -428,33 +438,9 @@ export function PlayerList({
                 perPage: 50,
             });
 
-            const matchPlayers = uniqBy(
-                events
-                    ?.flatMap(({ match }) => match.players)
-                    .filter((p) => p.rating && p.ratingDiff),
-                'profileId'
-            );
-
-            const leaderboardPlayers = leaderboardData.players.map((p) => {
-                const player = matchPlayers.find(
-                    (x) => x.profileId === p.profileId
-                );
-
-                if (player) {
-                    const rating = player.rating + player.ratingDiff;
-                    return {
-                        ...p,
-                        rating,
-                        maxRating: rating > p.maxRating ? rating : p.maxRating,
-                    };
-                } else {
-                    return p;
-                }
-            });
-
             setTime(new Date());
 
-            return { ...leaderboardData, players: leaderboardPlayers };
+            return leaderboardData;
         },
         {
             staleTime: Infinity,
@@ -482,22 +468,42 @@ export function PlayerList({
         };
     }, [isFetching]);
 
-    const mappedPlayers = data?.players.map((player) => {
-        const match =
-            sortedEvents.find((e) =>
-                e.match.players.some((p) => p.profileId === player.profileId)
-            )?.match ??
-            matches.find((m) =>
-                m.players.some((p) => p.profileId === player.profileId)
-            );
+    const mappedPlayers = useMemo(
+        () =>
+            data?.players.map((player) => {
+                const match =
+                    sortedEvents.find((e) =>
+                        e.match.players.some(
+                            (p) => p.profileId === player.profileId
+                        )
+                    )?.match ??
+                    matches.find((m) =>
+                        m.players.some((p) => p.profileId === player.profileId)
+                    );
 
-        return {
-            ...player,
-            winrates: (player.wins / player.games) * 100,
-            lastMatchTime:
-                match?.started ?? match?.finished ?? player.lastMatchTime,
-        };
-    });
+                const matchPlayer = match?.players.find(
+                    (p) => p.profileId === player.profileId
+                );
+                const rating =
+                    matchPlayer?.rating && matchPlayer?.ratingDiff
+                        ? matchPlayer.rating + matchPlayer.ratingDiff
+                        : player.rating;
+                const maxRating =
+                    rating > player.maxRating ? rating : player.maxRating;
+
+                return {
+                    ...player,
+                    winrates: (player.wins / player.games) * 100,
+                    lastMatchTime:
+                        match?.started ??
+                        match?.finished ??
+                        player.lastMatchTime,
+                    rating,
+                    maxRating,
+                };
+            }),
+        [data?.players, matches, sortedEvents]
+    );
     const sortedPlayerIds = orderBy(
         mappedPlayers,
         ['maxRating', 'rating'],
@@ -545,7 +551,13 @@ export function PlayerList({
 
                 <div className="flex gap-2">
                     <time dateTime={formatISO(time)}>
-                        Last updated {format(time, 'PPpp')}
+                        Last updated {format(time, 'pp')}
+                        <br />
+                        {connected && (
+                            <p className="text-xs italic text-center">
+                                Live Updates are Enabled
+                            </p>
+                        )}
                     </time>
 
                     <button onClick={() => refetch()}>
