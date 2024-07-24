@@ -968,11 +968,7 @@ const MatchCard = ({
                     <div className="flex justify-between" key={p.profileId}>
                         <div className="flex gap-1.5">
                             <img src={p.civImageUrl} className="w-5 h-5" />
-                            <span
-                                className={
-                                    p.profileId === userId ? 'font-bold' : ''
-                                }
-                            >
+                            <span className={p.won ? 'font-bold' : ''}>
                                 {playerNames[p.profileId]?.name ?? p.name}
                             </span>
                         </div>
