@@ -7,7 +7,7 @@ import {
     ILeaderboardPlayer,
     ILobbiesMatch,
 } from '../helper/api.types';
-import { isEmpty, merge, orderBy, uniqBy } from 'lodash';
+import { isEmpty, merge, orderBy } from 'lodash';
 import {
     formatAgo,
     formatDateShort,
@@ -23,7 +23,7 @@ import {
     faCaretDown,
     faCaretUp,
     faCrown,
-    faExternalLink,
+    faEye,
     faSkull,
     faSpinner,
     faTimes,
@@ -550,12 +550,13 @@ export function PlayerList({
                 </h2>
 
                 <div className="flex gap-2">
-                    <time dateTime={formatISO(time)}>
+                    <time dateTime={formatISO(time)} className="text-right">
                         Last updated {format(time, 'pp')}
                         <br />
                         {connected && (
-                            <p className="text-xs italic text-center">
-                                Live Updates are Enabled
+                            <p className="text-xs italic text-right">
+                                Live updates are enabled (no need to manually
+                                refresh)
                             </p>
                         )}
                     </time>
@@ -812,8 +813,15 @@ const PlayerRow = ({
                             </div>
                         ) : (
                             <div className="text-base">
-                                <b className="text-[#EAC65E]">LIVE</b> on{' '}
-                                {match.mapName}
+                                <a
+                                    href={`aoe2de://1/${match.matchId}`}
+                                    target="_blank"
+                                    className="text-[#EAC65E] font-bold align-middle hover:underline"
+                                    rel="noreferrer"
+                                >
+                                    LIVE <FontAwesomeIcon icon={faEye} />
+                                </a>{' '}
+                                on {match.mapName}
                                 <br />
                                 <p className="text-sm">vs {opponentName}</p>
                             </div>
@@ -934,7 +942,7 @@ const MatchCard = ({
                     className="text-[#EAC65E] absolute top-0"
                     rel="noreferrer"
                 >
-                    <FontAwesomeIcon icon={faExternalLink} />
+                    <FontAwesomeIcon icon={faEye} />
                 </a>
             )}
 
