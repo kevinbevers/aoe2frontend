@@ -498,7 +498,11 @@ export function PlayerList({
                 match?.started ?? match?.finished ?? player.lastMatchTime,
         };
     });
-    const sortedPlayerIds = orderBy(mappedPlayers, 'maxRating', 'desc')
+    const sortedPlayerIds = orderBy(
+        mappedPlayers,
+        ['maxRating', 'rating'],
+        ['desc', 'desc']
+    )
         ?.slice(0, 25)
         .map((p) => p.profileId);
     const qualifiedPlayers = sortedPlayerIds?.slice(0, 4);
