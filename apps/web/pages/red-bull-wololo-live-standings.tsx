@@ -84,6 +84,21 @@ export function Index() {
             <div className="fixed inset-0 bg-gradient-to-r from-black/80 via-black/90 to-black" />
             <div className="flex-1 relative order-2 2xl:order-1 self-center md:self-start xl:self-center 2xl:self-center">
                 <PlayerList leaderboard={leaderboard} search="" />
+                <div id="rankdisclaimer" className="text-sm italic">
+                    * In case of a tie between players, the player with the
+                    highest current rating will take precedence. In the rare
+                    case that there&apos;s still a tie, Red Bull will organise
+                    an additional matchup between these players. See{' '}
+                    <a
+                        href="https://bulldrive.redbull.com/dl/Pj7k9s9phP"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline"
+                    >
+                        Handbook
+                    </a>{' '}
+                    for more information.
+                </div>
                 <Footer className="block 2xl:hidden" />
             </div>
 
@@ -267,6 +282,7 @@ export function PlayerList({
     const [events, setEvents] = useState<
         Array<{ match: ILobbiesMatch; event: 'added' | 'removed' }>
     >([]);
+    const sortedEvents = orderBy(events, 'match.started', 'desc');
     const [connected, setConnected] = useState(false);
     const [screenTime, refreshScreen] = useState(getUnixTime(new Date()));
     const ref = useRef(null);
@@ -468,12 +484,8 @@ export function PlayerList({
 
     const mappedPlayers = data?.players.map((player) => {
         const match =
-            events.find((e) =>
-                e.match.players.some(
-                    (p) =>
-                        p.profileId === player.profileId &&
-                        e.event === 'removed'
-                )
+            sortedEvents.find((e) =>
+                e.match.players.some((p) => p.profileId === player.profileId)
             )?.match ??
             matches.find((m) =>
                 m.players.some((p) => p.profileId === player.profileId)
@@ -492,7 +504,8 @@ export function PlayerList({
     const qualifiedPlayers = sortedPlayerIds?.slice(0, 4);
     const players = orderBy(
         orderBy(mappedPlayers, 'maxRating', 'desc')?.slice(0, 25),
-        ...sort
+        [sort[0], 'rating'],
+        [sort[1], 'desc']
     )?.slice(0, 25);
 
     const transitions = useTransition(
@@ -608,11 +621,9 @@ export function PlayerList({
                     ) : (
                         transitions((style, player, { key }, index) => {
                             const match =
-                                events.find((e) =>
+                                sortedEvents.find((e) =>
                                     e.match.players.some(
-                                        (p) =>
-                                            p.profileId === player.profileId &&
-                                            e.event === 'removed'
+                                        (p) => p.profileId === player.profileId
                                     )
                                 )?.match ??
                                 matches.find((m) =>
@@ -623,6 +634,12 @@ export function PlayerList({
 
                             const isQualified = qualifiedPlayers.includes(
                                 player.profileId
+                            );
+
+                            const hasDuplicateRank = players.some(
+                                (p) =>
+                                    p.maxRating === player.maxRating &&
+                                    p.profileId !== player.profileId
                             );
 
                             return (
@@ -640,6 +657,7 @@ export function PlayerList({
                                             (pid) => player.profileId === pid
                                         ) + 1
                                     }
+                                    hasDuplicateRank={hasDuplicateRank}
                                     player={player}
                                     key={key}
                                     playerNames={playerNames}
@@ -669,6 +687,7 @@ const PlayerRow = ({
     playerNames,
     initialRank,
     rank,
+    hasDuplicateRank,
     status = 'none',
     style,
 }: {
@@ -678,6 +697,7 @@ const PlayerRow = ({
     rank?: number;
     match?: ILobbiesMatch;
     status?: 'invited' | 'qualified' | 'none';
+    hasDuplicateRank?: boolean;
     style?: {
         position: SpringValue<React.CSSProperties['position']>;
         opacity: SpringValue<number>;
@@ -710,7 +730,18 @@ const PlayerRow = ({
             >
                 {rank && (
                     <div className="flex gap-2 items-center">
-                        #{rank}
+                        <span>
+                            #{rank}
+                            {hasDuplicateRank && (
+                                <a
+                                    className="hover:text-[#EAC65E] transition-colors"
+                                    href="#rankdisclaimer"
+                                >
+                                    *
+                                </a>
+                            )}
+                        </span>
+
                         {initialRank && initialRank !== rank && (
                             <FontAwesomeIcon
                                 icon={
