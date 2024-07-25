@@ -1113,7 +1113,7 @@ const MatchCard = ({
                         </div>
 
                         <span className="flex gap-2">
-                            {p.ratingDiff && (
+                            {p.ratingDiff ? (
                                 <span
                                     className={
                                         p.ratingDiff > 0
@@ -1123,7 +1123,7 @@ const MatchCard = ({
                                 >
                                     {signed(p.ratingDiff)}
                                 </span>
-                            )}
+                            ) : null}
                             {p.rating}
                         </span>
                     </div>
@@ -1186,13 +1186,17 @@ const PlayerModal = ({
 }) => {
     const { data, isLoading } = useQuery(
         ['leaderboard-player', player.profileId],
-        async (context) => {
-            const { matches } = await fetchMatches({
+        async () => {
+            const matchData = await fetchMatches({
                 leaderboardIds: 'ew_1v1_redbullwololo' as unknown as number[],
                 profileIds: player.profileId as unknown as number[],
             });
 
-            return matches;
+            if (!matchData?.matches) {
+                throw new Error('Unable to load stats');
+            }
+
+            return matchData.matches;
         },
         {
             enabled: isVisible,
@@ -1201,11 +1205,17 @@ const PlayerModal = ({
     );
     const { data: profile, isLoading: isProfileLoading } = useQuery(
         ['leaderboard-player-stats', player.profileId],
-        () =>
-            fetchProfile({
+        async () => {
+            const statsData = await fetchProfile({
                 profileId: player.profileId,
                 extend: 'stats',
-            }),
+            });
+            if (!statsData?.stats || !statsData?.ratings) {
+                throw new Error('Unable to load stats');
+            }
+
+            return statsData;
+        },
         {
             enabled: isVisible,
             staleTime: 5 * 60 * 1000,
@@ -1489,11 +1499,17 @@ const PlayerModal = ({
                                             </h3>
                                             {isProfileLoading ||
                                             !ratingHistory ? (
-                                                <FontAwesomeIcon
-                                                    spin
-                                                    icon={faSpinner}
-                                                    size="2xl"
-                                                />
+                                                isProfileLoading ? (
+                                                    <FontAwesomeIcon
+                                                        spin
+                                                        icon={faSpinner}
+                                                        size="2xl"
+                                                    />
+                                                ) : (
+                                                    <p>
+                                                        Unable to fetch winrates
+                                                    </p>
+                                                )
                                             ) : (
                                                 <>
                                                     <div className="flex gap-2">
@@ -1588,12 +1604,19 @@ const PlayerModal = ({
                                             <h3 className="text-lg font-bold -mb-2">
                                                 Recent Games
                                             </h3>
-                                            {isLoading ? (
-                                                <FontAwesomeIcon
-                                                    spin={isLoading}
-                                                    icon={faSpinner}
-                                                    size="2xl"
-                                                />
+                                            {isLoading || !data?.length ? (
+                                                isLoading ? (
+                                                    <FontAwesomeIcon
+                                                        spin={isLoading}
+                                                        icon={faSpinner}
+                                                        size="2xl"
+                                                    />
+                                                ) : (
+                                                    <p>
+                                                        Unable to fetch recent
+                                                        games
+                                                    </p>
+                                                )
                                             ) : (
                                                 data?.map((match) => (
                                                     <div
