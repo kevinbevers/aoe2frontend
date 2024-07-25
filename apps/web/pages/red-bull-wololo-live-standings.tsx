@@ -88,7 +88,7 @@ export function Index() {
 
     return (
         <main
-            className="flex flex-col 2xl:flex-row px-4 md:px-12 py-8 gap-12 text-white min-h-screen relative items-center 2xl:items-stretch"
+            className="flex flex-col 2xl:flex-row px-4 md:px-12 py-8 gap-12 text-white min-h-screen relative items-center 2xl:items-stretch selection:bg-gold-700/70 select-none"
             style={{ colorScheme: 'dark' }}
         >
             <div className="fixed bg-[url('/red-bull-wololo-el-reinado-background.jpg')] bg-cover inset-0" />
@@ -97,7 +97,7 @@ export function Index() {
                 <PlayerList leaderboard={leaderboard} search="" />
                 <div
                     id="rankdisclaimer"
-                    className="text-center md:text-left text-sm italic"
+                    className="text-center md:text-left text-sm italic select-auto"
                 >
                     * In case of a tie between players, the player with the
                     highest current rating will take precedence. In the rare
@@ -116,11 +116,11 @@ export function Index() {
                 <Footer className="block 2xl:hidden" />
             </div>
 
-            <div className="relative w-[384px] flex flex-col justify-between order-1 2xl:order-2">
+            <div className="relative w-[384px] flex flex-col justify-between order-1 2xl:order-2 select-auto">
                 <div className="flex flex-col gap-4">
                     <img
                         src="/red-bull-wololo-el-reinado.png"
-                        className="h-[506px] w-[384px]"
+                        className="h-[506px] w-[384px] select-none"
                     />
                     <p className="text-lg inline-block text-center">
                         On the 28th of July, the four players with the
@@ -271,7 +271,7 @@ export function Index() {
 }
 
 export const Footer = ({ className }: { className?: string }) => (
-    <div className={className}>
+    <div className={`select-auto ${className}`}>
         <p className="text-center mb-4 italic">
             Inspired by{' '}
             <a
@@ -593,7 +593,7 @@ export function PlayerList({
 
     return (
         <div>
-            <div className="pb-2 mb-8 border-b-2 border-[#EAC65E] flex flex-col md:flex-row justify-between items-center">
+            <div className="pb-2 mb-8 border-b-2 border-[#EAC65E] flex flex-col md:flex-row justify-between items-center select-auto">
                 <h2 className="text-xl md:text-5xl uppercase font-bold">
                     Current Top Players
                 </h2>
@@ -821,7 +821,9 @@ const PlayerRow = ({
             data-id={player.profileId}
         >
             <Cell
-                className={`w-20 border-l-4 hidden md:flex ${statusClasses[status]} group cursor-pointer`}
+                className={`w-20 border-l-4 hidden md:flex ${
+                    statusClasses[status]
+                } group ${hasDuplicateRank ? 'cursor-pointer' : ''}`}
             >
                 {rank && (
                     <div className="flex gap-2 items-center relative">
@@ -884,7 +886,11 @@ const PlayerRow = ({
                 </span>
             </Cell>
             <Cell className="font-bold w-48">{player.maxRating}</Cell>
-            <Cell className="w-48 hidden md:flex group cursor-pointer">
+            <Cell
+                className={`w-48 hidden md:flex group ${
+                    player.rating === player.maxRating ? 'cursor-pointer' : ''
+                }`}
+            >
                 <div className="relative flex items-center gap-2">
                     {player.rating}
                     {player.rating === player.maxRating && (
@@ -1004,7 +1010,7 @@ const HeadCell = ({
 } & HTMLAttributes<HTMLTableCellElement>) => (
     <th
         scope="col"
-        className={`py-2 px-6 whitespace-nowrap block ${className}`}
+        className={`py-2 px-6 whitespace-nowrap block ${className} select-none`}
         {...props}
     >
         <button
@@ -1042,7 +1048,7 @@ const Cell = ({
     children: React.ReactNode;
 } & HTMLAttributes<HTMLTableCellElement>) => (
     <td
-        className={`py-3 px-6 text-lg border-t border-t-gray-700 whitespace-nowrap flex items-center ${className}`}
+        className={`py-3 px-6 text-lg border-t border-t-gray-700 whitespace-nowrap flex items-center ${className} select-text`}
         {...props}
     >
         {children}
