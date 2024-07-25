@@ -372,8 +372,24 @@ export function PlayerList({
 
             if (matchData?.matches?.length) {
                 updateMatches(matchData.matches.map(reformatTeamMatch), true);
+
+                closeSocket();
+                openSocket(profileIds);
             } else {
-                throw new Error('Unable to update matches');
+                const matchData2 = await fetchMatches({
+                    profileIds: profileIds.join(',') as unknown as number[],
+                });
+                if (matchData2?.matches?.length) {
+                    updateMatches(
+                        matchData2.matches.map(reformatTeamMatch),
+                        true
+                    );
+
+                    closeSocket();
+                    openSocket(profileIds);
+                } else {
+                    throw new Error('Unable to update matches');
+                }
             }
             setMatchesError(false);
         } catch {
@@ -382,7 +398,6 @@ export function PlayerList({
         }
 
         setMatchesLoading(false);
-        openSocket(profileIds);
     };
 
     const { data, isFetching, refetch, isLoading, isError } = useQuery(
@@ -432,12 +447,15 @@ export function PlayerList({
     const socket = useRef<w3cwebsocket>();
 
     const openSocket = (profileIds: number[]) => {
+        console.log('open socket');
+
         if (profileIds && profileIds.length > 0) {
             connect(profileIds).then((s) => (socket.current = s));
         }
     };
 
     const closeSocket = () => {
+        console.log('close socket');
         socket.current?.close();
     };
 
