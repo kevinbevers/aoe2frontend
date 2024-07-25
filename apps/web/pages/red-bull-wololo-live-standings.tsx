@@ -364,16 +364,16 @@ export function PlayerList({
 
     const fetchNewMatches = async (profileIds: number[]) => {
         try {
-            closeSocket();
-
             setMatchesLoading(true);
 
             const matchData = await fetchMatches({
                 profileIds: profileIds.join(',') as unknown as number[],
             });
 
-            if (matchData?.matches) {
+            if (matchData?.matches?.length) {
                 updateMatches(matchData.matches.map(reformatTeamMatch), true);
+            } else {
+                throw new Error('Unable to update matches');
             }
             setMatchesError(false);
         } catch {
@@ -410,7 +410,8 @@ export function PlayerList({
                 const pids = data?.players?.map((p) => p.profileId);
 
                 if (pids && pids.length > 0) {
-                    fetchNewMatches(data?.players?.map((p) => p.profileId));
+                    fetchNewMatches(pids);
+                    openSocket(pids);
                 }
             },
             staleTime: 2 * 60 * 1000,
@@ -579,7 +580,17 @@ export function PlayerList({
                             className="w-64 hidden md:block"
                             columnName="lastMatchTime"
                         >
-                            Last Match
+                            Last Match{' '}
+                            {!isLoading && matchesLoading && (
+                                <span className="ml-2">
+                                    <FontAwesomeIcon
+                                        spin
+                                        icon={faSpinner}
+                                        color="#d4d4d4"
+                                        size="xs"
+                                    />
+                                </span>
+                            )}
                         </HeadCell>
                         <HeadCell
                             sort={sort}
@@ -790,13 +801,23 @@ const PlayerRow = ({
                             <div className="text-base">
                                 {formatAgo(match.finished)}
                                 <p className="text-sm whitespace-nowrap overflow-hidden text-ellipsis">
-                                    {ratingDiff
-                                        ? `${
-                                              ratingDiff > 0 ? 'Gained' : 'Lost'
-                                          } ${Math.abs(ratingDiff)} points ${
-                                              ratingDiff > 0 ? 'from' : 'to'
-                                          } `
-                                        : 'vs '}
+                                    {ratingDiff ? (
+                                        <span>
+                                            {ratingDiff > 0 ? 'Gained' : 'Lost'}{' '}
+                                            <span
+                                                className={
+                                                    ratingDiff > 0
+                                                        ? 'text-green-500'
+                                                        : 'text-red-500'
+                                                }
+                                            >
+                                                {signed(ratingDiff)} points
+                                            </span>{' '}
+                                            {ratingDiff > 0 ? 'from' : 'to'}{' '}
+                                        </span>
+                                    ) : (
+                                        'vs '
+                                    )}
                                     {opponentName}
                                 </p>
                             </div>
@@ -828,24 +849,27 @@ const PlayerRow = ({
                     <div className="text-sm">
                         <p className="italic">Unable to Load</p>
                         <button
-                            className="text-[#EAC65E] hover:underline"
+                            className={`${
+                                matchesLoading
+                                    ? 'text-[#d4d4d4]'
+                                    : 'text-[#EAC65E] hover:underline'
+                            }`}
                             onClick={fetchMatchTime}
+                            disabled={matchesLoading}
                         >
-                            Try again
+                            {matchesLoading ? 'Retrying ' : 'Try again '}
+                            {matchesLoading && (
+                                <FontAwesomeIcon
+                                    spin
+                                    icon={faSpinner}
+                                    size="xs"
+                                    color="#d4d4d4"
+                                />
+                            )}
                         </button>
                     </div>
                 ) : (
                     formatAgo(player.lastMatchTime)
-                )}
-                {matchesLoading && (
-                    <div className="ml-2">
-                        <FontAwesomeIcon
-                            spin
-                            icon={faSpinner}
-                            color="#d4d4d4"
-                            size="xs"
-                        />
-                    </div>
                 )}
             </Cell>
             <Cell className="w-24 hidden md:flex">
