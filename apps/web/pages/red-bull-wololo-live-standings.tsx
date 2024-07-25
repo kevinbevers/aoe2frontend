@@ -88,7 +88,7 @@ export function Index() {
 
     return (
         <main
-            className="flex flex-col 2xl:flex-row px-4 md:px-12 py-8 gap-12 text-white min-h-screen relative items-center 2xl:items-stretch selection:bg-gold-700/70 select-none"
+            className="flex flex-col 2xl:flex-row px-4 md:px-12 py-8 gap-12 text-white min-h-screen relative items-center 2xl:items-stretch selection:bg-blue-600/90 select-none"
             style={{ colorScheme: 'dark' }}
         >
             <div className="fixed bg-[url('/red-bull-wololo-el-reinado-background.jpg')] bg-cover inset-0" />
@@ -1330,7 +1330,7 @@ const PlayerModal = ({
                     </Transition.Child>
 
                     <div
-                        className="fixed inset-0 overflow-y-auto"
+                        className="fixed inset-0 overflow-y-auto selection:bg-blue-600/90"
                         style={{ colorScheme: 'dark' }}
                     >
                         <div className="flex min-h-full items-center justify-center p-4 text-center">
