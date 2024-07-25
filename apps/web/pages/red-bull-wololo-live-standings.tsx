@@ -6,6 +6,7 @@ import {
     ILeaderboardDef,
     ILeaderboardPlayer,
     ILobbiesMatch,
+    IMatchesMatch,
 } from '../helper/api.types';
 import { isEmpty, merge, orderBy } from 'lodash';
 import {
@@ -34,6 +35,7 @@ import {
     formatISO,
     getUnixTime,
     isAfter,
+    subMinutes,
     subWeeks,
 } from 'date-fns';
 import {
@@ -91,7 +93,10 @@ export function Index() {
             <div className="fixed inset-0 bg-gradient-to-r from-black/80 via-black/90 to-black" />
             <div className="flex-1 relative order-2 2xl:order-1 self-center md:self-start xl:self-center 2xl:self-center">
                 <PlayerList leaderboard={leaderboard} search="" />
-                <div id="rankdisclaimer" className="text-sm italic">
+                <div
+                    id="rankdisclaimer"
+                    className="text-center md:text-left text-sm italic"
+                >
                     * In case of a tie between players, the player with the
                     highest current rating will take precedence. In the rare
                     case that there&apos;s still a tie, Red Bull will organise
@@ -286,10 +291,6 @@ export function PlayerList({
         'desc' | 'asc'
     ]);
     const [matches, setMatches] = useState<ILobbiesMatch[]>([]);
-    const [events, setEvents] = useState<
-        Array<{ match: ILobbiesMatch; event: 'added' | 'removed' }>
-    >([]);
-    const sortedEvents = orderBy(events, 'match.started', 'desc');
     const [connected, setConnected] = useState(false);
     const [screenTime, refreshScreen] = useState(getUnixTime(new Date()));
     const ref = useRef(null);
@@ -314,118 +315,64 @@ export function PlayerList({
                     setConnected(false);
                 },
                 onMatches: (games: ILobbiesMatch[]) => {
-                    setMatches(
-                        games.filter(
+                    setMatches((prev) => {
+                        const newGames = games.filter(
                             (game) =>
                                 game.leaderboardId === leaderboard.leaderboardId
-                        )
-                    );
+                        );
+                        const newGameIds = newGames.map((g) => g.matchId);
+                        return orderBy(
+                            [
+                                ...prev.filter(
+                                    (g) => !newGameIds.includes(g.matchId)
+                                ),
+                                ...games,
+                            ],
+                            'started',
+                            'desc'
+                        );
+                    });
+
                     setTime(new Date());
                 },
-                onMatchAdded: (match: ILobbiesMatch) => {
-                    if (match.leaderboardId === leaderboard.leaderboardId) {
-                        setEvents((prev) => [
-                            ...prev.filter(
-                                (e) => e.match.matchId !== match.matchId
-                            ),
-                            { event: 'added', match },
-                        ]);
-                    }
-                },
                 onMatchRemoved: (match: ILobbiesMatch) => {
-                    if (match.leaderboardId === leaderboard.leaderboardId) {
-                        setEvents((prev) => [
-                            ...prev.filter(
-                                (e) => e.match.matchId !== match.matchId
-                            ),
-                            { event: 'removed', match },
-                        ]);
-
-                        const profileIds = match.players.map(
-                            (p) => p.profileId
-                        );
-
-                        const getMatch = async () => {
-                            const { matches } = await fetchMatches({
-                                leaderboardIds:
-                                    leaderboard.leaderboardId as unknown as number[],
-                                profileIds: profileIds.join(
-                                    ','
-                                ) as unknown as number[],
-                            });
-
-                            const foundMatch = matches.find(
-                                (m) => m.matchId === match.matchId
+                    if (
+                        match &&
+                        match.leaderboardId === leaderboard.leaderboardId
+                    ) {
+                        setMatches((prev) => {
+                            return orderBy(
+                                [
+                                    ...prev.filter(
+                                        (g) => match.matchId !== g.matchId
+                                    ),
+                                    match,
+                                ],
+                                'started',
+                                'desc'
                             );
-
-                            setTime(new Date());
-
-                            setEvents((prev) =>
-                                prev.map((e) => {
-                                    if (
-                                        e.event === 'removed' &&
-                                        matches
-                                            .map((m) => m.matchId)
-                                            .includes(e.match.matchId)
-                                    ) {
-                                        const newMatchPlayers = matches
-                                            .find(
-                                                (m) =>
-                                                    m.matchId ===
-                                                    e.match.matchId
-                                            )
-                                            ?.teams.flatMap((t) => t.players);
-                                        return {
-                                            ...e,
-                                            match: {
-                                                ...e.match,
-                                                players: e.match.players.map(
-                                                    (x) => {
-                                                        const newP =
-                                                            newMatchPlayers.find(
-                                                                (p) =>
-                                                                    x.profileId ===
-                                                                    p.profileId
-                                                            );
-                                                        return {
-                                                            ...x,
-                                                            rating: newP.rating,
-                                                            ratingDiff:
-                                                                newP.ratingDiff,
-                                                        };
-                                                    }
-                                                ),
-                                            },
-                                        };
-                                    } else {
-                                        return e;
-                                    }
-                                })
-                            );
-
-                            const hasRatingDiff = foundMatch?.teams
-                                .flatMap((t) => t.players)
-                                .some((p) => p.ratingDiff);
-
-                            return hasRatingDiff;
-                        };
+                        });
 
                         setTimeout(async () => {
-                            const foundMatch = await getMatch();
-                            if (foundMatch) {
-                                refetch();
-                            } else {
-                                setTimeout(async () => {
-                                    await getMatch();
-                                    refetch();
-                                }, 15000);
-                            }
+                            refetch();
                         }, 15000);
                     }
                 },
             },
             profileIds
         );
+    };
+
+    const fetchNewMatches = async (profileIds: number[]) => {
+        const matchData = await fetchMatches({
+            profileIds: profileIds.join(',') as unknown as number[],
+        });
+
+        const newMatches = matchData.matches
+            ?.filter((game) => game.leaderboardId === leaderboard.leaderboardId)
+            .map((match) => reformatTeamMatch(match));
+
+        setMatches(orderBy(newMatches, 'started', 'desc'));
     };
 
     const { data, isFetching, refetch, isLoading } = useQuery(
@@ -443,6 +390,8 @@ export function PlayerList({
             return leaderboardData;
         },
         {
+            onSuccess: (data) =>
+                fetchNewMatches(data?.players.map((p) => p.profileId)),
             staleTime: Infinity,
             cacheTime: Infinity,
         }
@@ -471,15 +420,9 @@ export function PlayerList({
     const mappedPlayers = useMemo(
         () =>
             data?.players.map((player) => {
-                const match =
-                    sortedEvents.find((e) =>
-                        e.match.players.some(
-                            (p) => p.profileId === player.profileId
-                        )
-                    )?.match ??
-                    matches.find((m) =>
-                        m.players.some((p) => p.profileId === player.profileId)
-                    );
+                const match = matches.find((m) =>
+                    m.players.some((p) => p.profileId === player.profileId)
+                );
 
                 const matchPlayer = match?.players.find(
                     (p) => p.profileId === player.profileId
@@ -502,7 +445,7 @@ export function PlayerList({
                     maxRating,
                 };
             }),
-        [data?.players, matches, sortedEvents]
+        [data?.players, matches]
     );
     const sortedPlayerIds = orderBy(
         mappedPlayers,
@@ -549,8 +492,11 @@ export function PlayerList({
                     Current Top Players
                 </h2>
 
-                <div className="flex gap-2">
-                    <time dateTime={formatISO(time)} className="text-right">
+                <div className="flex gap-4">
+                    <time
+                        dateTime={formatISO(time)}
+                        className="text-center md:text-right"
+                    >
                         Last updated {format(time, 'pp')}
                         <br />
                         {connected && (
@@ -584,7 +530,7 @@ export function PlayerList({
                         <HeadCell
                             sort={sort}
                             setSort={setSort}
-                            className="w-48 md:w-72"
+                            className="w-48 md:w-72 flex-1"
                         >
                             Player
                         </HeadCell>
@@ -637,17 +583,11 @@ export function PlayerList({
                         </tr>
                     ) : (
                         transitions((style, player, { key }, index) => {
-                            const match =
-                                sortedEvents.find((e) =>
-                                    e.match.players.some(
-                                        (p) => p.profileId === player.profileId
-                                    )
-                                )?.match ??
-                                matches.find((m) =>
-                                    m.players.some(
-                                        (p) => p.profileId === player.profileId
-                                    )
-                                );
+                            const match = matches.find((m) =>
+                                m.players.some(
+                                    (p) => p.profileId === player.profileId
+                                )
+                            );
 
                             const isQualified = qualifiedPlayers.includes(
                                 player.profileId
@@ -738,7 +678,7 @@ const PlayerRow = ({
     return (
         <animated.tr
             key={player.profileId}
-            className="flex"
+            className="flex w-full"
             style={style}
             data-id={player.profileId}
         >
@@ -782,20 +722,24 @@ const PlayerRow = ({
                 />
             </Cell>
             <Cell
-                className={`font-bold w-48 md:w-72 cursor-pointer hover:text-[#EAC65E] transition-colors border-l-4 md:border-l-0 ${statusClasses[status]}`}
-                onClick={() => setIsOpen(true)}
+                className={`font-bold w-48 md:w-72 flex-1 border-l-4 md:border-l-0 ${statusClasses[status]}`}
             >
                 <span className="text-2xl mr-2 align-middle">
                     {player.countryIcon}
                 </span>
-                <span className="text-ellipsis overflow-hidden">
+                <span
+                    className="text-ellipsis overflow-hidden cursor-pointer hover:text-[#EAC65E] transition-colors"
+                    onClick={() => setIsOpen(true)}
+                >
                     {player.name}
                 </span>
             </Cell>
             <Cell className="font-bold w-48">{player.maxRating}</Cell>
             <Cell className="w-48 hidden md:flex">{player.rating}</Cell>
             <Cell className="w-64 group py-2 hidden md:flex">
-                {match ? (
+                {match &&
+                (!match.finished ||
+                    isAfter(match.finished, subMinutes(new Date(), 30))) ? (
                     <div className="relative cursor-pointer max-w-full">
                         {match.finished ? (
                             <div className="text-base">
@@ -1021,6 +965,17 @@ const formatTick = (tick: any, index: number, ticks: any[]) => {
         return formatDateShort(date);
     }
     return formatTime(ticks[index]);
+};
+
+const reformatTeamMatch = (match: IMatchesMatch): ILobbiesMatch => {
+    return {
+        ...match,
+        players: match.teams.flatMap((t) => t.players),
+        totalSlotCount: 0,
+        blockedSlotCount: 0,
+        gameModeName: '',
+        averageRating: 0,
+    };
 };
 
 const PlayerModal = ({
@@ -1454,19 +1409,9 @@ const PlayerModal = ({
                                                             userId={
                                                                 player.profileId
                                                             }
-                                                            match={{
-                                                                ...match,
-                                                                players:
-                                                                    match.teams.flatMap(
-                                                                        (t) =>
-                                                                            t.players
-                                                                    ),
-                                                                totalSlotCount: 0,
-                                                                blockedSlotCount: 0,
-                                                                gameModeName:
-                                                                    '',
-                                                                averageRating: 0,
-                                                            }}
+                                                            match={reformatTeamMatch(
+                                                                match
+                                                            )}
                                                             playerNames={
                                                                 playerNames
                                                             }
