@@ -60,6 +60,7 @@ import {
 import { getConfig } from '../helper/config';
 import Countdown from 'react-countdown';
 import { w3cwebsocket } from 'websocket';
+import { faChartLine } from '@fortawesome/free-solid-svg-icons';
 
 const config = getConfig();
 const endDate = new Date(1722178800000);
@@ -757,10 +758,10 @@ const PlayerRow = ({
             data-id={player.profileId}
         >
             <Cell
-                className={`w-20 border-l-4 hidden md:flex ${statusClasses[status]}`}
+                className={`w-20 border-l-4 hidden md:flex ${statusClasses[status]} group cursor-pointer`}
             >
                 {rank && (
-                    <div className="flex gap-2 items-center">
+                    <div className="flex gap-2 items-center relative">
                         <span>
                             #{rank}
                             {hasDuplicateRank && (
@@ -786,6 +787,17 @@ const PlayerRow = ({
                                 }
                             />
                         )}
+                        {hasDuplicateRank && (
+                            <div className="absolute top-8 left-1/2 -translate-x-1/2 mx-auto scale-0 bg-blue-800 rounded-lg border-gray-800 px-1.5 py-1.5 group-hover:scale-100 z-10 flex flex-row text-xs shadow-2xl transition-transform text-center italic w-36 whitespace-normal">
+                                In case of a tie between players, the player
+                                with the highest current rating will take
+                                precedence. <br />
+                                <br />
+                                In the rare case that there&apos;s still a tie,
+                                Red Bull will organise an additional matchup
+                                between these players.
+                            </div>
+                        )}
                     </div>
                 )}
                 <PlayerModal
@@ -809,7 +821,20 @@ const PlayerRow = ({
                 </span>
             </Cell>
             <Cell className="font-bold w-48">{player.maxRating}</Cell>
-            <Cell className="w-48 hidden md:flex">{player.rating}</Cell>
+            <Cell className="w-48 hidden md:flex group cursor-pointer">
+                <div className="relative flex items-center gap-2">
+                    {player.rating}
+                    {player.rating === player.maxRating && (
+                        <FontAwesomeIcon icon={faChartLine} size="sm" />
+                    )}
+                    {player.rating === player.maxRating && (
+                        <div className="absolute top-8 left-1/2 -translate-x-1/2 mx-auto scale-0 bg-blue-800 rounded-lg border-gray-800 px-3 py-2 group-hover:scale-100 z-10 flex flex-row text-sm shadow-2xl transition-transform">
+                            <div className="h-0 w-0 border-x-8 border-x-transparent border-b-[8px] border-b-blue-800 absolute -top-2 mx-auto left-0 right-0"></div>
+                            <p className="text-xs">At Highest Rating</p>
+                        </div>
+                    )}
+                </div>
+            </Cell>
             <Cell className="w-64 group py-2 hidden md:flex">
                 {match &&
                 (!match.finished ||
