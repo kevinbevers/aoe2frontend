@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import { fromUnixTime, getUnixTime, isAfter, subSeconds } from 'date-fns';
-import { fetchLeaderboard } from '../../helper/api';
+import { fetchLeaderboard, fetchMatches } from '../../helper/api';
 
 export const config = {
     maxDuration: 30,
@@ -30,17 +30,37 @@ export default async function handler(
 
     if (
         mostRecentFile &&
-        isAfter(fromUnixTime(mostRecentFile), subSeconds(new Date(), 10))
+        isAfter(fromUnixTime(mostRecentFile), subSeconds(new Date(), 15))
     ) {
         const cachedData = fs.readFileSync(`${folder}/${mostRecentFile}.json`);
 
         return response.status(200).json(JSON.parse(cachedData.toString()));
     } else {
-        const data = await fetchLeaderboard({
+        const leaderboard = await fetchLeaderboard({
             leaderboardId: 'ew_1v1_redbullwololo' as unknown as number,
             extend: 'max_rating,verified,players.country_icon',
             perPage: 50,
         });
+
+        if (!leaderboard?.players?.length) {
+            throw new Error('Server Error: Leaderboard');
+        }
+        const profileIds = leaderboard?.players?.map((p) => p.profileId);
+
+        const matchData = await fetchMatches({
+            profileIds: profileIds.join(',') as unknown as number[],
+        });
+
+        if (!matchData?.matches?.length) {
+            throw new Error('Server Error: Matches');
+        }
+
+        const data = {
+            leaderboard,
+            matches: matchData.matches.filter(
+                (match) => match.leaderboardId === leaderboard.leaderboardId
+            ),
+        };
 
         fs.writeFileSync(
             `/tmp/leaderboards/${getUnixTime(new Date())}.json`,

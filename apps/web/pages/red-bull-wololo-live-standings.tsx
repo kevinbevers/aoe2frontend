@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchLeaderboard, fetchMatches, fetchProfile } from '../helper/api';
 import {
+    ILeaderboard,
     ILeaderboardDef,
     ILeaderboardPlayer,
     ILobbiesMatch,
@@ -10,6 +11,7 @@ import {
 } from '../helper/api.types';
 import { isEmpty, merge, orderBy } from 'lodash';
 import {
+    dateReviver,
     formatAgo,
     formatDateShort,
     formatMonth,
@@ -350,8 +352,6 @@ export function PlayerList({
         'desc' | 'asc'
     ]);
     const [matches, setMatches] = useState<ILobbiesMatch[]>([]);
-    const [matchesError, setMatchesError] = useState(false);
-    const [matchesLoading, setMatchesLoading] = useState(true);
     const [connected, setConnected] = useState(false);
     const [screenTime, refreshScreen] = useState(getUnixTime(new Date()));
     const ref = useRef(null);
@@ -420,70 +420,37 @@ export function PlayerList({
         );
     };
 
-    const fetchNewMatches = async (profileIds: number[]) => {
-        try {
-            setMatchesLoading(true);
-
-            const matchData = await fetchMatches({
-                profileIds: profileIds.join(',') as unknown as number[],
-            });
-
-            if (matchData?.matches?.length) {
-                updateMatches(matchData.matches.map(reformatTeamMatch), true);
-
-                closeSocket();
-                openSocket(profileIds);
-            } else {
-                const matchData2 = await fetchMatches({
-                    profileIds: profileIds.join(',') as unknown as number[],
-                });
-                if (matchData2?.matches?.length) {
-                    updateMatches(
-                        matchData2.matches.map(reformatTeamMatch),
-                        true
-                    );
-
-                    closeSocket();
-                    openSocket(profileIds);
-                } else {
-                    throw new Error('Unable to update matches');
-                }
-            }
-            setMatchesError(false);
-        } catch {
-            setMatchesError(true);
-            updateMatches([], true);
-        }
-
-        setMatchesLoading(false);
-    };
-
     const { data, isFetching, refetch, isLoading, isError } = useQuery(
         ['leaderboard-players', leaderboard.leaderboardId],
         async (context) => {
             closeSocket();
 
-            const leaderboardData = await fetchLeaderboard({
-                ...context,
-                leaderboardId: context.queryKey[1] as number,
-                extend: 'max_rating,verified,players.country_icon',
-                perPage: 50,
-            });
+            const response = await fetch('/api/leaderboard');
+            const text = await response.text();
+            const leaderboardData = JSON.parse(text, dateReviver) as {
+                leaderboard: ILeaderboard;
+                matches: IMatchesMatch[];
+            };
 
-            if (!leaderboardData?.players?.length) {
+            if (!leaderboardData?.leaderboard?.players?.length) {
                 throw Error('Leaderboard bug');
             }
 
+            if (!leaderboardData?.matches?.length) {
+                throw Error('Matches bug');
+            }
+
+            updateMatches(leaderboardData.matches.map(reformatTeamMatch), true);
+
             setTime(new Date());
 
-            return leaderboardData;
+            return leaderboardData.leaderboard;
         },
         {
             onSuccess: (data) => {
                 const pids = data?.players?.map((p) => p.profileId);
 
                 if (pids && pids.length > 0) {
-                    fetchNewMatches(pids);
                     openSocket(pids);
                 }
             },
@@ -662,17 +629,7 @@ export function PlayerList({
                             className="w-64 hidden md:block"
                             columnName="lastMatchTime"
                         >
-                            Last Match{' '}
-                            {!isLoading && matchesLoading && (
-                                <span className="ml-2">
-                                    <FontAwesomeIcon
-                                        spin
-                                        icon={faSpinner}
-                                        color="#d4d4d4"
-                                        size="xs"
-                                    />
-                                </span>
-                            )}
+                            Last Match
                         </HeadCell>
                         <HeadCell
                             sort={sort}
@@ -728,9 +685,6 @@ export function PlayerList({
 
                             return (
                                 <PlayerRow
-                                    fetchMatchTime={() =>
-                                        fetchNewMatches(allProfileIds)
-                                    }
                                     style={{
                                         ...style,
                                         zIndex: 100 - (index + 1),
@@ -749,8 +703,6 @@ export function PlayerList({
                                     key={key}
                                     playerNames={playerNames}
                                     match={match}
-                                    matchesError={matchesError}
-                                    matchesLoading={matchesLoading}
                                     status={
                                         isQualified
                                             ? 'qualified'
@@ -777,9 +729,6 @@ const PlayerRow = ({
     initialRank,
     rank,
     hasDuplicateRank,
-    matchesError,
-    matchesLoading,
-    fetchMatchTime,
     status = 'none',
     style,
 }: {
@@ -790,9 +739,6 @@ const PlayerRow = ({
     match?: ILobbiesMatch;
     status?: 'invited' | 'qualified' | 'none';
     hasDuplicateRank?: boolean;
-    matchesError: boolean;
-    matchesLoading: boolean;
-    fetchMatchTime: () => void;
     style?: {
         position: SpringValue<React.CSSProperties['position']>;
         opacity: SpringValue<number>;
@@ -956,29 +902,6 @@ const PlayerRow = ({
                                 playerNames={playerNames}
                             />
                         </div>
-                    </div>
-                ) : matchesError ? (
-                    <div className="text-sm">
-                        <p className="italic">Unable to Load</p>
-                        <button
-                            className={`${
-                                matchesLoading
-                                    ? 'text-[#d4d4d4]'
-                                    : 'text-[#EAC65E] hover:underline'
-                            }`}
-                            onClick={fetchMatchTime}
-                            disabled={matchesLoading}
-                        >
-                            {matchesLoading ? 'Retrying ' : 'Try again '}
-                            {matchesLoading && (
-                                <FontAwesomeIcon
-                                    spin
-                                    icon={faSpinner}
-                                    size="xs"
-                                    color="#d4d4d4"
-                                />
-                            )}
-                        </button>
                     </div>
                 ) : (
                     formatAgo(player.lastMatchTime)
