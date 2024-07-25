@@ -205,6 +205,63 @@ export function Index() {
                             </p>
                         </div>
                     </div>
+
+                    <div className="flex flex-col border border-gray-700">
+                        {[
+                            {
+                                name: 'TaToH',
+                                countryIcon: '🇪🇸',
+                                reason: (
+                                    <>
+                                        Winner of{' '}
+                                        <a
+                                            className="underline"
+                                            href="https://liquipedia.net/ageofempires/Red_Bull_Wololo_Legacy/2022/AoE2"
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            RBW: Legacy
+                                        </a>
+                                    </>
+                                ),
+                            },
+                            {
+                                name: 'TheViper',
+                                countryIcon: '🇳🇴',
+                                reason: (
+                                    <>
+                                        Winner of{' '}
+                                        <a
+                                            className="underline"
+                                            href="https://liquipedia.net/ageofempires/Red_Bull_Wololo/5"
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            RBW V: Enthrone
+                                        </a>
+                                    </>
+                                ),
+                            },
+                        ].map((player, index) => (
+                            <div
+                                key={player.name}
+                                className={`flex h-14 border-l-4 border-[#EAC65E] items-center py-3 px-6 ${
+                                    index !== 0
+                                        ? 'border-t border-t-gray-700'
+                                        : ''
+                                }`}
+                            >
+                                <span className="text-2xl mr-2 align-middle">
+                                    {player.countryIcon}
+                                </span>
+                                <span className="text-lg">{player.name}</span>
+                                <span className="flex-1"></span>
+                                <span className="text-xs italic text-ellipsis overflow-hidden whitespace-nowrap">
+                                    {player.reason}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 <Footer className="hidden 2xl:block" />
@@ -463,11 +520,17 @@ export function PlayerList({
     const mappedPlayers = useMemo(
         () =>
             data?.players.map((player) => {
-                const match = matches.find((m) =>
+                const finishedMatch = matches.find(
+                    (m) =>
+                        m.players.some(
+                            (p) => p.profileId === player.profileId
+                        ) && m.finished
+                );
+                const mostRecentMatch = matches.find((m) =>
                     m.players.some((p) => p.profileId === player.profileId)
                 );
 
-                const matchPlayer = match?.players.find(
+                const matchPlayer = finishedMatch?.players.find(
                     (p) => p.profileId === player.profileId
                 );
                 const rating =
@@ -481,8 +544,8 @@ export function PlayerList({
                     ...player,
                     winrates: (player.wins / player.games) * 100,
                     lastMatchTime:
-                        match?.started ??
-                        match?.finished ??
+                        mostRecentMatch?.started ??
+                        mostRecentMatch?.finished ??
                         player.lastMatchTime,
                     rating,
                     maxRating,
