@@ -393,8 +393,13 @@ export function PlayerList({
             return leaderboardData;
         },
         {
-            onSuccess: (data) =>
-                fetchNewMatches(data?.players.map((p) => p.profileId)),
+            onSuccess: (data) => {
+                const pids = data?.players?.map((p) => p.profileId);
+
+                if (pids && pids.length > 0) {
+                    fetchNewMatches(data?.players?.map((p) => p.profileId));
+                }
+            },
             staleTime: 2 * 60 * 1000,
             cacheTime: Infinity,
             refetchOnWindowFocus: true,
