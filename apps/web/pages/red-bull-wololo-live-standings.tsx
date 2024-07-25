@@ -292,6 +292,8 @@ export function PlayerList({
         'desc' | 'asc'
     ]);
     const [matches, setMatches] = useState<ILobbiesMatch[]>([]);
+    const [matchesError, setMatchesError] = useState(false);
+    const [matchesLoading, setMatchesLoading] = useState(true);
     const [connected, setConnected] = useState(false);
     const [screenTime, refreshScreen] = useState(getUnixTime(new Date()));
     const ref = useRef(null);
@@ -362,6 +364,10 @@ export function PlayerList({
 
     const fetchNewMatches = async (profileIds: number[]) => {
         try {
+            closeSocket();
+
+            setMatchesLoading(true);
+
             const matchData = await fetchMatches({
                 profileIds: profileIds.join(',') as unknown as number[],
             });
@@ -369,14 +375,17 @@ export function PlayerList({
             if (matchData?.matches) {
                 updateMatches(matchData.matches.map(reformatTeamMatch), true);
             }
+            setMatchesError(false);
         } catch {
+            setMatchesError(true);
             updateMatches([], true);
         }
 
+        setMatchesLoading(false);
         openSocket(profileIds);
     };
 
-    const { data, isFetching, refetch, isLoading } = useQuery(
+    const { data, isFetching, refetch, isLoading, isError } = useQuery(
         ['leaderboard-players', leaderboard.leaderboardId],
         async (context) => {
             closeSocket();
@@ -387,6 +396,10 @@ export function PlayerList({
                 extend: 'max_rating,verified,players.country_icon',
                 perPage: 50,
             });
+
+            if (!leaderboardData?.players?.length) {
+                throw Error('Leaderboard bug');
+            }
 
             setTime(new Date());
 
@@ -414,6 +427,7 @@ export function PlayerList({
             { name: p.name, icon: p.countryIcon },
         ]) ?? []
     );
+    const allProfileIds = data?.players.map((p) => p.profileId);
     const socket = useRef<w3cwebsocket>();
 
     const openSocket = (profileIds: number[]) => {
@@ -586,9 +600,20 @@ export function PlayerList({
                     </tr>
                 </thead>
                 <tbody className="block min-h-[1600px]" ref={ref}>
-                    {!players || players.length === 0 ? (
+                    {!players || players.length === 0 || isError ? (
                         <tr className="flex h-96 items-center justify-center">
-                            <FontAwesomeIcon spin icon={faSpinner} size="2xl" />
+                            {isError ? (
+                                <p className="text-lg">
+                                    There was an error loading the leaderboard.
+                                    Please reload the page.
+                                </p>
+                            ) : (
+                                <FontAwesomeIcon
+                                    spin
+                                    icon={faSpinner}
+                                    size="2xl"
+                                />
+                            )}
                         </tr>
                     ) : (
                         transitions((style, player, { key }, index) => {
@@ -610,6 +635,9 @@ export function PlayerList({
 
                             return (
                                 <PlayerRow
+                                    fetchMatchTime={() =>
+                                        fetchNewMatches(allProfileIds)
+                                    }
                                     style={{
                                         ...style,
                                         zIndex: 100 - (index + 1),
@@ -628,6 +656,8 @@ export function PlayerList({
                                     key={key}
                                     playerNames={playerNames}
                                     match={match}
+                                    matchesError={matchesError}
+                                    matchesLoading={matchesLoading}
                                     status={
                                         isQualified
                                             ? 'qualified'
@@ -654,6 +684,9 @@ const PlayerRow = ({
     initialRank,
     rank,
     hasDuplicateRank,
+    matchesError,
+    matchesLoading,
+    fetchMatchTime,
     status = 'none',
     style,
 }: {
@@ -664,6 +697,9 @@ const PlayerRow = ({
     match?: ILobbiesMatch;
     status?: 'invited' | 'qualified' | 'none';
     hasDuplicateRank?: boolean;
+    matchesError: boolean;
+    matchesLoading: boolean;
+    fetchMatchTime: () => void;
     style?: {
         position: SpringValue<React.CSSProperties['position']>;
         opacity: SpringValue<number>;
@@ -788,8 +824,28 @@ const PlayerRow = ({
                             />
                         </div>
                     </div>
+                ) : matchesError ? (
+                    <div className="text-sm">
+                        <p className="italic">Unable to Load</p>
+                        <button
+                            className="text-[#EAC65E] hover:underline"
+                            onClick={fetchMatchTime}
+                        >
+                            Try again
+                        </button>
+                    </div>
                 ) : (
                     formatAgo(player.lastMatchTime)
+                )}
+                {matchesLoading && (
+                    <div className="ml-2">
+                        <FontAwesomeIcon
+                            spin
+                            icon={faSpinner}
+                            color="#d4d4d4"
+                            size="xs"
+                        />
+                    </div>
                 )}
             </Cell>
             <Cell className="w-24 hidden md:flex">
