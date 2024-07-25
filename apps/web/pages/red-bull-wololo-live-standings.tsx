@@ -59,6 +59,7 @@ import {
 } from 'victory';
 import { getConfig } from '../helper/config';
 import Countdown from 'react-countdown';
+import { w3cwebsocket } from 'websocket';
 
 const config = getConfig();
 const endDate = new Date(1722178800000);
@@ -294,6 +295,7 @@ export function PlayerList({
     const [connected, setConnected] = useState(false);
     const [screenTime, refreshScreen] = useState(getUnixTime(new Date()));
     const ref = useRef(null);
+    const refetchTimer = useRef(null);
 
     useEffect(() => {
         const intervalId = setInterval(() => {
@@ -305,6 +307,27 @@ export function PlayerList({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    const updateMatches = (
+        newMatches: ILobbiesMatch[],
+        clearMatches = false
+    ) => {
+        setMatches((prev) => {
+            const newMatchesFiltered = newMatches.filter(
+                (match) => match.leaderboardId === leaderboard.leaderboardId
+            );
+            const newMatchIds = newMatchesFiltered.map((g) => g.matchId);
+            const oldMatches = prev.filter(
+                (g) => !newMatchIds.includes(g.matchId)
+            );
+
+            return orderBy(
+                [...(clearMatches ? [] : oldMatches), ...newMatchesFiltered],
+                'started',
+                'desc'
+            );
+        });
+    };
+
     const connect = async (profileIds?: number[]) => {
         return await initMatchSubscription(
             {
@@ -315,45 +338,19 @@ export function PlayerList({
                     setConnected(false);
                 },
                 onMatches: (games: ILobbiesMatch[]) => {
-                    setMatches((prev) => {
-                        const newGames = games.filter(
-                            (game) =>
-                                game.leaderboardId === leaderboard.leaderboardId
-                        );
-                        const newGameIds = newGames.map((g) => g.matchId);
-                        return orderBy(
-                            [
-                                ...prev.filter(
-                                    (g) => !newGameIds.includes(g.matchId)
-                                ),
-                                ...games,
-                            ],
-                            'started',
-                            'desc'
-                        );
-                    });
-
-                    setTime(new Date());
+                    updateMatches(games);
                 },
                 onMatchRemoved: (match: ILobbiesMatch) => {
                     if (
                         match &&
                         match.leaderboardId === leaderboard.leaderboardId
                     ) {
-                        setMatches((prev) => {
-                            return orderBy(
-                                [
-                                    ...prev.filter(
-                                        (g) => match.matchId !== g.matchId
-                                    ),
-                                    match,
-                                ],
-                                'started',
-                                'desc'
-                            );
-                        });
+                        if (refetchTimer.current) {
+                            clearTimeout(refetchTimer.current);
+                        }
+                        updateMatches([match]);
 
-                        setTimeout(async () => {
+                        refetchTimer.current = setTimeout(() => {
                             refetch();
                         }, 15000);
                     }
@@ -364,20 +361,26 @@ export function PlayerList({
     };
 
     const fetchNewMatches = async (profileIds: number[]) => {
-        const matchData = await fetchMatches({
-            profileIds: profileIds.join(',') as unknown as number[],
-        });
+        try {
+            const matchData = await fetchMatches({
+                profileIds: profileIds.join(',') as unknown as number[],
+            });
 
-        const newMatches = matchData.matches
-            ?.filter((game) => game.leaderboardId === leaderboard.leaderboardId)
-            .map((match) => reformatTeamMatch(match));
+            if (matchData?.matches) {
+                updateMatches(matchData.matches.map(reformatTeamMatch), true);
+            }
+        } catch {
+            updateMatches([], true);
+        }
 
-        setMatches(orderBy(newMatches, 'started', 'desc'));
+        openSocket(profileIds);
     };
 
     const { data, isFetching, refetch, isLoading } = useQuery(
         ['leaderboard-players', leaderboard.leaderboardId],
         async (context) => {
+            closeSocket();
+
             const leaderboardData = await fetchLeaderboard({
                 ...context,
                 leaderboardId: context.queryKey[1] as number,
@@ -392,8 +395,9 @@ export function PlayerList({
         {
             onSuccess: (data) =>
                 fetchNewMatches(data?.players.map((p) => p.profileId)),
-            staleTime: Infinity,
+            staleTime: 2 * 60 * 1000,
             cacheTime: Infinity,
+            refetchOnWindowFocus: true,
         }
     );
 
@@ -405,17 +409,17 @@ export function PlayerList({
             { name: p.name, icon: p.countryIcon },
         ]) ?? []
     );
-    const allProfileIds = data?.players.map((p) => p.profileId);
+    const socket = useRef<w3cwebsocket>();
 
-    useEffect(() => {
-        let socket = null;
-        if (!isFetching && allProfileIds && allProfileIds.length > 0) {
-            connect(allProfileIds).then((s) => (socket = s));
+    const openSocket = (profileIds: number[]) => {
+        if (profileIds && profileIds.length > 0) {
+            connect(profileIds).then((s) => (socket.current = s));
         }
-        return () => {
-            socket?.close();
-        };
-    }, [isFetching]);
+    };
+
+    const closeSocket = () => {
+        socket.current?.close();
+    };
 
     const mappedPlayers = useMemo(
         () =>
