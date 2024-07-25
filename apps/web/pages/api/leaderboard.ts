@@ -3,6 +3,10 @@ import fs from 'fs';
 import { fromUnixTime, getUnixTime, isAfter, subSeconds } from 'date-fns';
 import { fetchLeaderboard } from '../../helper/api';
 
+export const config = {
+    maxDuration: 30,
+};
+
 export default async function handler(
     request: NextApiRequest,
     response: NextApiResponse

@@ -1,14 +1,5 @@
 {
-    "github": {
-        "silent": true
-    },
-    "functions": {
-        "pages/api/**/*": {
-            "maxDuration": 30
-        },
-
-        "apps/web/pages/api/**/*": {
-            "maxDuration": 30
-        }
-    }
+  "github": {
+    "silent": true
+  }
 }
