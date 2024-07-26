@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/alt-text */
 /* eslint-disable @next/next/no-img-element */
 import { useQuery } from '@tanstack/react-query';
-import { fetchLeaderboard, fetchMatches, fetchProfile } from '../helper/api';
+import { fetchMatches, fetchProfile } from '../helper/api';
 import {
     ILeaderboard,
     ILeaderboardDef,
@@ -468,19 +468,15 @@ export function PlayerList({
             { name: p.name, icon: p.countryIcon },
         ]) ?? []
     );
-    const allProfileIds = data?.players.map((p) => p.profileId);
     const socket = useRef<w3cwebsocket>();
 
     const openSocket = (profileIds: number[]) => {
-        console.log('open socket');
-
         if (profileIds && profileIds.length > 0) {
             connect(profileIds).then((s) => (socket.current = s));
         }
     };
 
     const closeSocket = () => {
-        console.log('close socket');
         socket.current?.close();
     };
 
@@ -533,6 +529,12 @@ export function PlayerList({
         [sort[0], 'rating'],
         [sort[1], 'desc']
     )?.slice(0, 25);
+
+    const minRatingToQualify = Math.min(
+        ...players
+            .filter((p) => qualifiedPlayers.includes(p.profileId))
+            .map((p) => p.maxRating)
+    );
 
     const transitions = useTransition(
         players.map((data, i) => ({ ...data, y: i * 64 })),
@@ -699,6 +701,7 @@ export function PlayerList({
                                         ) + 1
                                     }
                                     hasDuplicateRank={hasDuplicateRank}
+                                    minRatingToQualify={minRatingToQualify}
                                     player={player}
                                     key={key}
                                     playerNames={playerNames}
@@ -727,6 +730,7 @@ const PlayerRow = ({
     match,
     playerNames,
     initialRank,
+    minRatingToQualify,
     rank,
     hasDuplicateRank,
     status = 'none',
@@ -735,6 +739,7 @@ const PlayerRow = ({
     player: ILeaderboardPlayer & { winrates: number };
     playerNames: Record<string, { name: string; icon?: string }>;
     initialRank?: number;
+    minRatingToQualify: number;
     rank?: number;
     match?: ILobbiesMatch;
     status?: 'invited' | 'qualified' | 'none';
@@ -834,7 +839,9 @@ const PlayerRow = ({
             <Cell className="font-bold w-48">{player.maxRating}</Cell>
             <Cell
                 className={`w-48 hidden md:flex group ${
-                    player.rating === player.maxRating ? 'cursor-pointer' : ''
+                    player.rating === player.maxRating || status !== 'qualified'
+                        ? 'cursor-pointer'
+                        : ''
                 }`}
             >
                 <div className="relative flex items-center gap-2">
@@ -842,10 +849,19 @@ const PlayerRow = ({
                     {player.rating === player.maxRating && (
                         <FontAwesomeIcon icon={faChartLine} size="sm" />
                     )}
-                    {player.rating === player.maxRating && (
-                        <div className="absolute top-8 left-1/2 -translate-x-1/2 mx-auto scale-0 bg-blue-800 rounded-lg border-gray-800 px-3 py-2 group-hover:scale-100 z-10 flex flex-row text-sm shadow-2xl transition-transform">
+                    {(player.rating === player.maxRating ||
+                        status !== 'qualified') && (
+                        <div className="absolute top-8 left-1/2 -translate-x-1/2 mx-auto scale-0 bg-blue-800 rounded-lg border-gray-800 px-3 py-2 group-hover:scale-100 z-10 text-sm shadow-2xl transition-transform text-center">
                             <div className="h-0 w-0 border-x-8 border-x-transparent border-b-[8px] border-b-blue-800 absolute -top-2 mx-auto left-0 right-0"></div>
-                            <p className="text-xs">At Highest Rating</p>
+                            {player.rating === player.maxRating && (
+                                <p className="text-xs">At Highest Rating</p>
+                            )}
+                            {status !== 'qualified' && (
+                                <p className="text-xs">
+                                    <b>{minRatingToQualify - player.rating}</b>{' '}
+                                    Points To Be in Qualified Position
+                                </p>
+                            )}
                         </div>
                     )}
                 </div>
