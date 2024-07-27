@@ -507,6 +507,10 @@ export function PlayerList({
                     maxRating = 2000;
                 }
 
+                if (player.profileId === 198035 && maxRating < 1956) {
+                    maxRating = 1956;
+                }
+
                 return {
                     ...player,
                     winrates: (player.wins / player.games) * 100,
