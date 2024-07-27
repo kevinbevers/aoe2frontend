@@ -500,8 +500,12 @@ export function PlayerList({
                     matchPlayer?.rating && matchPlayer?.ratingDiff
                         ? matchPlayer.rating + matchPlayer.ratingDiff
                         : player.rating;
-                const maxRating =
+                let maxRating =
                     rating > player.maxRating ? rating : player.maxRating;
+
+                if (player.profileId === 212721 && maxRating < 2000) {
+                    maxRating = 2000;
+                }
 
                 return {
                     ...player,
