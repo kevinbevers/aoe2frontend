@@ -37,6 +37,7 @@ import {
     formatISO,
     getUnixTime,
     isAfter,
+    isPast,
     subMinutes,
     subWeeks,
 } from 'date-fns';
@@ -87,6 +88,7 @@ export function Index() {
         leaderboardId: 'ew_1v1_redbullwololo',
         leaderboardName: 'Red Bull Wololo 1v1',
     } as unknown as ILeaderboardDef;
+    const [isPastDeadline, setIsPastDeadline] = useState(isPast(endDate));
 
     return (
         <main
@@ -96,7 +98,11 @@ export function Index() {
             <div className="fixed bg-[url('/red-bull-wololo-el-reinado-background.jpg')] bg-cover inset-0" />
             <div className="fixed inset-0 bg-gradient-to-r from-black/80 via-black/90 to-black" />
             <div className="flex-1 relative order-2 2xl:order-1 self-center md:self-start xl:self-center 2xl:self-center">
-                <PlayerList leaderboard={leaderboard} search="" />
+                <PlayerList
+                    leaderboard={leaderboard}
+                    search=""
+                    isPastDeadline={isPastDeadline}
+                />
                 <div
                     id="rankdisclaimer"
                     className="text-center md:text-left text-sm italic select-auto"
@@ -132,6 +138,7 @@ export function Index() {
 
                     <Countdown
                         date={endDate}
+                        onComplete={() => setIsPastDeadline(true)}
                         renderer={({
                             days,
                             hours,
@@ -144,6 +151,9 @@ export function Index() {
                                     {completed ? (
                                         <p className="text-2xl font-bold">
                                             Qualification has Ended
+                                            <p className="text-sm text-center">
+                                                Ratings will no longer update
+                                            </p>
                                         </p>
                                     ) : (
                                         <>
@@ -193,20 +203,36 @@ export function Index() {
                         }}
                     />
 
-                    <div className="flex flex-row gap-6 justify-end py-4">
+                    <div className="flex flex-row gap-6 justify-between py-4">
+                        <div className="flex flex-row gap-2 items-center">
+                            <div className="w-6 h-6 bg-[#D00E4D]" />
+                            <p className="text-lg uppercase font-semibold inline-block pt-1 whitespace-nowrap">
+                                {isPastDeadline
+                                    ? 'Qualified'
+                                    : 'In Qualified Position'}
+                            </p>
+                        </div>
                         <div className="flex flex-row gap-2 items-center">
                             <div className="w-6 h-6 bg-[#EAC65E]" />
                             <p className="text-lg uppercase font-semibold inline-block pt-1 whitespace-nowrap">
                                 Invited
                             </p>
                         </div>
-                        <div className="flex flex-row gap-2 items-center">
-                            <div className="w-6 h-6 bg-[#D00E4D]" />
-                            <p className="text-lg uppercase font-semibold inline-block pt-1 whitespace-nowrap">
-                                In Qualified Position
-                            </p>
-                        </div>
                     </div>
+                    {isPastDeadline && (
+                        <p className="text-xs italic -mt-7">
+                            Please verify the qualified players from the{' '}
+                            <a
+                                href="https://www.ageofempires.com/stats/ageiidewololo/"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="underline"
+                            >
+                                official standings
+                            </a>
+                            .
+                        </p>
+                    )}
 
                     <div className="flex flex-col border border-gray-700">
                         {[
@@ -339,9 +365,11 @@ export const Footer = ({ className }: { className?: string }) => (
 export function PlayerList({
     leaderboard,
     search,
+    isPastDeadline,
 }: {
     leaderboard: ILeaderboardDef;
     search: string;
+    isPastDeadline: boolean;
 }) {
     const [time, setTime] = useState(new Date());
     const [initialRankings, setInitialRankings] = useState<
@@ -471,7 +499,7 @@ export function PlayerList({
     const socket = useRef<w3cwebsocket>();
 
     const openSocket = (profileIds: number[]) => {
-        if (profileIds && profileIds.length > 0) {
+        if (profileIds && profileIds.length > 0 && !isPastDeadline) {
             connect(profileIds).then((s) => (socket.current = s));
         }
     };
@@ -489,9 +517,13 @@ export function PlayerList({
                             (p) => p.profileId === player.profileId
                         ) && m.finished
                 );
-                const mostRecentMatch = matches.find((m) =>
-                    m.players.some((p) => p.profileId === player.profileId)
-                );
+                const mostRecentMatch = isPastDeadline
+                    ? finishedMatch
+                    : matches.find((m) =>
+                          m.players.some(
+                              (p) => p.profileId === player.profileId
+                          )
+                      );
 
                 const matchPlayer = finishedMatch?.players.find(
                     (p) => p.profileId === player.profileId
@@ -511,6 +543,10 @@ export function PlayerList({
                     maxRating = 1956;
                 }
 
+                if (player.profileId === 666976 && maxRating < 1978) {
+                    maxRating = 1978;
+                }
+
                 return {
                     ...player,
                     winrates: (player.wins / player.games) * 100,
@@ -522,7 +558,7 @@ export function PlayerList({
                     maxRating,
                 };
             }),
-        [data?.players, matches]
+        [data?.players, isPastDeadline, matches]
     );
     const sortedPlayerIds = orderBy(
         mappedPlayers,
@@ -568,11 +604,17 @@ export function PlayerList({
         }
     }, [isLoading]);
 
+    useEffect(() => {
+        if (isPastDeadline) {
+            closeSocket();
+        }
+    }, [isPastDeadline]);
+
     return (
         <div>
             <div className="pb-2 mb-8 border-b-2 border-[#EAC65E] flex flex-col md:flex-row justify-between items-center select-auto">
                 <h2 className="text-xl md:text-5xl uppercase font-bold">
-                    Current Top Players
+                    {isPastDeadline ? '' : 'Current '}Top Players
                 </h2>
 
                 <div className="flex gap-4">
@@ -679,7 +721,9 @@ export function PlayerList({
                         transitions((style, player, { key }, index) => {
                             const match = matches.find((m) =>
                                 m.players.some(
-                                    (p) => p.profileId === player.profileId
+                                    (p) =>
+                                        p.profileId === player.profileId &&
+                                        (!isPastDeadline || m.finished)
                                 )
                             );
 
@@ -695,6 +739,7 @@ export function PlayerList({
 
                             return (
                                 <PlayerRow
+                                    isPastDeadline={isPastDeadline}
                                     style={{
                                         ...style,
                                         zIndex: 100 - (index + 1),
@@ -743,6 +788,7 @@ const PlayerRow = ({
     hasDuplicateRank,
     status = 'none',
     style,
+    isPastDeadline,
 }: {
     player: ILeaderboardPlayer & { winrates: number };
     playerNames: Record<string, { name: string; icon?: string }>;
@@ -752,6 +798,7 @@ const PlayerRow = ({
     match?: ILobbiesMatch;
     status?: 'invited' | 'qualified' | 'none';
     hasDuplicateRank?: boolean;
+    isPastDeadline: boolean;
     style?: {
         position: SpringValue<React.CSSProperties['position']>;
         opacity: SpringValue<number>;
@@ -847,7 +894,8 @@ const PlayerRow = ({
             <Cell className="font-bold w-48">{player.maxRating}</Cell>
             <Cell
                 className={`w-48 hidden md:flex group ${
-                    player.rating === player.maxRating || status !== 'qualified'
+                    player.rating === player.maxRating ||
+                    (status !== 'qualified' && !isPastDeadline)
                         ? 'cursor-pointer'
                         : ''
                 }`}
@@ -858,13 +906,13 @@ const PlayerRow = ({
                         <FontAwesomeIcon icon={faChartLine} size="sm" />
                     )}
                     {(player.rating === player.maxRating ||
-                        status !== 'qualified') && (
+                        (status !== 'qualified' && !isPastDeadline)) && (
                         <div className="absolute top-8 left-1/2 -translate-x-1/2 mx-auto scale-0 bg-blue-800 rounded-lg border-gray-800 px-3 py-2 group-hover:scale-100 z-10 text-sm shadow-2xl transition-transform text-center">
                             <div className="h-0 w-0 border-x-8 border-x-transparent border-b-[8px] border-b-blue-800 absolute -top-2 mx-auto left-0 right-0"></div>
                             {player.rating === player.maxRating && (
                                 <p className="text-xs">At Highest Rating</p>
                             )}
-                            {status !== 'qualified' && (
+                            {status !== 'qualified' && !isPastDeadline && (
                                 <p className="text-xs">
                                     <b>{minRatingToQualify - player.rating}</b>{' '}
                                     Points To Be in Qualified Position

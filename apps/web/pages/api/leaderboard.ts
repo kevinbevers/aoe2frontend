@@ -30,7 +30,8 @@ export default async function handler(
 
     if (
         mostRecentFile &&
-        isAfter(fromUnixTime(mostRecentFile), subSeconds(new Date(), 15))
+        (isAfter(fromUnixTime(mostRecentFile), subSeconds(new Date(), 15)) ||
+            isAfter(fromUnixTime(mostRecentFile), new Date(1722178800000)))
     ) {
         const cachedData = fs.readFileSync(`${folder}/${mostRecentFile}.json`);
 
