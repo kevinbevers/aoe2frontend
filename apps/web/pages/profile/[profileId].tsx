@@ -1,4 +1,5 @@
 import {useState} from "react";
+import React from "react";
 import {useInfiniteQuery, useQuery} from "@tanstack/react-query";
 import {flatten} from "lodash";
 import Link from "next/link";
@@ -15,6 +16,7 @@ import Tabs from "../../components/tabs";
 import {classNames} from "../../components/global-search";
 import LocalSearch from "../../components/local-search";
 import {bgColor, borderColor, textColor} from "../../components/style.utils";
+import MatchupModal from "../../components/matchup_modal";
 
 
 export default function ProfilePage() {
@@ -354,6 +356,9 @@ export function PlayerList({
                                             </div>
                                             <div>{match.leaderboardName}</div>
                                             <div title={format(match.started, 'Pp')}>{formatMatchDuration(match)}</div>
+                                            {
+                                                !match.finished && differenceInSeconds(new Date(), match.started) < 14400 ? <div><MatchupModal /></div> : <></>
+                                            }
                                             {
                                                 match.finished &&
                                                 <div>{formatMatchDuration2(match)}</div>

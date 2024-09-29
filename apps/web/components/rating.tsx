@@ -11,7 +11,7 @@ interface IRatingProps {
 }
 
 function getLeaderboardColor(leaderboardId: string) {
-    return 'var(--text-main)';
+        return 'var(--text-main)';
 }
 
 export default function Rating({ratingHistories}: IRatingProps) {

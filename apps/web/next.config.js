@@ -13,7 +13,7 @@ const nextConfig = {
         svgr: false,
     },
     images: {
-        domains: ['aoe2companion.com', 'aoe4companion.com'],
+        domains: ['aoe2companion.com', 'aoe4companion.com', 'frontend.cdn.aoe2companion.com'],
     },
 };
 
