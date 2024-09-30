@@ -357,7 +357,7 @@ export function PlayerList({
                                             <div>{match.leaderboardName}</div>
                                             <div title={format(match.started, 'Pp')}>{formatMatchDuration(match)}</div>
                                             {
-                                                !match.finished && differenceInSeconds(new Date(), match.started) < 14400 ? <div><MatchupModal /></div> : <></>
+                                                !match.finished && differenceInSeconds(new Date(), match.started) < 14400 ? <div><MatchupModal profileId={profileId} match={match} /></div> : <></>
                                             }
                                             {
                                                 match.finished &&
